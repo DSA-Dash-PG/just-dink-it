@@ -11,9 +11,9 @@ import {
   registrations,
   sponsors,
   stats,
-} from './lib/db.js';
-import { requireAdmin } from './lib/supabase-auth.js';
-import { ok, badRequest, unauthorized, notFound, serverError, cors } from './lib/response.js';
+} from '../lib/db.js';
+import { requireAdmin } from '../lib/supabase-auth.js';
+import { ok, badRequest, unauthorized, notFound, serverError, cors } from '../lib/response.js';
 
 export const handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') return cors();

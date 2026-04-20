@@ -1,8 +1,8 @@
 // netlify/functions/public-data.js
 // Public read-only endpoint for homepage / teams / schedule
 
-import { seasons, divisions, teams, matches, stats, players, roster, sponsors } from './lib/db.js';
-import { ok, badRequest, serverError, cors } from './lib/response.js';
+import { seasons, divisions, teams, matches, stats, players, roster, sponsors } from '../lib/db.js';
+import { ok, badRequest, serverError, cors } from '../lib/response.js';
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return cors();

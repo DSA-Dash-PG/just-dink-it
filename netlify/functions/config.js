@@ -2,7 +2,7 @@
 // Exposes public configuration (Supabase URL + anon key, admin email list)
 // These are safe to share with the browser - the anon key has no special privileges.
 
-import { ok, cors } from './lib/response.js';
+import { ok, cors } from '../lib/response.js';
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return cors();

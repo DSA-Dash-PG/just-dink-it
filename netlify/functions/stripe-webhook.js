@@ -1,7 +1,7 @@
 // netlify/functions/stripe-webhook.js
 import Stripe from 'stripe';
-import { registrations, teams } from './lib/db.js';
-import { ok, badRequest, serverError } from './lib/response.js';
+import { registrations, teams } from '../lib/db.js';
+import { ok, badRequest, serverError } from '../lib/response.js';
 
 export const handler = async (event) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

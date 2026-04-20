@@ -1,8 +1,8 @@
 // netlify/functions/register.js
 // Captain submits team registration → admin reviews → on approval, captain pays via Stripe
 
-import { registrations, seasons, divisions, teams } from './lib/db.js';
-import { ok, badRequest, serverError, cors } from './lib/response.js';
+import { registrations, seasons, divisions, teams } from '../lib/db.js';
+import { ok, badRequest, serverError, cors } from '../lib/response.js';
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return cors();

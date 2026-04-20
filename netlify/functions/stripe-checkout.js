@@ -2,8 +2,8 @@
 // Create a Stripe checkout session for $450 team registration
 
 import Stripe from 'stripe';
-import { registrations, teams, divisions, seasons } from './lib/db.js';
-import { ok, badRequest, serverError, cors } from './lib/response.js';
+import { registrations, teams, divisions, seasons } from '../lib/db.js';
+import { ok, badRequest, serverError, cors } from '../lib/response.js';
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return cors();
