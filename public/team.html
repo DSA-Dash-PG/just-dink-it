@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,10 +129,9 @@
                         ${r.player.headshot ? `<img src="${r.player.headshot}" alt="${r.player.name}" style="width: 100%; height: 100%; object-fit: cover;"/>` : r.player.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
                       </div>
                       <div style="flex: 1;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 500;">${r.player.name}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
-                        <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${r.player.careerStats?.matchesPlayed || 0} career matches</p>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500;">${r.player.name}${r.player.nickname ? ` <span style="color: var(--c-ink-mute); font-weight: 400;">"${r.player.nickname}"</span>` : ''}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
+                        <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${[r.player.city, r.player.sex, r.player.careerStats?.matchesPlayed ? r.player.careerStats.matchesPlayed + ' career matches' : ''].filter(Boolean).join(' · ') || ''}</p>
                       </div>
-                      ${r.jerseyNumber ? `<span class="serif-num" style="font-size: 18px;">#${r.jerseyNumber}</span>` : ''}
                     </a>
                   ` : '').join('')}
                 </div>
