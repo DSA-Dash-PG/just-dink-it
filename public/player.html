@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,17 +26,24 @@
 
     mountChrome('');
 
-    const slug = new URLSearchParams(location.search).get('slug');
+    const slug = new URLSearchParams(location.search).get('slug')
+      || location.pathname.replace(/^\/players\//, '').replace(/\/$/, '') || null;
 
     async function load() {
-      if (!slug) return;
-      const data = await apiGet(`public-data?action=player&slug=${encodeURIComponent(slug)}`);
-      if (!data.player) {
+      if (!slug || slug === 'player.html') return;
+      try {
+        const data = await apiGet(`public-data?action=player&slug=${encodeURIComponent(slug)}`);
+        if (!data.player) {
+          document.getElementById('player-content').innerHTML = `
+            <div class="container"><p class="text-mute" style="text-align: center;">Player not found.</p></div>`;
+          return;
+        }
+        render(data.player);
+      } catch (err) {
+        console.error('Player page error:', err);
         document.getElementById('player-content').innerHTML = `
-          <div class="container"><p class="text-mute" style="text-align: center;">Player not found.</p></div>`;
-        return;
+          <div class="container"><p class="text-mute" style="text-align: center;">Error loading player: ${err.message}</p></div>`;
       }
-      render(data.player);
     }
 
     function render(p) {
