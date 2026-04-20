@@ -374,28 +374,32 @@ export const matches = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const scores = {
-  async submit({ matchId, submittedByTeamId, games, notes }) {
-    // games = [{home: 11, away: 9}, {home: 11, away: 7}]  (best of 3 typically)
+  // New format: rounds-based scoring (2 rounds × 6 games)
+  // rounds = [
+  //   { games: [ { type:'WD'|'MD'|'MXD', home: {p1,p2,score}, away: {p1,p2,score} }, ... ] },
+  //   { games: [ ... ] }
+  // ]
+  async submit({ matchId, submittedByTeamId, rounds, notes }) {
     const existing = (await store('scores').get(matchId, { type: 'json' })) || {
       matchId,
       submissions: {},
     };
 
     existing.submissions[submittedByTeamId] = {
-      games,
+      rounds,
       notes: notes || '',
       submittedAt: now(),
     };
 
-    // Check if both teams submitted matching scores
+    // Check if both teams submitted matching scores (compare only scores, not player names)
     const subs = Object.values(existing.submissions);
     if (subs.length === 2) {
       const [a, b] = subs;
-      const matches =
-        JSON.stringify(a.games) === JSON.stringify(b.games);
-      existing.confirmed = matches;
-      existing.disputed = !matches;
-      if (matches) existing.confirmedAt = now();
+      const extractScores = (r) => r.map(rd => rd.games.map(g => ({ homeScore: g.home.score, awayScore: g.away.score })));
+      const scoresMatch = JSON.stringify(extractScores(a.rounds)) === JSON.stringify(extractScores(b.rounds));
+      existing.confirmed = scoresMatch;
+      existing.disputed = !scoresMatch;
+      if (scoresMatch) existing.confirmedAt = now();
     }
 
     await store('scores').setJSON(matchId, existing);
@@ -406,6 +410,58 @@ export const scores = {
     return store('scores').get(matchId, { type: 'json' });
   },
 };
+
+// Helper: compute round results from a finalScore
+function computeRoundResults(finalScore) {
+  if (!finalScore || !finalScore.rounds) {
+    // Legacy format: flat games array — treat as single round
+    if (finalScore && finalScore.games) {
+      let hGW = 0, aGW = 0, hPts = 0, aPts = 0;
+      for (const g of finalScore.games) {
+        const hs = typeof g.home === 'object' ? g.home.score : g.home;
+        const as = typeof g.away === 'object' ? g.away.score : g.away;
+        hPts += hs; aPts += as;
+        if (hs > as) hGW++; else aGW++;
+      }
+      return {
+        homeGamesWon: hGW, awayGamesWon: aGW,
+        homePointsScored: hPts, awayPointsScored: aPts,
+        homeMatchPoints: hGW > aGW ? 2 : hGW === aGW ? 1 : 0,
+        awayMatchPoints: aGW > hGW ? 2 : hGW === aGW ? 1 : 0,
+      };
+    }
+    return { homeGamesWon: 0, awayGamesWon: 0, homePointsScored: 0, awayPointsScored: 0, homeMatchPoints: 0, awayMatchPoints: 0 };
+  }
+
+  let totalHomeGW = 0, totalAwayGW = 0;
+  let totalHomePts = 0, totalAwayPts = 0;
+  let homeMatchPoints = 0, awayMatchPoints = 0;
+
+  for (const round of finalScore.rounds) {
+    let roundHomeGW = 0, roundAwayGW = 0;
+    for (const game of round.games) {
+      const hs = game.home.score;
+      const as = game.away.score;
+      totalHomePts += hs;
+      totalAwayPts += as;
+      if (hs > as) { roundHomeGW++; totalHomeGW++; }
+      else { roundAwayGW++; totalAwayGW++; }
+    }
+    // Round points: Win=2, Tie=1, Loss=0
+    if (roundHomeGW > roundAwayGW) { homeMatchPoints += 2; }
+    else if (roundHomeGW === roundAwayGW) { homeMatchPoints += 1; awayMatchPoints += 1; }
+    else { awayMatchPoints += 2; }
+  }
+
+  return {
+    homeGamesWon: totalHomeGW,
+    awayGamesWon: totalAwayGW,
+    homePointsScored: totalHomePts,
+    awayPointsScored: totalAwayPts,
+    homeMatchPoints,   // 0–4
+    awayMatchPoints,   // 0–4
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REGISTRATIONS (pending captain signups awaiting admin approval)
@@ -508,14 +564,20 @@ export const stats = {
       if (!standings[teamId]) {
         standings[teamId] = {
           teamId,
-          wins: 0,
-          losses: 0,
-          pointsFor: 0,
-          pointsAgainst: 0,
+          roundsPlayed: 0,
+          roundWins: 0,
+          roundLosses: 0,
+          roundTies: 0,
+          matchPoints: 0,       // Aloha-style: Win=2, Tie=1, Loss=0 per round (max 4/match)
           gamesWon: 0,
           gamesLost: 0,
+          pointsFor: 0,         // individual game scores (e.g. 11-7, 11 is pointsFor)
+          pointsAgainst: 0,
           streak: { type: null, count: 0 },
-          recent: [], // last 5 results, newest first
+          recent: [],           // last 5 match results (W/L/T), newest first
+          // Legacy compat
+          wins: 0,
+          losses: 0,
         };
       }
     };
@@ -530,34 +592,49 @@ export const stats = {
       init(homeTeamId);
       init(awayTeamId);
 
-      let homeGameWins = 0;
-      let awayGameWins = 0;
-      let homePoints = 0;
-      let awayPoints = 0;
+      const r = computeRoundResults(finalScore);
 
-      for (const game of finalScore.games) {
-        homePoints += game.home;
-        awayPoints += game.away;
-        if (game.home > game.away) homeGameWins++;
-        else awayGameWins++;
+      standings[homeTeamId].gamesWon += r.homeGamesWon;
+      standings[homeTeamId].gamesLost += r.awayGamesWon;
+      standings[awayTeamId].gamesWon += r.awayGamesWon;
+      standings[awayTeamId].gamesLost += r.homeGamesWon;
+      standings[homeTeamId].pointsFor += r.homePointsScored;
+      standings[homeTeamId].pointsAgainst += r.awayPointsScored;
+      standings[awayTeamId].pointsFor += r.awayPointsScored;
+      standings[awayTeamId].pointsAgainst += r.homePointsScored;
+      standings[homeTeamId].matchPoints += r.homeMatchPoints;
+      standings[awayTeamId].matchPoints += r.awayMatchPoints;
+
+      // Count rounds
+      const numRounds = finalScore.rounds ? finalScore.rounds.length : 1;
+      standings[homeTeamId].roundsPlayed += numRounds;
+      standings[awayTeamId].roundsPlayed += numRounds;
+
+      // Per-round W/L/T counts
+      if (finalScore.rounds) {
+        for (const round of finalScore.rounds) {
+          let rHGW = 0, rAGW = 0;
+          for (const g of round.games) {
+            if (g.home.score > g.away.score) rHGW++; else rAGW++;
+          }
+          if (rHGW > rAGW) { standings[homeTeamId].roundWins++; standings[awayTeamId].roundLosses++; }
+          else if (rHGW === rAGW) { standings[homeTeamId].roundTies++; standings[awayTeamId].roundTies++; }
+          else { standings[awayTeamId].roundWins++; standings[homeTeamId].roundLosses++; }
+        }
       }
 
-      const homeWon = homeGameWins > awayGameWins;
-
-      standings[homeTeamId].pointsFor += homePoints;
-      standings[homeTeamId].pointsAgainst += awayPoints;
-      standings[homeTeamId].gamesWon += homeGameWins;
-      standings[homeTeamId].gamesLost += awayGameWins;
-      standings[awayTeamId].pointsFor += awayPoints;
-      standings[awayTeamId].pointsAgainst += homePoints;
-      standings[awayTeamId].gamesWon += awayGameWins;
-      standings[awayTeamId].gamesLost += homeGameWins;
+      // Overall match result for recent/streak (who got more match points)
+      const homeWon = r.homeMatchPoints > r.awayMatchPoints;
+      const tie = r.homeMatchPoints === r.awayMatchPoints;
 
       if (homeWon) {
         standings[homeTeamId].wins++;
         standings[awayTeamId].losses++;
         standings[homeTeamId].recent.unshift('W');
         standings[awayTeamId].recent.unshift('L');
+      } else if (tie) {
+        standings[homeTeamId].recent.unshift('T');
+        standings[awayTeamId].recent.unshift('T');
       } else {
         standings[awayTeamId].wins++;
         standings[homeTeamId].losses++;
@@ -570,7 +647,6 @@ export const stats = {
     for (const teamId in standings) {
       const s = standings[teamId];
       s.recent = s.recent.slice(0, 5);
-      // Compute streak from recent results
       if (s.recent.length > 0) {
         const type = s.recent[0];
         let count = 1;
@@ -586,8 +662,15 @@ export const stats = {
     }
 
     return Object.values(standings).sort((a, b) => {
-      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+      // Primary: match points
+      if (b.matchPoints !== a.matchPoints) return b.matchPoints - a.matchPoints;
+      // Tiebreaker: games won
+      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+      // Then points scored
+      if (b.pointsFor !== a.pointsFor) return b.pointsFor - a.pointsFor;
+      // Then point diff
       return b.pointDiff - a.pointDiff;
+    });
     });
   },
 
@@ -634,27 +717,21 @@ export const stats = {
       for (const match of teamMatches) {
         career.matchesPlayed++;
         const isHome = match.homeTeamId === entry.teamId;
-        let myGameWins = 0;
-        let oppGameWins = 0;
-        let myPoints = 0;
-        let oppPoints = 0;
-        for (const g of match.finalScore.games) {
-          if (isHome) {
-            myPoints += g.home;
-            oppPoints += g.away;
-            if (g.home > g.away) myGameWins++;
-            else oppGameWins++;
-          } else {
-            myPoints += g.away;
-            oppPoints += g.home;
-            if (g.away > g.home) myGameWins++;
-            else oppGameWins++;
-          }
+        const r = computeRoundResults(match.finalScore);
+
+        if (isHome) {
+          career.pointsFor += r.homePointsScored;
+          career.pointsAgainst += r.awayPointsScored;
+          career.matchPoints = (career.matchPoints || 0) + r.homeMatchPoints;
+          if (r.homeMatchPoints > r.awayMatchPoints) career.wins++;
+          else if (r.homeMatchPoints < r.awayMatchPoints) career.losses++;
+        } else {
+          career.pointsFor += r.awayPointsScored;
+          career.pointsAgainst += r.homePointsScored;
+          career.matchPoints = (career.matchPoints || 0) + r.awayMatchPoints;
+          if (r.awayMatchPoints > r.homeMatchPoints) career.wins++;
+          else if (r.awayMatchPoints < r.homeMatchPoints) career.losses++;
         }
-        career.pointsFor += myPoints;
-        career.pointsAgainst += oppPoints;
-        if (myGameWins > oppGameWins) career.wins++;
-        else career.losses++;
       }
     }
 
@@ -668,4 +745,4 @@ export const stats = {
 // (uses Supabase Auth instead of Netlify Identity)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export { slugify, newId };
+export { slugify, newId, computeRoundResults };
