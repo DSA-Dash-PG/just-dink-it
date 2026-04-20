@@ -267,10 +267,44 @@ img { max-width: 100%; display: block; }
 
 .divider { height: 1px; background: var(--c-rule); margin: 24px 0; }
 
+/* ─── Hamburger toggle ─── */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 1001;
+}
+.nav-toggle span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--c-cream);
+  border-radius: 1px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
-  .nav { gap: 14px; }
-  .nav a:not(.btn) { display: none; }
+  .nav-toggle { display: flex; }
+  .nav {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--c-teal-dark);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    z-index: 1000;
+  }
+  .nav.nav-open { display: flex; }
+  .nav a { font-size: 18px !important; color: var(--c-cream) !important; }
+  .nav a.active { color: var(--c-amber) !important; }
+  .nav a.nav-register { margin-top: 8px; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .field-row { grid-template-columns: 1fr; }
