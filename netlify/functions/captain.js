@@ -1,9 +1,9 @@
 // netlify/functions/captain.js
 // Captain actions: edit own team, manage roster, submit scores
 
-import { teams, players, roster, matches, scores, stats } from '../lib/db.js';
-import { requireUser, isAdmin } from '../lib/supabase-auth.js';
-import { ok, badRequest, unauthorized, notFound, serverError, cors } from '../lib/response.js';
+import { teams, players, roster, matches, scores, stats } from './lib/db.js';
+import { requireUser, isAdmin } from './lib/supabase-auth.js';
+import { ok, badRequest, unauthorized, notFound, serverError, cors } from './lib/response.js';
 
 const verifyCaptainOwnsTeam = async (user, teamId) => {
   const team = await teams.get(teamId);
