@@ -90,10 +90,15 @@
                   <tr>
                     <th>#</th>
                     <th>Team</th>
-                    <th>W–L</th>
-                    <th>WIN%</th>
-                    <th>+/−</th>
-                    <th>Streak</th>
+                    <th>RDS</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>T</th>
+                    <th>PTS</th>
+                    <th>GW</th>
+                    <th>PS</th>
+                    <th>PA</th>
+                    <th>DIFF</th>
                     <th>Last 5</th>
                   </tr>
                 </thead>
@@ -110,16 +115,26 @@
                             <span style="font-weight: 500;">${t?.name || 'Unknown'}</span>
                           </a>
                         </td>
-                        <td><span style="font-family: var(--font-serif); font-size: 15px;">${s.wins}–${s.losses}</span></td>
-                        <td>${Math.round(s.winPct * 100)}%</td>
+                        <td>${s.roundsPlayed || 0}</td>
+                        <td>${s.roundWins || s.wins || 0}</td>
+                        <td>${s.roundLosses || s.losses || 0}</td>
+                        <td>${s.roundTies || 0}</td>
+                        <td style="font-weight: 600;">${s.matchPoints || 0}</td>
+                        <td>${s.gamesWon || 0}</td>
+                        <td>${s.pointsFor || 0}</td>
+                        <td>${s.pointsAgainst || 0}</td>
                         <td style="color: ${s.pointDiff >= 0 ? 'var(--c-teal)' : 'var(--c-coral-dark)'}; font-weight: 500;">${s.pointDiff >= 0 ? '+' : ''}${s.pointDiff}</td>
-                        <td>${s.streak.type ? `<span style="color: ${s.streak.type === 'W' ? 'var(--c-teal)' : 'var(--c-coral-dark)'}; font-weight: 500;">${s.streak.type}${s.streak.count}</span>` : '—'}</td>
-                        <td style="font-family: monospace; font-size: 13px;">${s.recent.map(r => r === 'W' ? `<span style="color: var(--c-teal);">${r}</span>` : `<span style="color: var(--c-coral-dark);">${r}</span>`).join(' ')}</td>
+                        <td style="font-family: monospace; font-size: 13px;">${(s.recent || []).map(r => r === 'W' ? `<span style="color: var(--c-teal);">${r}</span>` : r === 'T' ? `<span style="color: #8D6E00;">${r}</span>` : `<span style="color: var(--c-coral-dark);">${r}</span>`).join(' ')}</td>
                       </tr>
                     `;
                   }).join('')}
                 </tbody>
               </table>
+              <p class="text-mute mt-16" style="font-size: 11px; line-height: 1.8;">
+                <strong>Point System:</strong> Win = 2 pts · Tie = 1 pt · Loss = 0 pts · Max 4 match pts per week<br/>
+                <strong>Tiebreaker:</strong> PTS (Match Points) → GW (Games Won) → PS (Points Scored) → DIFF (Points Differential)<br/>
+                <strong>RDS</strong> = Rounds Played · <strong>W</strong> = Round Wins · <strong>L</strong> = Round Losses · <strong>T</strong> = Round Ties · <strong>PTS</strong> = Match Points · <strong>GW</strong> = Games Won · <strong>PS</strong> = Points Scored · <strong>PA</strong> = Points Allowed · <strong>DIFF</strong> = Points Differential
+              </p>
             </div>
           `;
         }).join('')}
