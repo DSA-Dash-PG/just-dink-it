@@ -26,39 +26,52 @@
 
     mountChrome('teams');
 
-    const slug = new URLSearchParams(location.search).get('slug');
+    // Extract slug from path or query param
+    // Netlify rewrites /teams/ohana → /team.html?slug=ohana
+    const slug = new URLSearchParams(location.search).get('slug')
+      || location.pathname.replace(/^\/teams\//, '').replace(/\/$/, '') || null;
 
     let allTeams = [];
 
     async function load() {
-      if (!slug) {
+      if (!slug || slug === 'team.html') {
         document.getElementById('team-content').innerHTML = `
           <div class="container"><p class="text-mute" style="text-align: center;">No team specified.</p></div>`;
         return;
       }
 
-      const data = await apiGet(`public-data?action=team&slug=${encodeURIComponent(slug)}`);
+      try {
+        const data = await apiGet(`public-data?action=team&slug=${encodeURIComponent(slug)}`);
 
-      // Also fetch all teams in the season to resolve opponent names
-      if (data.team) {
-        try {
-          const seasonData = await apiGet(`public-data?action=season-overview&seasonId=${data.team.seasonId}`);
-          allTeams = seasonData.teams || [];
-        } catch {}
-      }
+        // Also fetch all teams in the season to resolve opponent names
+        if (data.team) {
+          try {
+            const seasonData = await apiGet(`public-data?action=season-overview&seasonId=${data.team.seasonId}`);
+            allTeams = seasonData.teams || [];
+          } catch {}
+        }
 
-      if (!data.team) {
+        if (!data.team) {
+          document.getElementById('team-content').innerHTML = `
+            <div class="container">
+              <p class="eyebrow">Not found</p>
+              <h1 class="h-display">No team here.</h1>
+              <p class="text-soft">That team slug doesn't match anything in the league.</p>
+              <a href="/teams.html" class="btn btn-ghost mt-16">← Back to all teams</a>
+            </div>`;
+          return;
+        }
+
+        render(data);
+      } catch (err) {
+        console.error('Team page error:', err);
         document.getElementById('team-content').innerHTML = `
           <div class="container">
-            <p class="eyebrow">Not found</p>
-            <h1 class="h-display">No team here.</h1>
-            <p class="text-soft">That team slug doesn't match anything in the league.</p>
+            <p class="eyebrow" style="color: var(--c-coral);">Error loading team</p>
+            <p class="text-soft" style="margin-top: 8px;">${err.message}</p>
             <a href="/teams.html" class="btn btn-ghost mt-16">← Back to all teams</a>
           </div>`;
-        return;
       }
-
-      render(data);
     }
 
     function render(data) {
