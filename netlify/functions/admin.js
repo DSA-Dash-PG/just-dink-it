@@ -153,9 +153,13 @@ export const handler = async (event, context) => {
         return ok(m);
       }
 
-      // ─── Seed (dev/demo only) ───
-      case 'seed-mock-season':
-        return ok(await seedMockSeason());
+      // ─── Seed (dev/demo only — broken into phases to avoid timeout) ───
+      case 'seed-phase-1':
+        return ok(await seedPhase1()); // Season + division + 6 teams w/ captains
+      case 'seed-phase-2':
+        return ok(await seedPhase2(body.seasonId)); // Add players to rosters
+      case 'seed-phase-3':
+        return ok(await seedPhase3(body.seasonId)); // Matches + finalize + sponsors
 
       // ─── Reset (NUCLEAR — wipes everything) ───
       case 'reset-all-data':
@@ -170,166 +174,134 @@ export const handler = async (event, context) => {
   }
 };
 
-// ─── Mock season seeder ───────────────────────────────────────────────────
-// Creates a full season with 6 teams, randomized rosters (6-12 players),
-// and a round-robin schedule with some past matches finalized.
+// ─── Seed helpers ─────────────────────────────────────────────────────────
+const SEED_TEAMS = [
+  { name: 'Pier Pressure', motto: 'We dink under stress.', neighborhood: 'Hermosa Beach', colors: { primary: '#D85A30', secondary: '#04342C' } },
+  { name: 'Salty Servers', motto: 'Soft hands, salty attitude.', neighborhood: 'Manhattan Beach', colors: { primary: '#0F6E56', secondary: '#FAC775' } },
+  { name: 'The Kitchen Sink', motto: 'Everything in the kitchen.', neighborhood: 'Redondo Beach', colors: { primary: '#1B4F8E', secondary: '#FAF7F2' } },
+  { name: 'Net Profits', motto: 'Always in the green.', neighborhood: 'Palos Verdes', colors: { primary: '#BA7517', secondary: '#04342C' } },
+  { name: 'Dinks & Drinks', motto: 'Beer league, A+ effort.', neighborhood: 'Torrance', colors: { primary: '#993C1D', secondary: '#FAC775' } },
+  { name: 'Smash Brothers', motto: 'Less dinking, more smashing.', neighborhood: 'Hermosa Beach', colors: { primary: '#2C2C2A', secondary: '#D85A30' } },
+];
+const FIRST = ['Alex','Sam','Jordan','Taylor','Casey','Morgan','Riley','Drew','Avery','Quinn','Reese','Skyler','Cameron','Hayden','Parker','Sage','Blake','Devin','Emerson','Finley','Gray','Harper','Jamie','Kai','Logan','Marlowe','Nico','Oakley','Phoenix','Rowan'];
+const LAST = ['Kim','Patel','Garcia','Nguyen','Lee','Smith','Johnson','Brown','Wong','Singh','Martinez','Anderson','Tanaka','Reyes','Ortega','Chen','Park','Sullivan','Walsh','Cohen','Murphy','Hayes','Reed','Carter','Diaz','Morales'];
+const DUPRS = ['3.0','3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8'];
+const COURTS = ['Marine Ave Court 1','Marine Ave Court 2','Live Oak Park Court A','Live Oak Park Court B','PV Estates Court 1','Wilson Park Court 2'];
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = (arr) => arr[rand(0, arr.length - 1)];
 
-async function seedMockSeason() {
-  const TEAMS = [
-    { name: 'Pier Pressure', motto: 'We dink under stress.', neighborhood: 'Hermosa Beach', colors: { primary: '#D85A30', secondary: '#04342C' } },
-    { name: 'Salty Servers', motto: 'Soft hands, salty attitude.', neighborhood: 'Manhattan Beach', colors: { primary: '#0F6E56', secondary: '#FAC775' } },
-    { name: 'The Kitchen Sink', motto: 'Everything in the kitchen.', neighborhood: 'Redondo Beach', colors: { primary: '#1B4F8E', secondary: '#FAF7F2' } },
-    { name: 'Net Profits', motto: 'Always in the green.', neighborhood: 'Palos Verdes', colors: { primary: '#BA7517', secondary: '#04342C' } },
-    { name: 'Dinks & Drinks', motto: 'Beer league, A+ effort.', neighborhood: 'Torrance', colors: { primary: '#993C1D', secondary: '#FAC775' } },
-    { name: 'Smash Brothers', motto: 'Less dinking, more smashing.', neighborhood: 'Hermosa Beach', colors: { primary: '#2C2C2A', secondary: '#D85A30' } },
-  ];
-
-  const FIRST = ['Alex','Sam','Jordan','Taylor','Casey','Morgan','Riley','Drew','Avery','Quinn','Reese','Skyler','Cameron','Hayden','Parker','Sage','Blake','Devin','Emerson','Finley','Gray','Harper','Jamie','Kai','Logan','Marlowe','Nico','Oakley','Phoenix','Rowan','Sloane','Tatum','Wren','Maya','Leo','Zoe','Mateo','Nora','Eli','Iris'];
-  const LAST = ['Kim','Patel','Garcia','Nguyen','Lee','Smith','Johnson','Brown','Wong','Singh','Martinez','Anderson','Tanaka','Reyes','Ortega','Chen','Park','Sullivan','Walsh','Cohen','Murphy','Hayes','Reed','Carter','Diaz','Morales','Bennett','Ward','Cooper','Foster'];
-  const DUPRS = ['3.0','3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8'];
-  const COURTS = ['Marine Ave Court 1','Marine Ave Court 2','Live Oak Park Court A','Live Oak Park Court B','PV Estates Court 1','Wilson Park Court 2'];
-
-  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-  const pick = (arr) => arr[rand(0, arr.length - 1)];
-
-  const log = [];
-
-  // 1. Season (started 4 weeks ago, runs 3 more weeks)
+// PHASE 1: Season + division + 6 teams with captains only (~6 blob writes per team = ~40 total)
+async function seedPhase1() {
   const today = new Date();
-  const start = new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000);
-  const end = new Date(today.getTime() + 21 * 24 * 60 * 60 * 1000);
+  const start = new Date(today.getTime() - 28 * 86400000);
+  const end = new Date(today.getTime() + 21 * 86400000);
+
   const season = await seasons.create({
-    name: 'Summer 2026 (Mock)',
+    name: 'Summer 2026',
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10),
     status: 'active',
   });
-  log.push(`Season: ${season.name}`);
 
-  // 2. One mixed 3.0 division
   const division = await divisions.create({
-    seasonId: season.id,
-    name: '3.0 Mixed',
-    capacity: 6,
-    price: 450,
+    seasonId: season.id, name: '3.0 Mixed', capacity: 6, price: 450,
   });
-  log.push(`Division: ${division.name}`);
 
-  // 3. Build 6 teams with rosters
-  const built = [];
-  for (const spec of TEAMS) {
-    // Captain
+  const createdTeams = [];
+  for (const spec of SEED_TEAMS) {
     const capName = `${pick(FIRST)} ${pick(LAST)}`;
-    const capEmail = `${capName.toLowerCase().replace(/[^a-z]/g, '')}.cap@example.com`;
     const captain = await players.create({
       name: capName,
-      email: capEmail,
-      phone: `(310) 555-${String(rand(1000, 9999))}`,
+      email: `${capName.toLowerCase().replace(/[^a-z]/g, '')}.cap@example.com`,
+      phone: `(310) 555-${rand(1000, 9999)}`,
       dupr: pick(DUPRS),
       bio: `Captain of ${spec.name}.`,
     });
-
     const team = await teams.create({
-      name: spec.name,
-      seasonId: season.id,
-      divisionId: division.id,
-      captainId: captain.id,
-      colors: spec.colors,
-      motto: spec.motto,
+      name: spec.name, seasonId: season.id, divisionId: division.id,
+      captainId: captain.id, colors: spec.colors, motto: spec.motto,
       neighborhood: spec.neighborhood,
     });
     await teams.update(team.id, { paymentStatus: 'paid' });
+    await roster.addPlayer({ seasonId: season.id, teamId: team.id, playerId: captain.id, role: 'captain' });
+    createdTeams.push(team);
+  }
 
-    await roster.addPlayer({
-      seasonId: season.id,
-      teamId: team.id,
-      playerId: captain.id,
-      role: 'captain',
-    });
+  return { seasonId: season.id, divisionId: division.id, teamCount: createdTeams.length, phase: 1 };
+}
 
-    // 5-11 more players (total 6-12)
-    const additionalCount = rand(5, 11);
-    for (let i = 0; i < additionalCount; i++) {
+// PHASE 2: Add 5 extra players per team (~30 players, ~60 blob writes)
+async function seedPhase2(seasonId) {
+  if (!seasonId) throw new Error('seasonId required');
+  const allTeams = await teams.listBySeason(seasonId);
+  let playerCount = 0;
+
+  for (const team of allTeams) {
+    for (let i = 0; i < 5; i++) {
       const pName = `${pick(FIRST)} ${pick(LAST)}`;
-      const pEmail = `${pName.toLowerCase().replace(/[^a-z]/g, '')}.${rand(1, 9999)}@example.com`;
       const player = await players.create({
         name: pName,
-        email: pEmail,
-        phone: `(310) 555-${String(rand(1000, 9999))}`,
+        email: `${pName.toLowerCase().replace(/[^a-z]/g, '')}.${rand(1, 999)}@example.com`,
         dupr: pick(DUPRS),
       });
       await roster.addPlayer({
-        seasonId: season.id,
-        teamId: team.id,
-        playerId: player.id,
-        jerseyNumber: rand(1, 99),
+        seasonId, teamId: team.id, playerId: player.id, jerseyNumber: rand(1, 99),
       });
+      playerCount++;
     }
-
-    built.push({ team, rosterSize: additionalCount + 1 });
-    log.push(`Team: ${team.name} (${additionalCount + 1} players)`);
   }
 
-  // 4. Round-robin schedule (15 matches across 5 weeks)
+  return { playerCount, phase: 2 };
+}
+
+// PHASE 3: Schedule matches, finalize past ones, add sponsors (~15 matches + 4 sponsors)
+async function seedPhase3(seasonId) {
+  if (!seasonId) throw new Error('seasonId required');
+  const allTeams = await teams.listBySeason(seasonId);
+  const divs = await divisions.listBySeason(seasonId);
+  const divisionId = divs[0]?.id;
+  const today = new Date();
+  const start = new Date(today.getTime() - 28 * 86400000);
+
+  // Round-robin matchups
   const matchups = [];
-  for (let i = 0; i < built.length; i++) {
-    for (let j = i + 1; j < built.length; j++) {
-      matchups.push({ home: built[i].team, away: built[j].team });
+  for (let i = 0; i < allTeams.length; i++) {
+    for (let j = i + 1; j < allTeams.length; j++) {
+      matchups.push({ home: allTeams[i], away: allTeams[j] });
     }
   }
   matchups.sort(() => Math.random() - 0.5);
 
-  let pastCount = 0;
-  let scheduledCount = 0;
-
+  let pastCount = 0, scheduledCount = 0;
   for (let i = 0; i < matchups.length; i++) {
     const week = Math.floor(i / 3) + 1;
-    const matchDate = new Date(start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
+    const matchDate = new Date(start.getTime() + (week - 1) * 7 * 86400000);
     const isPast = matchDate < today;
 
     const match = await matches.create({
-      seasonId: season.id,
-      divisionId: division.id,
-      week,
+      seasonId, divisionId, week,
       date: matchDate.toISOString().slice(0, 10),
-      homeTeamId: matchups[i].home.id,
-      awayTeamId: matchups[i].away.id,
-      court: pick(COURTS),
-      isRivalry: false,
+      homeTeamId: matchups[i].home.id, awayTeamId: matchups[i].away.id,
+      court: pick(COURTS), isRivalry: false,
     });
 
     if (isPast) {
-      // Best-of-3 scores
       const games = [];
-      let homeWins = 0, awayWins = 0;
+      let hw = 0, aw = 0;
       for (let g = 0; g < 3; g++) {
-        if (homeWins === 2 || awayWins === 2) break;
+        if (hw === 2 || aw === 2) break;
         const homeWon = Math.random() > 0.5;
-        const game = homeWon
-          ? { home: 11, away: rand(2, 9) }
-          : { home: rand(2, 9), away: 11 };
-        games.push(game);
-        if (homeWon) homeWins++; else awayWins++;
+        games.push(homeWon ? { home: 11, away: rand(2, 9) } : { home: rand(2, 9), away: 11 });
+        if (homeWon) hw++; else aw++;
       }
-      await matches.update(season.id, match.id, {
-        status: 'final',
-        finalScore: { games },
-      });
+      await matches.update(seasonId, match.id, { status: 'final', finalScore: { games } });
       pastCount++;
     } else {
       scheduledCount++;
     }
   }
 
-  // Recompute career stats for all players (since matches are final)
-  const allPlayers = await players.list();
-  for (const p of allPlayers) {
-    await stats.recomputePlayerCareerStats(p.id);
-  }
-
-  log.push(`Matches: ${pastCount} final, ${scheduledCount} scheduled`);
-
-  // 5. Sponsors
+  // Sponsors
   const mockSponsors = [
     { name: 'South Bay Sports Co.', tier: 'gold', logo: 'https://placehold.co/200x80/0F6E56/FAF7F2?text=SBSC', description: 'Local pickleball gear shop.' },
     { name: 'Pier Burger', tier: 'silver', logo: 'https://placehold.co/200x80/D85A30/FFFFFF?text=Pier+Burger', description: 'Post-match HQ in Hermosa.' },
@@ -337,14 +309,8 @@ async function seedMockSeason() {
     { name: 'Coastal Realty', tier: 'bronze', logo: 'https://placehold.co/200x80/1B4F8E/FFFFFF?text=Coastal', description: 'South Bay homes.' },
   ];
   for (const s of mockSponsors) await sponsors.create(s);
-  log.push(`Sponsors: ${mockSponsors.length}`);
 
-  return {
-    success: true,
-    season: season.name,
-    log,
-    summary: `Created season with ${built.length} teams, ${pastCount + scheduledCount} matches (${pastCount} final), and ${mockSponsors.length} sponsors.`,
-  };
+  return { matchesFinal: pastCount, matchesScheduled: scheduledCount, sponsors: mockSponsors.length, phase: 3 };
 }
 
 // ─── Reset all data (NUCLEAR) ─────────────────────────────────────────────
