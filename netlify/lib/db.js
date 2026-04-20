@@ -671,7 +671,6 @@ export const stats = {
       // Then point diff
       return b.pointDiff - a.pointDiff;
     });
-    });
   },
 
   // Recompute career stats for a player by walking all their roster entries + match results
