@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +21,7 @@
   <div id="footer"></div>
 
   <script type="module">
-    import { mountChrome, apiGet, fmtDate } from '/js/shared.js';
+    import { mountChrome, apiGet, fmtDate, matchResult } from '/js/shared.js';
 
     mountChrome('teams');
 
@@ -203,14 +202,9 @@
     }
     function didTeamWin(match, teamId) {
       if (!match.finalScore) return false;
+      const mr = matchResult(match.finalScore);
       const isHome = match.homeTeamId === teamId;
-      let myWins = 0, oppWins = 0;
-      for (const g of match.finalScore.games) {
-        const my = isHome ? g.home : g.away;
-        const opp = isHome ? g.away : g.home;
-        if (my > opp) myWins++; else oppWins++;
-      }
-      return myWins > oppWins;
+      return isHome ? mr.homeMP > mr.awayMP : mr.awayMP > mr.homeMP;
     }
     function opponentName(match, teamId, data) {
       const oppId = match.homeTeamId === teamId ? match.awayTeamId : match.homeTeamId;
