@@ -63,18 +63,70 @@ export const handler = async (event, context) => {
         let player = body.email ? await players.getByEmail(body.email) : null;
         if (!player) {
           player = await players.create({
-            name: body.name,
+            firstName: body.firstName,
+            lastName: body.lastName,
+            name: body.name, // legacy fallback
+            nickname: body.nickname,
             email: body.email,
             phone: body.phone,
+            sex: body.sex,
+            city: body.city,
           });
+        } else {
+          // Update existing player with any new info
+          const patch = {};
+          if (body.firstName) patch.firstName = body.firstName;
+          if (body.lastName) patch.lastName = body.lastName;
+          if (body.nickname) patch.nickname = body.nickname;
+          if (body.phone) patch.phone = body.phone;
+          if (body.sex) patch.sex = body.sex;
+          if (body.city) patch.city = body.city;
+          if (body.firstName && body.lastName) patch.name = `${body.firstName} ${body.lastName}`;
+          if (Object.keys(patch).length) await players.update(player.id, patch);
         }
         await roster.addPlayer({
           seasonId: team.seasonId,
           teamId: team.id,
           playerId: player.id,
-          jerseyNumber: body.jerseyNumber,
         });
         return ok({ player });
+      }
+
+      case 'add-players-bulk': {
+        const team = await verifyCaptainOwnsTeam(user, body.teamId);
+        const results = [];
+        for (const p of (body.players || [])) {
+          if (!p.firstName || !p.lastName) continue;
+          let player = p.email ? await players.getByEmail(p.email) : null;
+          if (!player) {
+            player = await players.create({
+              firstName: p.firstName,
+              lastName: p.lastName,
+              nickname: p.nickname,
+              email: p.email,
+              phone: p.phone,
+              sex: p.sex,
+              city: p.city,
+            });
+          } else {
+            const patch = {};
+            if (p.firstName) patch.firstName = p.firstName;
+            if (p.lastName) patch.lastName = p.lastName;
+            if (p.nickname) patch.nickname = p.nickname;
+            if (p.phone) patch.phone = p.phone;
+            if (p.sex) patch.sex = p.sex;
+            if (p.city) patch.city = p.city;
+            if (p.firstName && p.lastName) patch.name = `${p.firstName} ${p.lastName}`;
+            if (Object.keys(patch).length) await players.update(player.id, patch);
+          }
+          await roster.addPlayer({
+            seasonId: team.seasonId,
+            teamId: team.id,
+            playerId: player.id,
+          });
+          results.push(player);
+        }
+        return ok({ players: results, count: results.length });
       }
 
       case 'remove-player': {
