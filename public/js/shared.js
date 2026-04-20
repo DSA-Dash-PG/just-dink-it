@@ -62,6 +62,7 @@ export function renderHeader(activePage = '') {
           <a href="/schedule.html" class="${isActive('schedule')}">Schedule</a>
           <a href="/scores.html" class="${isActive('scores')}">Scores</a>
           <a href="/stats.html" class="${isActive('stats')}">Stats</a>
+          <a href="/analytics.html" class="${isActive('analytics')}">🔥 Analytics</a>
           <a href="/gallery.html" class="${isActive('gallery')}">Photos</a>
           <a href="/sponsors.html" class="${isActive('sponsors')}">Sponsors</a>
           <a href="/captain.html" class="${isActive('captain')}">Login</a>
@@ -155,6 +156,43 @@ export const winPct = (w, l) => {
   const total = w + l;
   return total > 0 ? Math.round((w / total) * 1000) / 10 : 0;
 };
+
+// Compute match results from finalScore — handles both legacy flat games and round-based format
+export function matchResult(finalScore) {
+  if (!finalScore) return { homeGW: 0, awayGW: 0, homePts: 0, awayPts: 0, homeMP: 0, awayMP: 0, allGames: [] };
+
+  if (finalScore.rounds) {
+    let homeGW = 0, awayGW = 0, homePts = 0, awayPts = 0, homeMP = 0, awayMP = 0;
+    const allGames = [];
+    for (const round of finalScore.rounds) {
+      let rHGW = 0, rAGW = 0;
+      for (const g of round.games) {
+        const hs = g.home.score, as = g.away.score;
+        homePts += hs; awayPts += as;
+        if (hs > as) { rHGW++; homeGW++; } else { rAGW++; awayGW++; }
+        allGames.push({ type: g.type, homeScore: hs, awayScore: as, homePlayers: [g.home.player1, g.home.player2], awayPlayers: [g.away.player1, g.away.player2] });
+      }
+      if (rHGW > rAGW) homeMP += 2;
+      else if (rHGW === rAGW) { homeMP += 1; awayMP += 1; }
+      else awayMP += 2;
+    }
+    return { homeGW, awayGW, homePts, awayPts, homeMP, awayMP, allGames, rounds: finalScore.rounds };
+  }
+
+  // Legacy flat format
+  let homeGW = 0, awayGW = 0, homePts = 0, awayPts = 0;
+  const allGames = [];
+  for (const g of finalScore.games) {
+    const hs = typeof g.home === 'object' ? g.home.score : g.home;
+    const as = typeof g.away === 'object' ? g.away.score : g.away;
+    homePts += hs; awayPts += as;
+    if (hs > as) homeGW++; else awayGW++;
+    allGames.push({ homeScore: hs, awayScore: as });
+  }
+  const homeMP = homeGW > awayGW ? 2 : homeGW === awayGW ? 1 : 0;
+  const awayMP = awayGW > homeGW ? 2 : homeGW === awayGW ? 1 : 0;
+  return { homeGW, awayGW, homePts, awayPts, homeMP, awayMP, allGames };
+}
 
 /* ─── Auth (Supabase) — lazy loaded so public pages don't block ─── */
 let _authModule = null;
