@@ -371,8 +371,16 @@ async function resetAllData(confirmation) {
 
   const counts = {};
 
+  const siteID = process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN;
+
   for (const name of storeNames) {
-    const store = getStore({ name, consistency: 'strong' });
+    const opts = { name, consistency: 'strong' };
+    if (siteID && token) {
+      opts.siteID = siteID;
+      opts.token = token;
+    }
+    const store = getStore(opts);
     const { blobs } = await store.list();
     counts[name] = blobs.length;
     await Promise.all(blobs.map((b) => store.delete(b.key)));
