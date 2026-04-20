@@ -26,6 +26,7 @@ export async function getSupabase() {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
+      flowType: 'pkce',
     },
   });
   return _supabase;
