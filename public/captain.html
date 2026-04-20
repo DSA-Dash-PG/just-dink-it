@@ -160,8 +160,7 @@
         ${myTeam.paymentStatus !== 'paid' ? `
           <div class="card-coral mt-16">
             <p class="eyebrow">⚠ Payment required</p>
-            <p style="margin: 8px 0 0;">Your team isn't paid yet. Pay $450 to lock your spot.</p>
-            <button id="pay-now" class="btn btn-primary btn-sm mt-16">Pay now via Stripe</button>
+            <p style="margin: 8px 0 0;">Your team isn't paid yet. Pay $450 via Zelle or Venmo to lock your spot. Payment details were included in your approval email — text Richard if you need them resent.</p>
           </div>
         ` : ''}
 
@@ -327,12 +326,6 @@
         };
         await captainFetch('update-team', { id: myTeam.id, patch });
         await bootApp();
-      };
-
-      // Pay now
-      const pay = document.getElementById('pay-now');
-      if (pay) pay.onclick = async () => {
-        alert('Payment flow: Stripe checkout will be initiated. (Hookup: pass your registration ID to /api/stripe-checkout)');
       };
 
       // Remove player
