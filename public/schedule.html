@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +26,7 @@
   <div id="footer"></div>
 
   <script type="module">
-    import { mountChrome, apiGet, fmtDate } from '/js/shared.js';
+    import { mountChrome, apiGet, fmtDate, matchResult } from '/js/shared.js';
     mountChrome('schedule');
 
     let allData = null;
@@ -104,13 +103,13 @@
                 const home = teamById(m.homeTeamId);
                 const away = teamById(m.awayTeamId);
                 const isFinal = m.status === 'final';
-                let homeWins = 0, awayWins = 0;
+                let homeWins = 0, awayWins = 0, homeMP = 0, awayMP = 0, mr = null;
                 if (isFinal && m.finalScore) {
-                  for (const g of m.finalScore.games) {
-                    if (g.home > g.away) homeWins++; else awayWins++;
-                  }
+                  mr = matchResult(m.finalScore);
+                  homeWins = mr.homeGW; awayWins = mr.awayGW;
+                  homeMP = mr.homeMP; awayMP = mr.awayMP;
                 }
-                const homeWon = homeWins > awayWins;
+                const homeWon = homeMP > awayMP;
                 const bg = isRivalry ? 'background: rgba(255,255,255,0.08); color: var(--c-cream);' : 'background: var(--c-paper);';
                 const mutedColor = isRivalry ? 'var(--c-teal-light)' : 'var(--c-ink-mute)';
                 return `
@@ -123,37 +122,60 @@
                     </div>
                     <div class="flex justify-between items-center" style="font-size: 14px;">
                       <a href="${home ? `/teams/${home.slug}` : '#'}" style="color: inherit; text-decoration: none; flex: 1; ${isFinal && homeWon ? 'font-weight: 600;' : ''}" onclick="event.stopPropagation();">${home?.name || 'TBD'}</a>
-                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''} ${isFinal && homeWon ? 'font-weight: 700;' : ''}">${isFinal ? homeWins : ''}</span>
+                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''} ${isFinal && homeWon ? 'font-weight: 700;' : ''}">${isFinal ? homeMP : ''}</span>
                     </div>
                     <div class="flex justify-between items-center" style="font-size: 14px; margin-top: 4px;">
                       <a href="${away ? `/teams/${away.slug}` : '#'}" style="color: inherit; text-decoration: none; flex: 1; ${isFinal && !homeWon ? 'font-weight: 600;' : ''}" onclick="event.stopPropagation();">${away?.name || 'TBD'}</a>
-                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''} ${isFinal && !homeWon ? 'font-weight: 700;' : ''}">${isFinal ? awayWins : ''}</span>
+                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''} ${isFinal && !homeWon ? 'font-weight: 700;' : ''}">${isFinal ? awayMP : ''}</span>
                     </div>
-                    ${isFinal && m.finalScore ? `
+                    ${isFinal && mr ? `
                       <div class="score-detail" id="scores-${m.id}" style="display: none; margin-top: 12px; padding-top: 10px; border-top: 1px solid ${isRivalry ? 'rgba(255,255,255,0.15)' : 'var(--c-rule)'};">
-                        <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-                          <thead>
-                            <tr style="color: ${mutedColor}; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em;">
-                              <th style="text-align: left; padding: 2px 4px;">Game</th>
-                              <th style="text-align: center; padding: 2px 4px;">${home?.name || 'Home'}</th>
-                              <th style="text-align: center; padding: 2px 4px;">${away?.name || 'Away'}</th>
-                              <th style="text-align: center; padding: 2px 4px;"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            ${m.finalScore.games.map((g, i) => {
-                              const hWon = g.home > g.away;
-                              return `
+                        ${mr.rounds ? mr.rounds.map((round, ri) => {
+                          let rHGW = 0, rAGW = 0;
+                          return `
+                          <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: ${mutedColor}; margin: ${ri > 0 ? '10px' : '0'} 0 4px; font-weight: 600;">Round ${ri + 1}</p>
+                          <table style="width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 4px;">
+                            <thead>
+                              <tr style="color: ${mutedColor}; text-transform: uppercase; font-size: 9px; letter-spacing: 0.06em;">
+                                <th style="text-align: left; padding: 2px 4px;">Game</th>
+                                <th style="text-align: center; padding: 2px 4px;">${home?.name || 'Home'}</th>
+                                <th style="text-align: center; padding: 2px 4px;">${away?.name || 'Away'}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${round.games.map((g, i) => {
+                                const hs = g.home.score, as = g.away.score;
+                                const hWon = hs > as;
+                                if (hWon) rHGW++; else rAGW++;
+                                const types = ['WD','MD','MXD','MXD','MXD','MXD'];
+                                return `
+                                  <tr style="border-top: 0.5px solid ${isRivalry ? 'rgba(255,255,255,0.1)' : 'var(--c-rule)'};">
+                                    <td style="padding: 3px 4px; color: ${mutedColor}; font-size: 10px;">G${i+1} ${types[i]}</td>
+                                    <td style="text-align: center; padding: 3px 4px; ${hWon ? 'font-weight: 600;' : ''}">${hs}</td>
+                                    <td style="text-align: center; padding: 3px 4px; ${!hWon ? 'font-weight: 600;' : ''}">${as}</td>
+                                  </tr>
+                                `;
+                              }).join('')}
+                              <tr style="border-top: 1px solid ${isRivalry ? 'rgba(255,255,255,0.2)' : 'var(--c-rule-strong)'}; font-weight: 600; font-size: 11px;">
+                                <td style="padding: 3px 4px;">GW</td>
+                                <td style="text-align: center; padding: 3px 4px;">${rHGW}</td>
+                                <td style="text-align: center; padding: 3px 4px;">${rAGW}</td>
+                              </tr>
+                            </tbody>
+                          </table>`;
+                        }).join('') : `
+                          <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                            <tbody>
+                              ${mr.allGames.map((g, i) => `
                                 <tr style="border-top: 0.5px solid ${isRivalry ? 'rgba(255,255,255,0.1)' : 'var(--c-rule)'};">
-                                  <td style="padding: 4px; color: ${mutedColor};">G${i + 1}</td>
-                                  <td style="text-align: center; padding: 4px; ${hWon ? 'font-weight: 600;' : ''}">${g.home}</td>
-                                  <td style="text-align: center; padding: 4px; ${!hWon ? 'font-weight: 600;' : ''}">${g.away}</td>
-                                  <td style="text-align: center; padding: 4px; font-size: 10px; color: ${mutedColor};">${hWon ? '◀' : '▶'}</td>
+                                  <td style="padding: 3px 4px; color: ${mutedColor};">G${i+1}</td>
+                                  <td style="text-align: center; padding: 3px 4px; ${g.homeScore > g.awayScore ? 'font-weight: 600;' : ''}">${g.homeScore}</td>
+                                  <td style="text-align: center; padding: 3px 4px; ${g.awayScore > g.homeScore ? 'font-weight: 600;' : ''}">${g.awayScore}</td>
                                 </tr>
-                              `;
-                            }).join('')}
-                          </tbody>
-                        </table>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                        `}
                       </div>
                     ` : ''}
                   </div>
