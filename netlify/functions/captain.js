@@ -140,7 +140,7 @@ export const handler = async (event, context) => {
       }
 
       case 'submit-score': {
-        // body = { matchId, teamId, games: [{home, away}, ...], notes }
+        // body = { matchId, teamId, rounds: [ { games: [{type, home:{p1,p2,score}, away:{p1,p2,score}}, ...] }, ... ], notes }
         const team = await verifyCaptainOwnsTeam(user, body.teamId);
 
         // Verify this team is actually in this match
@@ -153,7 +153,7 @@ export const handler = async (event, context) => {
         const scoreRecord = await scores.submit({
           matchId: body.matchId,
           submittedByTeamId: team.id,
-          games: body.games,
+          rounds: body.rounds,
           notes: body.notes,
         });
 
@@ -161,7 +161,7 @@ export const handler = async (event, context) => {
         if (scoreRecord.confirmed) {
           await matches.update(team.seasonId, body.matchId, {
             status: 'final',
-            finalScore: { games: body.games },
+            finalScore: { rounds: body.rounds },
           });
 
           const seasonRoster = await roster.listBySeason(team.seasonId);
