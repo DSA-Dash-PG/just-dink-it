@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -186,18 +187,17 @@
           <div class="card">
             <div class="flex justify-between items-center">
               <h3 class="h-section" style="font-size: 18px;">Roster (${myRoster.length})</h3>
-              <button id="add-player-btn" class="btn btn-amber btn-sm">+ Add player</button>
             </div>
 
             <div class="mt-16">
-              ${myRoster.length === 0 ? `<p class="text-mute" style="font-size: 13px;">No players yet. Add your squad above.</p>` : myRoster.map(r => r.player ? `
+              ${myRoster.length === 0 ? `<p class="text-mute" style="font-size: 13px;">No players on roster yet. Add them below.</p>` : myRoster.map(r => r.player ? `
                 <div class="flex items-center gap-12" style="padding: 8px 0; border-bottom: 0.5px solid var(--c-rule);">
                   <div style="width: 32px; height: 32px; border-radius: 50%; background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; overflow: hidden;">
                     ${r.player.headshot ? `<img src="${r.player.headshot}" style="width: 100%; height: 100%; object-fit: cover;"/>` : r.player.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
                   </div>
                   <div style="flex: 1;">
-                    <p style="margin: 0; font-size: 13px; font-weight: 500;">${r.player.name}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
-                    <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${r.player.email || 'no email'}</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: 500;">${r.player.name}${r.player.nickname ? ` <span style="color: var(--c-ink-mute); font-weight: 400;">"${r.player.nickname}"</span>` : ''}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
+                    <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${[r.player.email, r.player.phone, r.player.sex, r.player.city].filter(Boolean).join(' · ') || 'no details'}</p>
                   </div>
                   ${r.role !== 'captain' ? `<button class="btn btn-sm" data-remove="${r.player.id}" style="font-size: 11px; padding: 4px 8px; box-shadow: none; background: transparent; color: var(--c-coral);">Remove</button>` : ''}
                 </div>
@@ -205,6 +205,38 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- Add players — inline spreadsheet -->
+        <div class="card mt-24">
+          <h3 class="h-section" style="font-size: 18px;">Add players</h3>
+          <p class="text-mute" style="font-size: 12px; margin-top: 4px;">Fill in one row per player. First and last name are required — everything else is optional. Hit "Save all" when done.</p>
+
+          <div style="overflow-x: auto; margin-top: 16px;">
+            <table id="roster-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 820px;">
+              <thead>
+                <tr style="background: var(--c-teal-dark); color: #fff; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em;">
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">#</th>
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">First Name *</th>
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Last Name *</th>
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Nickname</th>
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Email</th>
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Phone</th>
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Sex</th>
+                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">City</th>
+                  <th style="padding: 8px 6px; width: 36px;"></th>
+                </tr>
+              </thead>
+              <tbody id="roster-rows">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex gap-8 mt-16" style="flex-wrap: wrap;">
+            <button id="add-row-btn" class="btn btn-sm" style="background: var(--c-cream); box-shadow: none; color: var(--c-ink);">+ Add row</button>
+            <button id="save-roster-btn" class="btn btn-primary btn-sm">Save all players</button>
+            <span id="roster-save-status" style="font-size: 12px; color: var(--c-teal); align-self: center;"></span>
+          </div>
         </div>
 
         <!-- Matches & score entry -->
@@ -276,22 +308,6 @@
           </div>
         </div>
 
-        <!-- Add player modal -->
-        <div id="player-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-          <div class="card" style="max-width: 420px; width: 90%; padding: 28px;">
-            <h3 class="h-section" style="font-size: 20px;">Add player</h3>
-            <form id="player-form" class="mt-16">
-              <div class="field"><label>Name</label><input name="name" required /></div>
-              <div class="field"><label>Email</label><input type="email" name="email" placeholder="optional, for player login" /></div>
-              <div class="field"><label>Phone</label><input name="phone" placeholder="optional" /></div>
-              <div class="field"><label>Jersey #</label><input type="number" name="jerseyNumber" /></div>
-              <div class="flex gap-8 mt-16">
-                <button type="button" id="cancel-player" class="btn btn-sm" style="background: transparent; box-shadow: none; color: var(--c-ink-soft);">Cancel</button>
-                <button class="btn btn-primary btn-sm">Add to roster</button>
-              </div>
-            </form>
-          </div>
-        </div>
       `;
 
       wireUp();
@@ -316,23 +332,7 @@
       // Pay now
       const pay = document.getElementById('pay-now');
       if (pay) pay.onclick = async () => {
-        // Note: requires registration ID - you'd need to pass through to checkout
         alert('Payment flow: Stripe checkout will be initiated. (Hookup: pass your registration ID to /api/stripe-checkout)');
-      };
-
-      // Add player modal
-      document.getElementById('add-player-btn').onclick = () => {
-        document.getElementById('player-modal').style.display = 'flex';
-      };
-      document.getElementById('cancel-player').onclick = () => {
-        document.getElementById('player-modal').style.display = 'none';
-      };
-      document.getElementById('player-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = Object.fromEntries(new FormData(e.target));
-        await captainFetch('add-player', { ...fd, teamId: myTeam.id });
-        document.getElementById('player-modal').style.display = 'none';
-        await bootApp();
       };
 
       // Remove player
@@ -343,6 +343,83 @@
           await bootApp();
         };
       });
+
+      // ─── Roster spreadsheet ───
+      let rowCount = 0;
+      const inputStyle = 'width: 100%; padding: 5px 6px; border: 1px solid var(--c-rule-strong); border-radius: var(--r-sm); font-size: 12px; font-family: var(--font-sans); background: var(--c-paper);';
+
+      function addRow() {
+        rowCount++;
+        const tbody = document.getElementById('roster-rows');
+        const tr = document.createElement('tr');
+        tr.dataset.row = rowCount;
+        tr.style.borderBottom = '0.5px solid var(--c-rule)';
+        const altBg = rowCount % 2 === 0 ? 'background: var(--c-cream);' : '';
+        tr.innerHTML = `
+          <td style="padding: 4px 6px; color: var(--c-ink-mute); font-size: 11px; ${altBg}">${rowCount}</td>
+          <td style="padding: 4px 4px; ${altBg}"><input name="firstName" style="${inputStyle}" placeholder="First" /></td>
+          <td style="padding: 4px 4px; ${altBg}"><input name="lastName" style="${inputStyle}" placeholder="Last" /></td>
+          <td style="padding: 4px 4px; ${altBg}"><input name="nickname" style="${inputStyle}" placeholder="Nickname" /></td>
+          <td style="padding: 4px 4px; ${altBg}"><input name="email" type="email" style="${inputStyle}" placeholder="email@..." /></td>
+          <td style="padding: 4px 4px; ${altBg}"><input name="phone" style="${inputStyle}" placeholder="(310)..." /></td>
+          <td style="padding: 4px 4px; ${altBg}">
+            <select name="sex" style="${inputStyle}">
+              <option value="">—</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </td>
+          <td style="padding: 4px 4px; ${altBg}"><input name="city" style="${inputStyle}" placeholder="City" /></td>
+          <td style="padding: 4px 4px; ${altBg}"><button type="button" class="remove-row" style="background: none; border: none; cursor: pointer; color: var(--c-coral); font-size: 16px; padding: 2px;" title="Remove row">×</button></td>
+        `;
+        tbody.appendChild(tr);
+        tr.querySelector('.remove-row').onclick = () => { tr.remove(); };
+        // Focus the first input of the new row
+        tr.querySelector('input[name="firstName"]').focus();
+      }
+
+      // Start with 4 blank rows
+      for (let i = 0; i < 4; i++) addRow();
+
+      document.getElementById('add-row-btn').onclick = addRow;
+
+      document.getElementById('save-roster-btn').onclick = async () => {
+        const rows = document.querySelectorAll('#roster-rows tr');
+        const playersToAdd = [];
+        for (const row of rows) {
+          const firstName = row.querySelector('input[name="firstName"]')?.value.trim();
+          const lastName = row.querySelector('input[name="lastName"]')?.value.trim();
+          if (!firstName || !lastName) continue;
+          playersToAdd.push({
+            firstName,
+            lastName,
+            nickname: row.querySelector('input[name="nickname"]')?.value.trim() || '',
+            email: row.querySelector('input[name="email"]')?.value.trim() || '',
+            phone: row.querySelector('input[name="phone"]')?.value.trim() || '',
+            sex: row.querySelector('select[name="sex"]')?.value || '',
+            city: row.querySelector('input[name="city"]')?.value.trim() || '',
+          });
+        }
+        if (playersToAdd.length === 0) {
+          alert('Fill in at least one player (first + last name required).');
+          return;
+        }
+        const btn = document.getElementById('save-roster-btn');
+        const statusEl = document.getElementById('roster-save-status');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        statusEl.textContent = '';
+        try {
+          const result = await captainFetch('add-players-bulk', { teamId: myTeam.id, players: playersToAdd });
+          statusEl.textContent = `✓ ${result.count} player${result.count === 1 ? '' : 's'} added`;
+          setTimeout(() => bootApp(), 800);
+        } catch (err) {
+          statusEl.style.color = 'var(--c-coral)';
+          statusEl.textContent = 'Error: ' + err.message;
+          btn.disabled = false;
+          btn.textContent = 'Save all players';
+        }
+      };
 
       // Score entry modal
       document.querySelectorAll('[data-score-match]').forEach(btn => {
