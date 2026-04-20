@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,13 +86,14 @@
         const isRivalry = Number(week) === 6;
         const isPlayoff = Number(week) >= 7;
         const weekClass = isRivalry ? 'card-dark' : isPlayoff ? 'card-coral' : 'card';
+        const weekDate = byWeek[week][0]?.date ? fmtDate(byWeek[week][0].date) : '';
         return `
           <div class="${weekClass} mb-16" style="padding: 20px;">
             <div class="flex justify-between items-center mb-16">
               <div>
                 <p class="eyebrow ${isRivalry ? '' : 'eyebrow-amber'}" ${isRivalry ? 'style="color: var(--c-amber);"' : ''}>Week ${week}</p>
                 <h2 style="margin: 4px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 22px; ${isRivalry ? 'color: var(--c-cream);' : 'color: var(--c-teal-dark);'}">
-                  ${isRivalry ? '⚔ Rivalry Week' : isPlayoff ? 'Playoffs' : 'Round robin'}
+                  ${isRivalry ? '⚔ Rivalry Week' : isPlayoff ? 'Playoffs' : weekDate}
                 </h2>
               </div>
               <span style="font-size: 11px; ${isRivalry ? 'color: var(--c-teal-light);' : 'color: var(--c-ink-mute);'};">${byWeek[week].length} match${byWeek[week].length === 1 ? '' : 'es'}</span>
@@ -108,21 +110,52 @@
                     if (g.home > g.away) homeWins++; else awayWins++;
                   }
                 }
+                const homeWon = homeWins > awayWins;
                 const bg = isRivalry ? 'background: rgba(255,255,255,0.08); color: var(--c-cream);' : 'background: var(--c-paper);';
+                const mutedColor = isRivalry ? 'var(--c-teal-light)' : 'var(--c-ink-mute)';
                 return `
-                  <div style="${bg} padding: 14px; border-radius: var(--r-md);">
-                    <div class="flex justify-between" style="font-size: 11px; color: ${isRivalry ? 'var(--c-teal-light)' : 'var(--c-ink-mute)'}; margin-bottom: 8px;">
+                  <div style="${bg} padding: 14px; border-radius: var(--r-md); ${isFinal ? 'cursor: pointer;' : ''}" ${isFinal ? `data-toggle-scores="${m.id}"` : ''}>
+                    <div class="flex justify-between" style="font-size: 11px; color: ${mutedColor}; margin-bottom: 8px;">
                       <span>${fmtDate(m.date)}${m.court ? ` · ${m.court}` : ''}</span>
-                      ${isFinal ? `<span style="color: var(--c-amber); font-weight: 500;">FINAL</span>` : ''}
+                      ${isFinal
+                        ? `<span class="flex items-center gap-4" style="color: var(--c-amber); font-weight: 500;">FINAL <span style="font-size: 9px; opacity: 0.7;">▼</span></span>`
+                        : `<span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Upcoming</span>`}
                     </div>
                     <div class="flex justify-between items-center" style="font-size: 14px;">
-                      <a href="${home ? `/teams/${home.slug}` : '#'}" style="color: inherit; text-decoration: none; flex: 1;">${home?.name || 'TBD'}</a>
-                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''}">${isFinal ? homeWins : ''}</span>
+                      <a href="${home ? `/teams/${home.slug}` : '#'}" style="color: inherit; text-decoration: none; flex: 1; ${isFinal && homeWon ? 'font-weight: 600;' : ''}" onclick="event.stopPropagation();">${home?.name || 'TBD'}</a>
+                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''} ${isFinal && homeWon ? 'font-weight: 700;' : ''}">${isFinal ? homeWins : ''}</span>
                     </div>
                     <div class="flex justify-between items-center" style="font-size: 14px; margin-top: 4px;">
-                      <a href="${away ? `/teams/${away.slug}` : '#'}" style="color: inherit; text-decoration: none; flex: 1;">${away?.name || 'TBD'}</a>
-                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''}">${isFinal ? awayWins : ''}</span>
+                      <a href="${away ? `/teams/${away.slug}` : '#'}" style="color: inherit; text-decoration: none; flex: 1; ${isFinal && !homeWon ? 'font-weight: 600;' : ''}" onclick="event.stopPropagation();">${away?.name || 'TBD'}</a>
+                      <span class="serif-num" style="font-size: 18px; ${isRivalry ? 'color: var(--c-amber);' : ''} ${isFinal && !homeWon ? 'font-weight: 700;' : ''}">${isFinal ? awayWins : ''}</span>
                     </div>
+                    ${isFinal && m.finalScore ? `
+                      <div class="score-detail" id="scores-${m.id}" style="display: none; margin-top: 12px; padding-top: 10px; border-top: 1px solid ${isRivalry ? 'rgba(255,255,255,0.15)' : 'var(--c-rule)'};">
+                        <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                          <thead>
+                            <tr style="color: ${mutedColor}; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em;">
+                              <th style="text-align: left; padding: 2px 4px;">Game</th>
+                              <th style="text-align: center; padding: 2px 4px;">${home?.name || 'Home'}</th>
+                              <th style="text-align: center; padding: 2px 4px;">${away?.name || 'Away'}</th>
+                              <th style="text-align: center; padding: 2px 4px;"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${m.finalScore.games.map((g, i) => {
+                              const hWon = g.home > g.away;
+                              return `
+                                <tr style="border-top: 0.5px solid ${isRivalry ? 'rgba(255,255,255,0.1)' : 'var(--c-rule)'};">
+                                  <td style="padding: 4px; color: ${mutedColor};">G${i + 1}</td>
+                                  <td style="text-align: center; padding: 4px; ${hWon ? 'font-weight: 600;' : ''}">${g.home}</td>
+                                  <td style="text-align: center; padding: 4px; ${!hWon ? 'font-weight: 600;' : ''}">${g.away}</td>
+                                  <td style="text-align: center; padding: 4px; font-size: 10px; color: ${mutedColor};">${hWon ? '◀' : '▶'}</td>
+                                </tr>
+                              `;
+                            }).join('')}
+                          </tbody>
+                        </table>
+                      </div>
+                    ` : ''}
                   </div>
                 `;
               }).join('')}
@@ -130,6 +163,22 @@
           </div>
         `;
       }).join('');
+
+      // Wire up expandable score details
+      target.querySelectorAll('[data-toggle-scores]').forEach(card => {
+        card.addEventListener('click', (e) => {
+          const detail = document.getElementById(`scores-${card.dataset.toggleScores}`);
+          if (!detail) return;
+          const arrow = card.querySelector('.flex.items-center.gap-4 span:last-child');
+          if (detail.style.display === 'none') {
+            detail.style.display = 'block';
+            if (arrow) arrow.textContent = '▲';
+          } else {
+            detail.style.display = 'none';
+            if (arrow) arrow.textContent = '▼';
+          }
+        });
+      });
     }
 
     load();
