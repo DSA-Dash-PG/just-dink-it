@@ -53,6 +53,9 @@ export function renderHeader(activePage = '') {
             <div class="brand-tag">South Bay · Summer 2026</div>
           </div>
         </a>
+        <button class="nav-toggle" onclick="document.querySelector('.nav').classList.toggle('nav-open')" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
         <nav class="nav">
           <a href="/" class="${isActive('home')}">Home</a>
           <a href="/teams.html" class="${isActive('teams')}">Teams</a>
@@ -61,7 +64,8 @@ export function renderHeader(activePage = '') {
           <a href="/stats.html" class="${isActive('stats')}">Stats</a>
           <a href="/gallery.html" class="${isActive('gallery')}">Photos</a>
           <a href="/sponsors.html" class="${isActive('sponsors')}">Sponsors</a>
-          <a href="/register.html" class="btn btn-amber btn-sm">Register →</a>
+          <a href="/captain.html" class="${isActive('captain')}">Login</a>
+          <a href="/register.html" class="btn btn-amber btn-sm nav-register">Register →</a>
         </nav>
       </div>
     </header>
@@ -97,7 +101,7 @@ export function renderFooter() {
             <h4>Get involved</h4>
             <a href="/register.html">Register a team</a>
             <a href="/sponsors.html">Sponsor</a>
-            <a href="/captain.html">Captain login</a>
+            <a href="/captain.html">Login</a>
           </div>
           <div>
             <h4>Contact</h4>
