@@ -89,9 +89,12 @@ function ensureModal() {
 
   document.getElementById('auth-google').onclick = async () => {
     const supabase = await getSupabase();
+    // Strip query params (e.g. ?error=...) so a failed previous OAuth attempt
+    // doesn't poison the state on retry. Keep only the origin + path.
+    const cleanUrl = window.location.origin + window.location.pathname;
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.href },
+      options: { redirectTo: cleanUrl },
     });
   };
 
