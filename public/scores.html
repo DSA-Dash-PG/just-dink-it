@@ -32,7 +32,7 @@
   <div id="footer"></div>
 
   <script type="module">
-    import { mountChrome, apiGet, fmtDate } from '/js/shared.js';
+    import { mountChrome, apiGet, fmtDate, matchResult } from '/js/shared.js';
 
     mountChrome('scores');
 
@@ -116,22 +116,17 @@
       const homeColor = home?.colors?.primary || '#888780';
       const awayColor = away?.colors?.primary || '#888780';
 
-      let homeWins = 0, awayWins = 0;
-      let scoreDisplay = '';
+      const isFinal = m.status === 'final';
+      let homeMP = 0, awayMP = 0, mr = null;
 
-      if (m.status === 'final' && m.finalScore) {
-        for (const g of m.finalScore.games) {
-          if (g.home > g.away) homeWins++;
-          else awayWins++;
-        }
-        scoreDisplay = m.finalScore.games.map(g =>
-          `<span style="font-family: var(--font-serif); font-size: 16px;">${g.home}-${g.away}</span>`
-        ).join(' · ');
+      if (isFinal && m.finalScore) {
+        mr = matchResult(m.finalScore);
+        homeMP = mr.homeMP;
+        awayMP = mr.awayMP;
       }
 
-      const isFinal = m.status === 'final';
-      const homeWon = isFinal && homeWins > awayWins;
-      const awayWon = isFinal && awayWins > homeWins;
+      const homeWon = isFinal && homeMP > awayMP;
+      const awayWon = isFinal && awayMP > homeMP;
 
       return `
         <div class="card" style="padding: 16px;">
@@ -149,7 +144,7 @@
               </div>
               <span style="font-size: 14px;">${home?.name || 'TBD'}</span>
             </a>
-            <span class="serif-num" style="font-size: 22px; color: ${homeWon ? 'var(--c-teal-dark)' : 'var(--c-ink-mute)'};">${isFinal ? homeWins : '—'}</span>
+            <span class="serif-num" style="font-size: 22px; color: ${homeWon ? 'var(--c-teal-dark)' : 'var(--c-ink-mute)'};">${isFinal ? homeMP : '—'}</span>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-top: 8px;">
@@ -159,12 +154,12 @@
               </div>
               <span style="font-size: 14px;">${away?.name || 'TBD'}</span>
             </a>
-            <span class="serif-num" style="font-size: 22px; color: ${awayWon ? 'var(--c-teal-dark)' : 'var(--c-ink-mute)'};">${isFinal ? awayWins : '—'}</span>
+            <span class="serif-num" style="font-size: 22px; color: ${awayWon ? 'var(--c-teal-dark)' : 'var(--c-ink-mute)'};">${isFinal ? awayMP : '—'}</span>
           </div>
 
-          ${scoreDisplay ? `
+          ${isFinal && mr ? `
             <div class="text-mute mt-8" style="font-size: 11px; padding-top: 8px; border-top: 0.5px solid var(--c-rule);">
-              Games: ${scoreDisplay}
+              Games won: ${mr.homeGW}–${mr.awayGW} · Points: ${mr.homePts}–${mr.awayPts}
             </div>
           ` : ''}
         </div>
