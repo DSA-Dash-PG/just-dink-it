@@ -207,17 +207,24 @@ export const teams = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const players = {
-  async create({ name, email, headshot, bio, dupr, phone }) {
+  async create({ name, firstName, lastName, nickname, email, headshot, bio, dupr, phone, sex, city }) {
     const id = newId('p_');
+    // Build display name from first/last if provided, else fall back to legacy 'name'
+    const displayName = (firstName && lastName) ? `${firstName} ${lastName}` : name || 'Unknown';
     const data = {
       id,
-      name,
-      slug: slugify(name) + '-' + id.slice(-4),
+      name: displayName,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      nickname: nickname || '',
+      slug: slugify(displayName) + '-' + id.slice(-4),
       email: email?.toLowerCase() || null,
       headshot: headshot || null,
       bio: bio || '',
       dupr: dupr || null,
       phone: phone || null,
+      sex: sex || null,       // 'Male' | 'Female'
+      city: city || '',
       joinedDate: now(),
       // Career-spanning denormalized stats for fast profile loads
       careerStats: {
@@ -272,12 +279,11 @@ export const players = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const roster = {
-  async addPlayer({ seasonId, teamId, playerId, jerseyNumber, role = 'player' }) {
+  async addPlayer({ seasonId, teamId, playerId, role = 'player' }) {
     const data = {
       seasonId,
       teamId,
       playerId,
-      jerseyNumber: jerseyNumber || null,
       role, // 'captain' | 'player'
       addedAt: now(),
     };
