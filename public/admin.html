@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -386,22 +387,87 @@
       const teams = await adminFetchGet('list-teams');
       const target = document.getElementById('tab-content');
 
+      // Fetch rosters for all teams in parallel
+      const seasonId = currentSeason?.id;
+      const rostersByTeam = {};
+      if (seasonId) {
+        await Promise.all(teams.filter(t => t.seasonId === seasonId).map(async t => {
+          try {
+            rostersByTeam[t.id] = await adminFetchGet('list-roster', { seasonId, teamId: t.id });
+          } catch { rostersByTeam[t.id] = []; }
+        }));
+      }
+
       target.innerHTML = `
         <h2 class="h-section" style="font-size: 22px;">All teams</h2>
-        <p class="text-mute mb-16" style="font-size: 13px;">Edit names, colors, logos, mottos, neighborhoods.</p>
+        <p class="text-mute mb-16" style="font-size: 13px;">Edit team details, view rosters, and move players between teams.</p>
 
-        <div class="grid-2">
-          ${teams.length === 0 ? '<p class="text-mute">No teams yet — approve a registration first.</p>' : teams.map(t => `
-            <div class="card">
-              <div class="flex items-center gap-12 mb-16">
-                <div style="width: 40px; height: 40px; border-radius: var(--r-md); background: ${t.colors?.primary || '#D85A30'}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500;">
-                  ${t.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
-                </div>
-                <div>
-                  <p style="margin: 0; font-weight: 500;">${t.name}</p>
-                  <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${t.neighborhood || 'no neighborhood set'} · <span class="pill ${t.paymentStatus === 'paid' ? 'pill-teal' : 'pill-live'}" style="font-size: 9px;">${t.paymentStatus}</span></p>
-                </div>
+        ${teams.length === 0 ? '<p class="text-mute">No teams yet — approve a registration first.</p>' : teams.map(t => {
+          const teamRoster = rostersByTeam[t.id] || [];
+          const primary = t.colors?.primary || '#D85A30';
+          const otherTeams = teams.filter(ot => ot.id !== t.id && ot.seasonId === t.seasonId);
+
+          return `
+          <div class="card mb-16">
+            <!-- Team header -->
+            <div class="flex items-center gap-12 mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--c-rule);">
+              <div style="width: 44px; height: 44px; border-radius: var(--r-md); background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                ${t.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
               </div>
+              <div style="flex: 1;">
+                <p style="margin: 0; font-weight: 600; font-size: 16px;">${t.name}</p>
+                <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${t.neighborhood || 'no neighborhood'} · ${teamRoster.length} player${teamRoster.length === 1 ? '' : 's'} · <span class="pill ${t.paymentStatus === 'paid' ? 'pill-teal' : 'pill-live'}" style="font-size: 9px;">${t.paymentStatus}</span></p>
+              </div>
+              <button class="btn btn-sm" data-toggle-edit="${t.id}" style="font-size: 11px;">Edit details</button>
+            </div>
+
+            <!-- Roster table -->
+            <div style="margin-bottom: 16px;">
+              <p class="eyebrow" style="margin-bottom: 8px;">Roster</p>
+              ${teamRoster.length === 0 ? '<p class="text-mute" style="font-size: 12px;">No players on this team yet.</p>' : `
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 600px;">
+                  <thead>
+                    <tr style="background: var(--c-cream); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--c-ink-mute);">
+                      <th style="padding: 6px 8px; text-align: left;">Name</th>
+                      <th style="padding: 6px 8px; text-align: left;">Nickname</th>
+                      <th style="padding: 6px 8px; text-align: left;">Email</th>
+                      <th style="padding: 6px 8px; text-align: left;">Phone</th>
+                      <th style="padding: 6px 8px; text-align: left;">Sex</th>
+                      <th style="padding: 6px 8px; text-align: left;">City</th>
+                      <th style="padding: 6px 8px; text-align: left;">Role</th>
+                      <th style="padding: 6px 8px; text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${teamRoster.map((r, i) => r.player ? `
+                      <tr style="border-bottom: 0.5px solid var(--c-rule); ${i % 2 === 1 ? 'background: var(--c-cream);' : ''}">
+                        <td style="padding: 6px 8px; font-weight: 500;">${r.player.name}</td>
+                        <td style="padding: 6px 8px; color: var(--c-ink-mute);">${r.player.nickname || '—'}</td>
+                        <td style="padding: 6px 8px;">${r.player.email || '—'}</td>
+                        <td style="padding: 6px 8px;">${r.player.phone || '—'}</td>
+                        <td style="padding: 6px 8px;">${r.player.sex || '—'}</td>
+                        <td style="padding: 6px 8px;">${r.player.city || '—'}</td>
+                        <td style="padding: 6px 8px;">${r.role === 'captain' ? '<span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">Captain</span>' : 'Player'}</td>
+                        <td style="padding: 6px 8px; text-align: right; white-space: nowrap;">
+                          ${otherTeams.length > 0 ? `
+                            <select data-move-player="${r.playerId}" data-from-team="${t.id}" data-season="${t.seasonId}" style="font-size: 11px; padding: 2px 4px; border: 1px solid var(--c-rule-strong); border-radius: var(--r-sm); max-width: 110px;">
+                              <option value="">Move to...</option>
+                              ${otherTeams.map(ot => `<option value="${ot.id}">${ot.name}</option>`).join('')}
+                            </select>
+                          ` : ''}
+                          <button data-remove-roster="${r.playerId}" data-remove-team="${t.id}" data-remove-season="${t.seasonId}" style="background: none; border: none; color: var(--c-coral); cursor: pointer; font-size: 11px; padding: 2px 6px;" title="Remove from roster">✕</button>
+                        </td>
+                      </tr>
+                    ` : '').join('')}
+                  </tbody>
+                </table>
+              </div>
+              `}
+            </div>
+
+            <!-- Collapsible edit form -->
+            <div id="edit-${t.id}" style="display: none; border-top: 1px solid var(--c-rule); padding-top: 16px;">
               <form data-team-form="${t.id}">
                 <div class="field"><label>Name</label><input name="name" value="${t.name}" /></div>
                 <div class="field-row">
@@ -411,13 +477,32 @@
                 <div class="field"><label>Neighborhood</label><input name="neighborhood" value="${t.neighborhood || ''}" placeholder="Hermosa Beach" /></div>
                 <div class="field"><label>Motto</label><input name="motto" value="${t.motto || ''}" placeholder="We dink under stress." /></div>
                 <div class="field"><label>Logo URL</label><input name="logo" value="${t.logo || ''}" placeholder="https://..." /></div>
+                <div class="field"><label>Payment status</label>
+                  <select name="paymentStatus">
+                    <option value="pending" ${t.paymentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="paid" ${t.paymentStatus === 'paid' ? 'selected' : ''}>Paid</option>
+                    <option value="refunded" ${t.paymentStatus === 'refunded' ? 'selected' : ''}>Refunded</option>
+                  </select>
+                </div>
                 <button class="btn btn-primary btn-sm">Save</button>
               </form>
             </div>
-          `).join('')}
-        </div>
+          </div>
+          `;
+        }).join('')}
       `;
 
+      // Toggle edit panels
+      target.querySelectorAll('[data-toggle-edit]').forEach(btn => {
+        btn.onclick = () => {
+          const panel = document.getElementById(`edit-${btn.dataset.toggleEdit}`);
+          const showing = panel.style.display !== 'none';
+          panel.style.display = showing ? 'none' : 'block';
+          btn.textContent = showing ? 'Edit details' : 'Hide details';
+        };
+      });
+
+      // Save team form
       target.querySelectorAll('[data-team-form]').forEach(form => {
         form.onsubmit = async (e) => {
           e.preventDefault();
@@ -429,9 +514,39 @@
             neighborhood: fd.neighborhood,
             motto: fd.motto,
             logo: fd.logo || null,
+            paymentStatus: fd.paymentStatus,
           };
           await adminFetch('update-team', { id, patch });
           alert('Team updated.');
+          renderTeamsTab();
+        };
+      });
+
+      // Move player
+      target.querySelectorAll('[data-move-player]').forEach(select => {
+        select.onchange = async () => {
+          const toTeamId = select.value;
+          if (!toTeamId) return;
+          const playerId = select.dataset.movePlayer;
+          const fromTeamId = select.dataset.fromTeam;
+          const seasonId = select.dataset.season;
+          const toTeamName = select.options[select.selectedIndex].text;
+          if (!confirm(`Move this player to ${toTeamName}?`)) { select.value = ''; return; }
+          await adminFetch('move-player', { playerId, seasonId, fromTeamId, toTeamId });
+          renderTeamsTab();
+        };
+      });
+
+      // Remove player from roster
+      target.querySelectorAll('[data-remove-roster]').forEach(btn => {
+        btn.onclick = async () => {
+          if (!confirm('Remove this player from the roster?')) return;
+          await adminFetch('remove-from-roster', {
+            playerId: btn.dataset.removeRoster,
+            teamId: btn.dataset.removeTeam,
+            seasonId: btn.dataset.removeSeason,
+          });
+          renderTeamsTab();
         };
       });
     }
