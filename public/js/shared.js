@@ -156,15 +156,37 @@ export const winPct = (w, l) => {
   return total > 0 ? Math.round((w / total) * 1000) / 10 : 0;
 };
 
-/* ─── Auth (Supabase) ─── */
-import { getCurrentUser, getAccessToken, isAdmin as supaIsAdmin, signOut as supaSignOut, onAuthChange } from '/js/supabase-client.js';
+/* ─── Auth (Supabase) — lazy loaded so public pages don't block ─── */
+let _authModule = null;
+async function loadAuth() {
+  if (!_authModule) _authModule = await import('/js/supabase-client.js');
+  return _authModule;
+}
 
-// Re-export for convenience so pages can import from one place
-export { getCurrentUser, getAccessToken, supaSignOut as signOut, onAuthChange };
+export async function getCurrentUser() {
+  const auth = await loadAuth();
+  return auth.getCurrentUser();
+}
+
+export async function getAccessToken() {
+  const auth = await loadAuth();
+  return auth.getAccessToken();
+}
+
+export async function signOut() {
+  const auth = await loadAuth();
+  return auth.signOut();
+}
+
+export async function onAuthChange(callback) {
+  const auth = await loadAuth();
+  return auth.onAuthChange(callback);
+}
 
 export async function userIsAdmin() {
-  const user = await getCurrentUser();
-  return supaIsAdmin(user);
+  const auth = await loadAuth();
+  const user = await auth.getCurrentUser();
+  return auth.isAdmin(user);
 }
 
 // Captain check is implicit - the captain.js function will return their team if they are one
