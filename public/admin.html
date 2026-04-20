@@ -265,18 +265,28 @@
         });
       }
 
-      // Seed mock data button
+      // Seed mock data button (3 phases to avoid timeout)
       document.getElementById('seed-btn').onclick = async () => {
-        if (!confirm('This will create a complete mock season: 6 teams, 6-12 players each, ~15 matches, 4 sponsors. Continue?')) return;
+        if (!confirm('This will create a mock season: 6 teams, ~30 players, ~15 matches, 4 sponsors. Runs in 3 phases. Continue?')) return;
         const btn = document.getElementById('seed-btn');
         btn.disabled = true;
-        btn.textContent = 'Seeding... (~30s)';
         try {
-          const result = await adminFetch('seed-mock-season', {});
-          alert(`✅ ${result.summary}\n\n${result.log.join('\n')}`);
+          // Phase 1: Season + teams + captains
+          btn.textContent = '⚡ Phase 1/3: Creating teams...';
+          const p1 = await adminFetch('seed-phase-1', {});
+
+          // Phase 2: Add players to rosters
+          btn.textContent = '⚡ Phase 2/3: Adding players...';
+          const p2 = await adminFetch('seed-phase-2', { seasonId: p1.seasonId });
+
+          // Phase 3: Schedule matches + sponsors
+          btn.textContent = '⚡ Phase 3/3: Scheduling matches...';
+          const p3 = await adminFetch('seed-phase-3', { seasonId: p1.seasonId });
+
+          alert(`✅ Mock season seeded!\n\n• ${p1.teamCount} teams with captains\n• ${p2.playerCount} additional players\n• ${p3.matchesFinal} matches finalized, ${p3.matchesScheduled} scheduled\n• ${p3.sponsors} sponsors`);
           renderSeasonsTab();
         } catch (e) {
-          alert('❌ Seed failed: ' + e.message);
+          alert('❌ Seed failed: ' + e.message + '\n\nPartial data may have been created. Use Reset to start fresh.');
           btn.disabled = false;
           btn.textContent = '⚡ Seed mock season';
         }
