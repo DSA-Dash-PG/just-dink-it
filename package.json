@@ -1,5 +1,6 @@
 {
   "name": "just-dink-it",
+  "type": "module",
   "version": "0.1.0",
   "description": "Just Dink It - South Bay Pickleball League",
   "scripts": {
