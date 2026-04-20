@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Just Dink It</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="header"></div>
+
+  <section style="padding: 32px 0;">
+    <div class="container">
+      <div class="flex justify-between items-center mb-24" style="flex-wrap: wrap; gap: 12px;">
+        <div>
+          <p class="eyebrow">Admin console</p>
+          <h1 class="h-display" style="font-size: 36px; margin-top: 4px;">Run the league.</h1>
+        </div>
+        <div id="auth-status" class="flex items-center gap-12">
+          <span class="text-mute" style="font-size: 13px;">Loading...</span>
+        </div>
+      </div>
+
+      <div id="not-authed" style="display: none;" class="card-coral">
+        <p class="eyebrow">Sign in required</p>
+        <p style="margin: 8px 0 0;">You need an admin account to access this dashboard.</p>
+        <button id="btn-login" class="btn btn-primary mt-16">Sign in</button>
+      </div>
+
+      <div id="admin-app" style="display: none;">
+
+        <!-- Tabs -->
+        <div class="flex gap-8 mb-24" style="flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--c-rule);">
+          <button class="btn btn-sm" data-tab="seasons">Seasons & Divisions</button>
+          <button class="btn btn-sm" data-tab="registrations">Registrations <span id="reg-count" class="pill pill-live" style="margin-left: 6px;"></span></button>
+          <button class="btn btn-sm" data-tab="teams">Teams</button>
+          <button class="btn btn-sm" data-tab="players">Players</button>
+          <button class="btn btn-sm" data-tab="matches">Matches & Schedule</button>
+          <button class="btn btn-sm" data-tab="sponsors">Sponsors</button>
+        </div>
+
+        <div id="tab-content"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer"></div>
+
+  <script type="module">
+    import { mountChrome, getCurrentUser, getAccessToken, userIsAdmin, signOut, onAuthChange } from '/js/shared.js';
+    import { openAuthModal } from '/js/auth-modal.js';
+
+    mountChrome('');
+
+    let currentSeason = null;
+    let allSeasons = [];
+    let activeTab = 'registrations';
+
+    // ─── Auth gate ───
+    async function checkAuth() {
+      const user = await getCurrentUser();
+      const statusEl = document.getElementById('auth-status');
+
+      if (!user) {
+        statusEl.innerHTML = `<button id="btn-login-top" class="btn btn-primary btn-sm">Sign in</button>`;
+        document.getElementById('btn-login-top').onclick = () => openAuthModal();
+        document.getElementById('not-authed').style.display = 'block';
+        document.getElementById('admin-app').style.display = 'none';
+        return;
+      }
+
+      const admin = await userIsAdmin();
+      if (!admin) {
+        statusEl.innerHTML = `
+          <span class="text-soft" style="font-size: 13px;">${user.email}</span>
+          <button class="btn btn-sm" id="btn-logout-noauth">Logout</button>
+        `;
+        document.getElementById('btn-logout-noauth').onclick = signOut;
+        document.getElementById('not-authed').innerHTML = `
+          <p class="eyebrow">Access denied</p>
+          <p style="margin: 8px 0 0;">Your account (<strong>${user.email}</strong>) isn't on the admin list.</p>
+          <p style="margin: 8px 0 0; font-size: 13px;">Add your email to the <code>ADMIN_EMAILS</code> environment variable in Netlify (comma-separated for multiple admins) and reload this page.</p>
+        `;
+        document.getElementById('not-authed').style.display = 'block';
+        document.getElementById('admin-app').style.display = 'none';
+        return;
+      }
+
+      statusEl.innerHTML = `
+        <span class="text-soft" style="font-size: 13px;">${user.email}</span>
+        <button class="btn btn-sm" id="btn-logout">Logout</button>
+      `;
+      document.getElementById('btn-logout').onclick = signOut;
+      document.getElementById('not-authed').style.display = 'none';
+      document.getElementById('admin-app').style.display = 'block';
+      bootApp();
+    }
+
+    // Listen for auth changes (signin, signout, OAuth callback)
+    onAuthChange(() => checkAuth());
+    checkAuth();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('btn-login');
+      if (btn) btn.onclick = () => openAuthModal();
+    });
+
+    // ─── Admin API helper ───
+    async function adminFetch(action, body) {
+      const token = await getAccessToken();
+      const res = await fetch(`/api/admin?action=${action}`, {
+        method: body ? 'POST' : 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    async function adminFetchGet(action, params = {}) {
+      const token = await getAccessToken();
+      const q = new URLSearchParams({ action, ...params }).toString();
+      const res = await fetch(`/api/admin?${q}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    // ─── Boot ───
+    async function bootApp() {
+      // Load seasons
+      try {
+        allSeasons = await adminFetchGet('list-seasons');
+        currentSeason = allSeasons.find(s => s.status === 'active' || s.status === 'registration_open') || allSeasons[0];
+      } catch (e) {
+        console.error(e);
+      }
+
+      // Load registration count
+      try {
+        const regs = await adminFetchGet('list-registrations');
+        const pending = regs.filter(r => r.status === 'pending').length;
+        const el = document.getElementById('reg-count');
+        if (pending > 0) el.textContent = pending;
+        else el.style.display = 'none';
+      } catch {}
+
+      // Tab handlers
+      document.querySelectorAll('[data-tab]').forEach(btn => {
+        btn.onclick = () => { activeTab = btn.dataset.tab; renderTab(); };
+      });
+
+      renderTab();
+    }
+
+    async function renderTab() {
+      const target = document.getElementById('tab-content');
+      target.innerHTML = '<p class="text-mute" style="text-align: center; padding: 32px;">Loading...</p>';
+
+      switch (activeTab) {
+        case 'seasons': return renderSeasonsTab();
+        case 'registrations': return renderRegistrationsTab();
+        case 'teams': return renderTeamsTab();
+        case 'players': return renderPlayersTab();
+        case 'matches': return renderMatchesTab();
+        case 'sponsors': return renderSponsorsTab();
+      }
+    }
+
+    // ─── Seasons & Divisions ───
+    async function renderSeasonsTab() {
+      const seasons = await adminFetchGet('list-seasons');
+      const target = document.getElementById('tab-content');
+
+      target.innerHTML = `
+        <div class="card-coral mb-24" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <p class="eyebrow">Quick start · demo data</p>
+            <p style="margin: 4px 0 0; font-size: 13px;">Seed a complete mock season — 6 teams, randomized rosters (6–12 players each), 5 weeks of matches with some finalized scores, and 4 sponsors. Great for testing the UI with live data.</p>
+          </div>
+          <button id="seed-btn" class="btn btn-primary btn-sm">⚡ Seed mock season</button>
+        </div>
+
+        <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+          <div class="card">
+            <h2 class="h-section" style="font-size: 20px;">Create season</h2>
+            <form id="season-form" class="mt-16">
+              <div class="field"><label>Name</label><input name="name" required placeholder="Summer 2026" /></div>
+              <div class="field-row">
+                <div class="field"><label>Start</label><input type="date" name="startDate" required /></div>
+                <div class="field"><label>End</label><input type="date" name="endDate" required /></div>
+              </div>
+              <div class="field"><label>Status</label>
+                <select name="status">
+                  <option value="upcoming">Upcoming</option>
+                  <option value="registration_open">Registration open</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-block">Create season</button>
+            </form>
+
+            <h3 class="h-section mt-32" style="font-size: 18px;">Add division to a season</h3>
+            <form id="division-form" class="mt-16">
+              <div class="field"><label>Season</label>
+                <select name="seasonId" required>${seasons.map(s => `<option value="${s.id}" ${s.id === currentSeason?.id ? 'selected' : ''}>${s.name}</option>`).join('')}</select>
+              </div>
+              <div class="field"><label>Division name</label><input name="name" required placeholder="3.0" /></div>
+              <div class="field-row">
+                <div class="field"><label>Capacity</label><input type="number" name="capacity" value="6" required /></div>
+                <div class="field"><label>Price ($)</label><input type="number" name="price" value="450" required /></div>
+              </div>
+              <button class="btn btn-primary btn-block">Add division</button>
+            </form>
+          </div>
+
+          <div>
+            <h2 class="h-section" style="font-size: 20px;">All seasons</h2>
+            <div class="mt-16">
+              ${seasons.length === 0 ? '<p class="text-mute">No seasons yet.</p>' : ''}
+              ${seasons.map(s => `
+                <div class="card mb-8">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <p style="margin: 0; font-weight: 500;">${s.name}</p>
+                      <p style="margin: 2px 0 0; font-size: 12px; color: var(--c-ink-mute);">${s.startDate} → ${s.endDate}</p>
+                    </div>
+                    <span class="pill pill-teal">${s.status}</span>
+                  </div>
+                  <div id="divs-${s.id}" class="mt-8" style="font-size: 12px; color: var(--c-ink-soft);">Loading divisions...</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div style="margin-top: 48px; padding: 24px; border: 2px dashed #A32D2D; border-radius: var(--r-lg); background: #FCEBEB;">
+          <p class="eyebrow" style="color: #A32D2D;">⚠ Danger zone</p>
+          <div class="flex justify-between items-center mt-8" style="flex-wrap: wrap; gap: 12px;">
+            <div>
+              <p style="margin: 0; font-weight: 500; color: #A32D2D;">Reset all data</p>
+              <p style="margin: 4px 0 0; font-size: 13px; color: var(--c-ink-soft);">Permanently delete every season, team, player, match, score, registration, and sponsor. <strong>Cannot be undone.</strong></p>
+            </div>
+            <button id="reset-btn" style="background: #A32D2D; color: #fff; padding: 10px 18px; border: none; border-radius: var(--r-sm); font-size: 13px; font-weight: 500; cursor: pointer;">Reset everything</button>
+          </div>
+        </div>
+      `;
+
+      // Load divisions per season
+      for (const s of seasons) {
+        adminFetchGet('list-divisions', { seasonId: s.id }).then(divs => {
+          const el = document.getElementById(`divs-${s.id}`);
+          if (el) el.innerHTML = divs.length === 0
+            ? '<em>No divisions</em>'
+            : divs.map(d => `<span class="pill pill-amber" style="margin-right: 4px;">${d.name} · ${d.capacity} teams · $${d.price}</span>`).join('');
+        });
+      }
+
+      // Seed mock data button
+      document.getElementById('seed-btn').onclick = async () => {
+        if (!confirm('This will create a complete mock season: 6 teams, 6-12 players each, ~15 matches, 4 sponsors. Continue?')) return;
+        const btn = document.getElementById('seed-btn');
+        btn.disabled = true;
+        btn.textContent = 'Seeding... (~30s)';
+        try {
+          const result = await adminFetch('seed-mock-season', {});
+          alert(`✅ ${result.summary}\n\n${result.log.join('\n')}`);
+          renderSeasonsTab();
+        } catch (e) {
+          alert('❌ Seed failed: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = '⚡ Seed mock season';
+        }
+      };
+
+      // Reset everything (DANGER)
+      document.getElementById('reset-btn').onclick = async () => {
+        const first = confirm('⚠ THIS WILL DELETE EVERYTHING.\n\nAll seasons, teams, players, matches, scores, registrations, and sponsors will be permanently removed. Career stats and history will be lost.\n\nAre you absolutely sure?');
+        if (!first) return;
+        const typed = prompt('To confirm, type exactly: DELETE EVERYTHING');
+        if (typed !== 'DELETE EVERYTHING') {
+          alert('Reset cancelled (confirmation did not match).');
+          return;
+        }
+        const btn = document.getElementById('reset-btn');
+        btn.disabled = true;
+        btn.textContent = 'Wiping...';
+        try {
+          const result = await adminFetch('reset-all-data', { confirmation: 'DELETE EVERYTHING' });
+          alert(`✅ ${result.summary}\n\nDeleted by store:\n${Object.entries(result.counts).map(([k, v]) => `  ${k}: ${v}`).join('\n')}`);
+          renderSeasonsTab();
+        } catch (e) {
+          alert('❌ Reset failed: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = 'Reset everything';
+        }
+      };
+
+      document.getElementById('season-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target));
+        await adminFetch('create-season', data);
+        renderSeasonsTab();
+      };
+
+      document.getElementById('division-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target));
+        data.capacity = Number(data.capacity);
+        data.price = Number(data.price);
+        await adminFetch('create-division', data);
+        renderSeasonsTab();
+      };
+    }
+
+    // ─── Registrations ───
+    async function renderRegistrationsTab() {
+      const regs = await adminFetchGet('list-registrations');
+      const target = document.getElementById('tab-content');
+
+      target.innerHTML = `
+        <h2 class="h-section" style="font-size: 22px;">Pending registrations</h2>
+        <p class="text-mute mb-16" style="font-size: 13px;">Approve to create the team and notify captain.</p>
+
+        <div>
+          ${regs.length === 0 ? '<p class="text-mute">No registrations yet.</p>' : regs.map(r => `
+            <div class="card mb-8">
+              <div class="flex justify-between" style="align-items: start; flex-wrap: wrap; gap: 16px;">
+                <div style="flex: 1; min-width: 280px;">
+                  <p style="margin: 0; font-size: 16px; font-weight: 500;">${r.teamName}</p>
+                  <p style="margin: 4px 0 0; font-size: 13px; color: var(--c-ink-soft);">Captain: ${r.captainName} · ${r.captainEmail} ${r.captainPhone ? `· ${r.captainPhone}` : ''}</p>
+                  ${r.notes ? `<p style="margin: 8px 0 0; font-size: 12px; color: var(--c-ink-mute); font-style: italic;">"${r.notes}"</p>` : ''}
+                  <p class="text-mute mt-8" style="font-size: 11px;">Submitted ${new Date(r.createdAt).toLocaleString()}</p>
+                </div>
+                <div class="flex gap-8" style="flex-wrap: wrap; align-items: center;">
+                  <span class="pill ${r.status === 'pending' ? 'pill-live' : r.status === 'approved' ? 'pill-amber' : r.status === 'paid' ? 'pill-teal' : 'pill-teal'}">${r.status}</span>
+                  ${r.status === 'pending' ? `
+                    <button class="btn btn-amber btn-sm" data-approve="${r.id}">Approve</button>
+                    <button class="btn btn-sm" data-reject="${r.id}">Reject</button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      target.querySelectorAll('[data-approve]').forEach(btn => {
+        btn.onclick = async () => {
+          if (!confirm('Approve this registration? This creates the team and notifies the captain.')) return;
+          await adminFetch('approve-registration', { id: btn.dataset.approve });
+          renderRegistrationsTab();
+        };
+      });
+      target.querySelectorAll('[data-reject]').forEach(btn => {
+        btn.onclick = async () => {
+          const reason = prompt('Reason for rejection (optional):');
+          if (reason === null) return;
+          await adminFetch('reject-registration', { id: btn.dataset.reject, reason });
+          renderRegistrationsTab();
+        };
+      });
+    }
+
+    // ─── Teams ───
+    async function renderTeamsTab() {
+      const teams = await adminFetchGet('list-teams');
+      const target = document.getElementById('tab-content');
+
+      target.innerHTML = `
+        <h2 class="h-section" style="font-size: 22px;">All teams</h2>
+        <p class="text-mute mb-16" style="font-size: 13px;">Edit names, colors, logos, mottos, neighborhoods.</p>
+
+        <div class="grid-2">
+          ${teams.length === 0 ? '<p class="text-mute">No teams yet — approve a registration first.</p>' : teams.map(t => `
+            <div class="card">
+              <div class="flex items-center gap-12 mb-16">
+                <div style="width: 40px; height: 40px; border-radius: var(--r-md); background: ${t.colors?.primary || '#D85A30'}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500;">
+                  ${t.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                </div>
+                <div>
+                  <p style="margin: 0; font-weight: 500;">${t.name}</p>
+                  <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${t.neighborhood || 'no neighborhood set'} · <span class="pill ${t.paymentStatus === 'paid' ? 'pill-teal' : 'pill-live'}" style="font-size: 9px;">${t.paymentStatus}</span></p>
+                </div>
+              </div>
+              <form data-team-form="${t.id}">
+                <div class="field"><label>Name</label><input name="name" value="${t.name}" /></div>
+                <div class="field-row">
+                  <div class="field"><label>Primary color</label><input type="color" name="primaryColor" value="${t.colors?.primary || '#D85A30'}" /></div>
+                  <div class="field"><label>Secondary</label><input type="color" name="secondaryColor" value="${t.colors?.secondary || '#2C2C2A'}" /></div>
+                </div>
+                <div class="field"><label>Neighborhood</label><input name="neighborhood" value="${t.neighborhood || ''}" placeholder="Hermosa Beach" /></div>
+                <div class="field"><label>Motto</label><input name="motto" value="${t.motto || ''}" placeholder="We dink under stress." /></div>
+                <div class="field"><label>Logo URL</label><input name="logo" value="${t.logo || ''}" placeholder="https://..." /></div>
+                <button class="btn btn-primary btn-sm">Save</button>
+              </form>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      target.querySelectorAll('[data-team-form]').forEach(form => {
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const id = form.dataset.teamForm;
+          const fd = Object.fromEntries(new FormData(form));
+          const patch = {
+            name: fd.name,
+            colors: { primary: fd.primaryColor, secondary: fd.secondaryColor },
+            neighborhood: fd.neighborhood,
+            motto: fd.motto,
+            logo: fd.logo || null,
+          };
+          await adminFetch('update-team', { id, patch });
+          alert('Team updated.');
+        };
+      });
+    }
+
+    // ─── Players ───
+    async function renderPlayersTab() {
+      const players = await adminFetchGet('list-players');
+      const teams = await adminFetchGet('list-teams');
+      const target = document.getElementById('tab-content');
+
+      target.innerHTML = `
+        <h2 class="h-section" style="font-size: 22px;">Players</h2>
+        <p class="text-mute mb-16" style="font-size: 13px;">Edit headshots, bios. Move players between teams (career stats follow them).</p>
+
+        <div class="grid-2">
+          ${players.length === 0 ? '<p class="text-mute">No players yet.</p>' : players.map(p => `
+            <div class="card">
+              <div class="flex items-center gap-12 mb-16">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--c-coral); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500; overflow: hidden;">
+                  ${p.headshot ? `<img src="${p.headshot}" style="width: 100%; height: 100%; object-fit: cover;"/>` : p.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                </div>
+                <div>
+                  <p style="margin: 0; font-weight: 500;">${p.name}</p>
+                  <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${p.email || 'no email'} · ${p.careerStats?.matchesPlayed || 0} career matches</p>
+                </div>
+              </div>
+              <form data-player-form="${p.id}">
+                <div class="field-row">
+                  <div class="field"><label>Name</label><input name="name" value="${p.name}" /></div>
+                  <div class="field"><label>Email</label><input type="email" name="email" value="${p.email || ''}" /></div>
+                </div>
+                <div class="field"><label>Headshot URL</label><input name="headshot" value="${p.headshot || ''}" placeholder="https://..." /></div>
+                <div class="field"><label>Bio</label><textarea name="bio" rows="2">${p.bio || ''}</textarea></div>
+                <div class="field-row">
+                  <div class="field"><label>DUPR</label><input name="dupr" value="${p.dupr || ''}" placeholder="3.5" /></div>
+                  <div class="field"><label>Phone</label><input name="phone" value="${p.phone || ''}" /></div>
+                </div>
+                <button class="btn btn-primary btn-sm">Save player</button>
+              </form>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      target.querySelectorAll('[data-player-form]').forEach(form => {
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const id = form.dataset.playerForm;
+          const patch = Object.fromEntries(new FormData(form));
+          await adminFetch('update-player', { id, patch });
+          alert('Player updated.');
+        };
+      });
+    }
+
+    // ─── Matches ───
+    async function renderMatchesTab() {
+      const target = document.getElementById('tab-content');
+      if (!currentSeason) {
+        target.innerHTML = '<p class="text-mute">Create a season first.</p>';
+        return;
+      }
+      const [matches, teams, divisions] = await Promise.all([
+        adminFetchGet('list-matches', { seasonId: currentSeason.id }),
+        adminFetchGet('list-teams'),
+        adminFetchGet('list-divisions', { seasonId: currentSeason.id }),
+      ]);
+
+      const seasonTeams = teams.filter(t => t.seasonId === currentSeason.id);
+
+      target.innerHTML = `
+        <h2 class="h-section" style="font-size: 22px;">Matches · ${currentSeason.name}</h2>
+        <p class="text-mute mb-16" style="font-size: 13px;">Schedule matches and finalize scores manually if needed.</p>
+
+        <div class="card mb-24">
+          <h3 class="h-section" style="font-size: 16px;">Schedule a match</h3>
+          <form id="match-form" class="mt-16">
+            <div class="field-row">
+              <div class="field"><label>Division</label>
+                <select name="divisionId" required>${divisions.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}</select>
+              </div>
+              <div class="field"><label>Week</label><input type="number" name="week" required min="1" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Date</label><input type="date" name="date" required /></div>
+              <div class="field"><label>Court</label><input name="court" placeholder="Marine Ave 3" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Home team</label>
+                <select name="homeTeamId" required>${seasonTeams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>
+              </div>
+              <div class="field"><label>Away team</label>
+                <select name="awayTeamId" required>${seasonTeams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>
+              </div>
+            </div>
+            <label class="flex items-center gap-8" style="font-size: 13px; cursor: pointer;">
+              <input type="checkbox" name="isRivalry" /> ⚔ Rivalry week match
+            </label>
+            <button class="btn btn-primary btn-block mt-16">Schedule match</button>
+          </form>
+        </div>
+
+        <h3 class="h-section" style="font-size: 18px;">Scheduled matches (${matches.length})</h3>
+        <div class="mt-16">
+          ${matches.length === 0 ? '<p class="text-mute">No matches scheduled.</p>' : matches.map(m => {
+            const home = seasonTeams.find(t => t.id === m.homeTeamId);
+            const away = seasonTeams.find(t => t.id === m.awayTeamId);
+            return `
+              <div class="card mb-8">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p style="margin: 0; font-size: 13px;">Wk ${m.week} · ${m.date} · ${home?.name || '?'} vs ${away?.name || '?'}</p>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: var(--c-ink-mute);">${m.court || ''} ${m.isRivalry ? '⚔' : ''}</p>
+                  </div>
+                  <span class="pill ${m.status === 'final' ? 'pill-teal' : 'pill-live'}">${m.status}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      document.getElementById('match-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target));
+        data.seasonId = currentSeason.id;
+        data.week = Number(data.week);
+        data.isRivalry = e.target.isRivalry.checked;
+        if (data.homeTeamId === data.awayTeamId) {
+          alert('Home and away must be different teams.');
+          return;
+        }
+        await adminFetch('create-match', data);
+        renderMatchesTab();
+      };
+    }
+
+    // ─── Sponsors ───
+    async function renderSponsorsTab() {
+      const sponsors = await adminFetchGet('list-sponsors');
+      const target = document.getElementById('tab-content');
+
+      target.innerHTML = `
+        <div class="grid-2" style="grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
+          <div class="card">
+            <h3 class="h-section" style="font-size: 18px;">Add sponsor</h3>
+            <form id="sponsor-form" class="mt-16">
+              <div class="field"><label>Name</label><input name="name" required /></div>
+              <div class="field"><label>Logo URL</label><input name="logo" required placeholder="https://..." /></div>
+              <div class="field"><label>Link</label><input name="link" placeholder="https://..." /></div>
+              <div class="field"><label>Tier</label>
+                <select name="tier"><option value="platinum">Platinum</option><option value="gold">Gold</option><option value="silver" selected>Silver</option><option value="bronze">Bronze</option></select>
+              </div>
+              <div class="field"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+              <button class="btn btn-primary btn-block">Add sponsor</button>
+            </form>
+          </div>
+          <div>
+            <h3 class="h-section" style="font-size: 18px;">Active sponsors</h3>
+            <div class="grid-2 mt-16">
+              ${sponsors.length === 0 ? '<p class="text-mute">No sponsors yet.</p>' : sponsors.map(s => `
+                <div class="card">
+                  <div class="flex items-center gap-12">
+                    <img src="${s.logo}" alt="${s.name}" style="width: 60px; height: 60px; object-fit: contain;" />
+                    <div>
+                      <p style="margin: 0; font-weight: 500;">${s.name}</p>
+                      <span class="pill pill-amber" style="font-size: 10px;">${s.tier}</span>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('sponsor-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target));
+        await adminFetch('create-sponsor', data);
+        renderSponsorsTab();
+      };
+    }
+  </script>
+</body>
+</html>

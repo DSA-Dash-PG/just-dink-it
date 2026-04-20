@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stats — Just Dink It</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="header"></div>
+
+  <section style="padding: 48px 0;">
+    <div class="container">
+      <p class="eyebrow">By the numbers</p>
+      <h1 class="h-display" style="font-size: 44px; margin-top: 6px;">Stats <em>tell the story</em>.</h1>
+      <p class="text-soft" style="margin-top: 12px; font-size: 14px;">Standings, leaderboards, head-to-head. Every match counts toward your career legacy.</p>
+
+      <div id="stats-content" class="mt-32">
+        <p class="text-mute" style="text-align: center; padding: 32px;">Loading stats...</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer"></div>
+
+  <script type="module">
+    import { mountChrome, apiGet } from '/js/shared.js';
+    mountChrome('stats');
+
+    let allData = null;
+
+    async function load() {
+      try {
+        allData = await apiGet('public-data?action=season-overview');
+        render();
+      } catch {
+        document.getElementById('stats-content').innerHTML =
+          '<p class="text-mute" style="text-align: center;">Stats will appear once matches are played.</p>';
+      }
+    }
+
+    function teamById(id) { return (allData.teams || []).find(t => t.id === id); }
+
+    function render() {
+      const target = document.getElementById('stats-content');
+      const standings = allData.standings || [];
+      const finalMatches = (allData.matches || []).filter(m => m.status === 'final');
+
+      if (finalMatches.length === 0) {
+        target.innerHTML = `
+          <div class="card text-center" style="padding: 40px;">
+            <p class="serif-num" style="font-size: 48px;">0</p>
+            <p class="text-soft mt-8">No matches completed yet. Stats will fill in as the season unfolds.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Top scoring teams
+      const topScoring = [...standings].sort((a, b) => b.pointsFor - a.pointsFor).slice(0, 5);
+      // Best point diff
+      const topDiff = [...standings].sort((a, b) => b.pointDiff - a.pointDiff).slice(0, 5);
+      // Hottest streaks
+      const hotStreaks = standings
+        .filter(s => s.streak.type === 'W' && s.streak.count >= 2)
+        .sort((a, b) => b.streak.count - a.streak.count)
+        .slice(0, 5);
+
+      target.innerHTML = `
+        <!-- Standings by division -->
+        ${(allData.divisions || []).map(div => {
+          const divTeams = standings.filter(s => {
+            const t = teamById(s.teamId);
+            return t?.divisionId === div.id;
+          });
+          if (divTeams.length === 0) return '';
+          return `
+            <div class="card mb-24">
+              <div class="flex justify-between items-center mb-16">
+                <div>
+                  <p class="eyebrow eyebrow-amber">Standings</p>
+                  <h2 style="margin: 4px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 22px;">${div.name} Division</h2>
+                </div>
+              </div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>W–L</th>
+                    <th>WIN%</th>
+                    <th>+/−</th>
+                    <th>Streak</th>
+                    <th>Last 5</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${divTeams.map((s, i) => {
+                    const t = teamById(s.teamId);
+                    const primary = t?.colors?.primary || '#888780';
+                    return `
+                      <tr>
+                        <td><span class="serif-num" style="font-size: 16px;">${i + 1}</span></td>
+                        <td>
+                          <a href="${t ? `/teams/${t.slug}` : '#'}" class="flex items-center gap-8" style="text-decoration: none;">
+                            <div style="width: 22px; height: 22px; border-radius: var(--r-sm); background: ${primary};"></div>
+                            <span style="font-weight: 500;">${t?.name || 'Unknown'}</span>
+                          </a>
+                        </td>
+                        <td><span style="font-family: var(--font-serif); font-size: 15px;">${s.wins}–${s.losses}</span></td>
+                        <td>${Math.round(s.winPct * 100)}%</td>
+                        <td style="color: ${s.pointDiff >= 0 ? 'var(--c-teal)' : 'var(--c-coral-dark)'}; font-weight: 500;">${s.pointDiff >= 0 ? '+' : ''}${s.pointDiff}</td>
+                        <td>${s.streak.type ? `<span style="color: ${s.streak.type === 'W' ? 'var(--c-teal)' : 'var(--c-coral-dark)'}; font-weight: 500;">${s.streak.type}${s.streak.count}</span>` : '—'}</td>
+                        <td style="font-family: monospace; font-size: 13px;">${s.recent.map(r => r === 'W' ? `<span style="color: var(--c-teal);">${r}</span>` : `<span style="color: var(--c-coral-dark);">${r}</span>`).join(' ')}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }).join('')}
+
+        <!-- Leaderboards -->
+        <div class="grid-3 mt-24">
+          ${renderLeaderboard('Most points scored', topScoring, s => s.pointsFor)}
+          ${renderLeaderboard('Best point diff', topDiff, s => `${s.pointDiff >= 0 ? '+' : ''}${s.pointDiff}`)}
+          ${renderLeaderboard('🔥 Hot streaks', hotStreaks, s => `W${s.streak.count}`)}
+        </div>
+      `;
+    }
+
+    function renderLeaderboard(title, items, valueFn) {
+      return `
+        <div class="card">
+          <p class="eyebrow">${title}</p>
+          <div class="mt-16">
+            ${items.length === 0 ? '<p class="text-mute" style="font-size: 13px;">No data yet.</p>' : items.map((s, i) => {
+              const t = teamById(s.teamId);
+              return `
+                <a href="${t ? `/teams/${t.slug}` : '#'}" class="flex justify-between items-center" style="padding: 8px 0; border-bottom: 0.5px solid var(--c-rule); text-decoration: none;">
+                  <div class="flex items-center gap-8">
+                    <span style="font-family: var(--font-serif); font-style: italic; font-size: 16px; color: var(--c-coral); width: 18px;">${i + 1}</span>
+                    <div style="width: 18px; height: 18px; border-radius: var(--r-sm); background: ${t?.colors?.primary || '#888780'};"></div>
+                    <span style="font-size: 13px; font-weight: 500;">${t?.name || 'Unknown'}</span>
+                  </div>
+                  <span class="serif-num" style="font-size: 16px;">${valueFn(s)}</span>
+                </a>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    load();
+  </script>
+</body>
+</html>

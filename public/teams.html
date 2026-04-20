@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teams — Just Dink It</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="header"></div>
+
+  <section style="padding: 48px 0;">
+    <div class="container">
+      <p class="eyebrow">The lineup</p>
+      <h1 class="h-display" style="font-size: 44px; margin-top: 6px;">Twelve teams. <em>One champion.</em></h1>
+      <p class="text-soft" style="margin-top: 12px; font-size: 14px;">Click any team to see their roster, schedule, and results.</p>
+
+      <div id="teams-content" class="mt-32">
+        <p class="text-mute" style="text-align: center; padding: 32px;">Loading teams...</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer"></div>
+
+  <script type="module">
+    import { mountChrome, apiGet } from '/js/shared.js';
+    mountChrome('teams');
+
+    async function load() {
+      try {
+        const data = await apiGet('public-data?action=season-overview');
+        render(data);
+      } catch (e) {
+        document.getElementById('teams-content').innerHTML =
+          '<p class="text-mute" style="text-align: center; padding: 32px;">Season not yet configured.</p>';
+      }
+    }
+
+    function render(data) {
+      const target = document.getElementById('teams-content');
+      if (!data.divisions || data.divisions.length === 0) {
+        target.innerHTML = '<p class="text-mute" style="text-align: center; padding: 32px;">No divisions yet.</p>';
+        return;
+      }
+
+      const standings = data.standings || [];
+      const standingMap = Object.fromEntries(standings.map(s => [s.teamId, s]));
+
+      target.innerHTML = data.divisions.map(div => {
+        const divTeams = (data.teams || []).filter(t => t.divisionId === div.id);
+        const remaining = Math.max(0, div.capacity - divTeams.length);
+
+        // Sort by standings if available
+        divTeams.sort((a, b) => {
+          const sA = standingMap[a.id];
+          const sB = standingMap[b.id];
+          if (sA && sB) return sB.winPct - sA.winPct;
+          return a.name.localeCompare(b.name);
+        });
+
+        return `
+          <div class="mb-32">
+            <div class="flex justify-between items-center mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--c-rule);">
+              <div>
+                <p class="eyebrow eyebrow-amber">Division</p>
+                <h2 style="margin: 4px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 28px; color: var(--c-teal-dark);">${div.name}</h2>
+              </div>
+              <p class="text-mute" style="font-size: 13px;">${divTeams.length} of ${div.capacity} teams</p>
+            </div>
+
+            <div class="grid-3">
+              ${divTeams.map(team => {
+                const s = standingMap[team.id];
+                const record = s ? `${s.wins}–${s.losses}` : '0–0';
+                const primary = team.colors?.primary || '#D85A30';
+                return `
+                  <a href="/teams/${team.slug}" class="card" style="text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; padding: 18px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='var(--shadow-soft)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                    <div class="flex items-center gap-12">
+                      <div style="width: 44px; height: 44px; border-radius: var(--r-md); background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500; overflow: hidden; flex-shrink: 0;">
+                        ${team.logo ? `<img src="${team.logo}" style="width: 100%; height: 100%; object-fit: cover;"/>` : team.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                      </div>
+                      <div style="flex: 1; min-width: 0;">
+                        <p class="h-card" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${team.name}</p>
+                        <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${team.neighborhood || 'South Bay'}</p>
+                      </div>
+                      <div style="text-align: right;">
+                        <p class="serif-num" style="font-size: 18px;">${record}</p>
+                      </div>
+                    </div>
+                    ${team.motto ? `<p style="margin: 12px 0 0; font-size: 12px; color: var(--c-ink-mute); font-family: var(--font-serif); font-style: italic;">"${team.motto}"</p>` : ''}
+                  </a>
+                `;
+              }).join('')}
+
+              ${Array.from({length: remaining}).map(() => `
+                <a href="/register.html" style="background: var(--c-coral-light); border: 1.5px dashed var(--c-coral); border-radius: var(--r-lg); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 92px; text-decoration: none;">
+                  <p style="margin: 0; font-size: 13px; font-weight: 500; color: var(--c-coral-dark);">Open spot</p>
+                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--c-coral-dark);">Register a team →</p>
+                </a>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    load();
+  </script>
+</body>
+</html>

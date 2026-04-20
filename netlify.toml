@@ -1,0 +1,39 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Pretty URLs for team pages: /teams/pier-pressure → /team.html?slug=pier-pressure
+[[redirects]]
+  from = "/teams/:slug"
+  to = "/team.html?slug=:slug"
+  status = 200
+
+[[redirects]]
+  from = "/players/:slug"
+  to = "/player.html?slug=:slug"
+  status = 200
+
+[[redirects]]
+  from = "/seasons/:id"
+  to = "/season.html?id=:id"
+  status = 200
+
+# API routes
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA fallback for admin & captain dashboards
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/captain/*"
+  to = "/captain.html"
+  status = 200

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team — Just Dink It</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="header"></div>
+
+  <div id="team-content" style="padding: 56px 0;">
+    <div class="container">
+      <p class="text-mute" style="text-align: center;">Loading team...</p>
+    </div>
+  </div>
+
+  <div id="footer"></div>
+
+  <script type="module">
+    import { mountChrome, apiGet, fmtDate } from '/js/shared.js';
+
+    mountChrome('teams');
+
+    const slug = new URLSearchParams(location.search).get('slug');
+
+    let allTeams = [];
+
+    async function load() {
+      if (!slug) {
+        document.getElementById('team-content').innerHTML = `
+          <div class="container"><p class="text-mute" style="text-align: center;">No team specified.</p></div>`;
+        return;
+      }
+
+      const data = await apiGet(`public-data?action=team&slug=${encodeURIComponent(slug)}`);
+
+      // Also fetch all teams in the season to resolve opponent names
+      if (data.team) {
+        try {
+          const seasonData = await apiGet(`public-data?action=season-overview&seasonId=${data.team.seasonId}`);
+          allTeams = seasonData.teams || [];
+        } catch {}
+      }
+
+      if (!data.team) {
+        document.getElementById('team-content').innerHTML = `
+          <div class="container">
+            <p class="eyebrow">Not found</p>
+            <h1 class="h-display">No team here.</h1>
+            <p class="text-soft">That team slug doesn't match anything in the league.</p>
+            <a href="/teams.html" class="btn btn-ghost mt-16">← Back to all teams</a>
+          </div>`;
+        return;
+      }
+
+      render(data);
+    }
+
+    function render(data) {
+      const { team, season, division, roster, matches } = data;
+      const primary = team.colors?.primary || '#D85A30';
+      const initials = team.name.split(' ').map(w => w[0]).slice(0, 2).join('');
+
+      const upcomingMatches = matches.filter(m => m.status !== 'final').slice(0, 5);
+      const recentMatches = matches.filter(m => m.status === 'final').slice(-5).reverse();
+
+      document.getElementById('team-content').innerHTML = `
+        <div class="container">
+
+          <!-- Team header card -->
+          <div style="background: ${primary}; border-radius: var(--r-lg); padding: 32px; color: #fff; position: relative; overflow: hidden;">
+            <svg style="position: absolute; right: -30px; top: -30px; opacity: 0.15;" width="200" height="200" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="90" fill="#fff"/>
+            </svg>
+
+            <div style="position: relative; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+              <div style="width: 96px; height: 96px; border-radius: var(--r-md); background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-style: italic; font-size: 36px; font-weight: 500;">
+                ${team.logo ? `<img src="${team.logo}" alt="${team.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-md);"/>` : initials}
+              </div>
+              <div style="flex: 1;">
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.85;">${division?.name || ''} Division · ${season?.name || ''}</p>
+                <h1 class="h-display" style="color: #fff; font-size: 48px; margin-top: 4px;">${team.name}</h1>
+                ${team.motto ? `<p style="margin: 8px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 18px; opacity: 0.95;">"${team.motto}"</p>` : ''}
+                ${team.neighborhood ? `<p style="margin: 8px 0 0; font-size: 13px; opacity: 0.85;">📍 ${team.neighborhood}</p>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats row -->
+          <div class="grid-4 mt-24">
+            <div class="card">
+              <p class="eyebrow">Record</p>
+              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${countWins(matches, team.id)}–${countLosses(matches, team.id)}</p>
+            </div>
+            <div class="card">
+              <p class="eyebrow">Win %</p>
+              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${calcWinPct(matches, team.id)}%</p>
+            </div>
+            <div class="card">
+              <p class="eyebrow">Roster</p>
+              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${roster.length}</p>
+            </div>
+            <div class="card">
+              <p class="eyebrow">Matches</p>
+              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${matches.length}</p>
+            </div>
+          </div>
+
+          <div class="grid-2 mt-24" style="grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start;">
+
+            <!-- Roster -->
+            <div class="card">
+              <div class="flex justify-between items-center mb-16">
+                <h2 class="h-section" style="font-size: 22px;">Roster</h2>
+                <span class="text-mute" style="font-size: 12px;">${roster.length} player${roster.length === 1 ? '' : 's'}</span>
+              </div>
+              ${roster.length === 0 ? `
+                <p class="text-mute" style="font-size: 13px;">Captain hasn't added players yet.</p>
+              ` : `
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  ${roster.map(r => r.player ? `
+                    <a href="/players/${r.player.slug}" class="flex items-center gap-12" style="padding: 10px; border-radius: var(--r-md); transition: background 0.15s; text-decoration: none;" onmouseover="this.style.background='var(--c-cream)'" onmouseout="this.style.background=''">
+                      <div style="width: 40px; height: 40px; border-radius: 50%; background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; overflow: hidden;">
+                        ${r.player.headshot ? `<img src="${r.player.headshot}" alt="${r.player.name}" style="width: 100%; height: 100%; object-fit: cover;"/>` : r.player.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                      </div>
+                      <div style="flex: 1;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 500;">${r.player.name}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
+                        <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${r.player.careerStats?.matchesPlayed || 0} career matches</p>
+                      </div>
+                      ${r.jerseyNumber ? `<span class="serif-num" style="font-size: 18px;">#${r.jerseyNumber}</span>` : ''}
+                    </a>
+                  ` : '').join('')}
+                </div>
+              `}
+            </div>
+
+            <!-- Schedule + recent results -->
+            <div>
+              <div class="card mb-16">
+                <h3 class="h-section" style="font-size: 18px;">Upcoming</h3>
+                ${upcomingMatches.length === 0 ? `
+                  <p class="text-mute mt-8" style="font-size: 13px;">No upcoming matches.</p>
+                ` : upcomingMatches.map(m => `
+                  <div style="padding: 10px 0; border-bottom: 0.5px solid var(--c-rule);">
+                    <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${fmtDate(m.date)} ${m.isRivalry ? '· ⚔ Rivalry' : ''}</p>
+                    <p style="margin: 4px 0 0; font-size: 13px;">vs ${opponentName(m, team.id, data)}</p>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="card">
+                <h3 class="h-section" style="font-size: 18px;">Recent</h3>
+                ${recentMatches.length === 0 ? `
+                  <p class="text-mute mt-8" style="font-size: 13px;">No matches played yet.</p>
+                ` : recentMatches.map(m => {
+                  const won = didTeamWin(m, team.id);
+                  return `
+                    <div style="padding: 10px 0; border-bottom: 0.5px solid var(--c-rule);">
+                      <div class="flex justify-between items-center">
+                        <p style="margin: 0; font-size: 13px;">vs ${opponentName(m, team.id, data)}</p>
+                        <span style="font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--r-pill); ${won ? 'background: #EAF3DE; color: #3B6D11;' : 'background: #FCEBEB; color: #A32D2D;'}">${won ? 'W' : 'L'}</span>
+                      </div>
+                      <p class="text-mute" style="margin: 4px 0 0; font-size: 11px;">${fmtDate(m.date)}</p>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function countWins(matches, teamId) {
+      return matches.filter(m => m.status === 'final' && didTeamWin(m, teamId)).length;
+    }
+    function countLosses(matches, teamId) {
+      return matches.filter(m => m.status === 'final' && !didTeamWin(m, teamId)).length;
+    }
+    function calcWinPct(matches, teamId) {
+      const w = countWins(matches, teamId);
+      const l = countLosses(matches, teamId);
+      const total = w + l;
+      return total > 0 ? Math.round((w / total) * 100) : 0;
+    }
+    function didTeamWin(match, teamId) {
+      if (!match.finalScore) return false;
+      const isHome = match.homeTeamId === teamId;
+      let myWins = 0, oppWins = 0;
+      for (const g of match.finalScore.games) {
+        const my = isHome ? g.home : g.away;
+        const opp = isHome ? g.away : g.home;
+        if (my > opp) myWins++; else oppWins++;
+      }
+      return myWins > oppWins;
+    }
+    function opponentName(match, teamId, data) {
+      const oppId = match.homeTeamId === teamId ? match.awayTeamId : match.homeTeamId;
+      const opp = allTeams.find(t => t.id === oppId);
+      if (!opp) return '<span class="text-mute">TBD</span>';
+      return `<a href="/teams/${opp.slug}" style="color: var(--c-coral); font-weight: 500;">${opp.name}</a>`;
+    }
+
+    load();
+  </script>
+</body>
+</html>

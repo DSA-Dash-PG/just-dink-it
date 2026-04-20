@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Captain — Just Dink It</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="header"></div>
+
+  <section style="padding: 32px 0;">
+    <div class="container">
+      <div class="flex justify-between items-center mb-24" style="flex-wrap: wrap; gap: 12px;">
+        <div>
+          <p class="eyebrow">Captain console</p>
+          <h1 class="h-display" style="font-size: 36px; margin-top: 4px;">Run your <em>squad</em>.</h1>
+        </div>
+        <div id="auth-status" class="flex items-center gap-12">
+          <span class="text-mute" style="font-size: 13px;">Loading...</span>
+        </div>
+      </div>
+
+      <div id="not-authed" style="display: none;" class="card-coral">
+        <p class="eyebrow">Sign in required</p>
+        <p style="margin: 8px 0 0;">Sign in with the email you used to register your team.</p>
+        <button id="btn-login" class="btn btn-primary mt-16">Sign in</button>
+      </div>
+
+      <div id="captain-app" style="display: none;"></div>
+    </div>
+  </section>
+
+  <div id="footer"></div>
+
+  <script type="module">
+    import { mountChrome, getCurrentUser, getAccessToken, signOut, onAuthChange, fmtDate } from '/js/shared.js';
+    import { openAuthModal } from '/js/auth-modal.js';
+
+    mountChrome('');
+
+    async function captainFetch(action, body) {
+      const token = await getAccessToken();
+      const res = await fetch(`/api/captain?action=${action}`, {
+        method: body ? 'POST' : 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    async function checkAuth() {
+      const user = await getCurrentUser();
+      const statusEl = document.getElementById('auth-status');
+
+      if (!user) {
+        statusEl.innerHTML = `<button id="btn-login-top" class="btn btn-primary btn-sm">Sign in</button>`;
+        document.getElementById('btn-login-top').onclick = () => openAuthModal();
+        document.getElementById('not-authed').style.display = 'block';
+        document.getElementById('captain-app').style.display = 'none';
+        return;
+      }
+
+      statusEl.innerHTML = `
+        <span class="text-soft" style="font-size: 13px;">${user.email}</span>
+        <button class="btn btn-sm" id="btn-logout">Logout</button>
+      `;
+      document.getElementById('btn-logout').onclick = signOut;
+      document.getElementById('not-authed').style.display = 'none';
+      document.getElementById('captain-app').style.display = 'block';
+      bootApp();
+    }
+
+    onAuthChange(() => checkAuth());
+    checkAuth();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('btn-login');
+      if (btn) btn.onclick = () => openAuthModal();
+    });
+
+    let myTeam = null;
+    let myRoster = [];
+    let allTeams = [];
+    let myMatches = [];
+
+    async function bootApp() {
+      const target = document.getElementById('captain-app');
+      target.innerHTML = '<p class="text-mute" style="text-align: center; padding: 32px;">Loading your team...</p>';
+
+      try {
+        const data = await captainFetch('my-team');
+        if (!data.team) {
+          const currentUser = await getCurrentUser();
+          target.innerHTML = `
+            <div class="card-coral">
+              <p class="eyebrow">No team found</p>
+              <p style="margin: 8px 0 0;">We couldn't find a team registered to <strong>${currentUser?.email || 'this account'}</strong>.</p>
+              <p style="margin: 8px 0 0; font-size: 13px;">If you registered with a different email, sign in with that one. Otherwise, <a href="/register.html" class="text-coral">register a team</a> or text Richard.</p>
+            </div>
+          `;
+          return;
+        }
+        myTeam = data.team;
+        myRoster = data.roster;
+
+        // Get matches for this team
+        const seasonData = await fetch(`/api/public-data?action=season-overview&seasonId=${myTeam.seasonId}`).then(r => r.json());
+        allTeams = seasonData.teams || [];
+        myMatches = (seasonData.matches || []).filter(m =>
+          m.homeTeamId === myTeam.id || m.awayTeamId === myTeam.id
+        );
+
+        render();
+      } catch (e) {
+        target.innerHTML = `<div class="card-coral"><p class="eyebrow">Error</p><p style="margin: 8px 0 0;">${e.message}</p></div>`;
+      }
+    }
+
+    function getTeamName(id) {
+      const t = allTeams.find(x => x.id === id);
+      return t?.name || 'TBD';
+    }
+
+    function render() {
+      const target = document.getElementById('captain-app');
+      const primary = myTeam.colors?.primary || '#D85A30';
+      const initials = myTeam.name.split(' ').map(w => w[0]).slice(0, 2).join('');
+
+      const upcoming = myMatches.filter(m => m.status === 'scheduled' || m.status === 'awaiting_confirmation');
+      const recent = myMatches.filter(m => m.status === 'final').slice(-3).reverse();
+
+      target.innerHTML = `
+        <!-- Team header -->
+        <div style="background: ${primary}; border-radius: var(--r-lg); padding: 28px; color: #fff; position: relative; overflow: hidden;">
+          <div class="flex items-center gap-16" style="flex-wrap: wrap;">
+            <div style="width: 64px; height: 64px; border-radius: var(--r-md); background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-style: italic; font-size: 24px; overflow: hidden;">
+              ${myTeam.logo ? `<img src="${myTeam.logo}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-md);"/>` : initials}
+            </div>
+            <div style="flex: 1;">
+              <p style="margin: 0; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.85;">Your team</p>
+              <h2 style="margin: 4px 0 0; font-family: var(--font-serif); font-size: 32px; font-weight: 500;">${myTeam.name}</h2>
+              ${myTeam.motto ? `<p style="margin: 4px 0 0; font-style: italic; opacity: 0.95; font-family: var(--font-serif);">"${myTeam.motto}"</p>` : ''}
+            </div>
+            <div class="flex gap-8">
+              <a href="/teams/${myTeam.slug}" class="btn btn-amber btn-sm" style="box-shadow: none;">View public page</a>
+              <span class="pill ${myTeam.paymentStatus === 'paid' ? 'pill-teal' : 'pill-live'}">${myTeam.paymentStatus}</span>
+            </div>
+          </div>
+        </div>
+
+        ${myTeam.paymentStatus !== 'paid' ? `
+          <div class="card-coral mt-16">
+            <p class="eyebrow">⚠ Payment required</p>
+            <p style="margin: 8px 0 0;">Your team isn't paid yet. Pay $450 to lock your spot.</p>
+            <button id="pay-now" class="btn btn-primary btn-sm mt-16">Pay now via Stripe</button>
+          </div>
+        ` : ''}
+
+        <div class="grid-2 mt-24" style="grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+
+          <!-- Edit team -->
+          <div class="card">
+            <h3 class="h-section" style="font-size: 18px;">Edit team</h3>
+            <form id="team-form" class="mt-16">
+              <div class="field"><label>Name</label><input name="name" value="${myTeam.name}" required /></div>
+              <div class="field-row">
+                <div class="field"><label>Primary color</label><input type="color" name="primary" value="${myTeam.colors?.primary || '#D85A30'}" /></div>
+                <div class="field"><label>Secondary</label><input type="color" name="secondary" value="${myTeam.colors?.secondary || '#2C2C2A'}" /></div>
+              </div>
+              <div class="field"><label>Motto</label><input name="motto" value="${myTeam.motto || ''}" placeholder="We dink under stress" /></div>
+              <div class="field"><label>Neighborhood</label><input name="neighborhood" value="${myTeam.neighborhood || ''}" placeholder="Hermosa Beach" /></div>
+              <div class="field"><label>Logo URL</label><input name="logo" value="${myTeam.logo || ''}" placeholder="https://..." /></div>
+              <button class="btn btn-primary btn-sm">Save changes</button>
+            </form>
+          </div>
+
+          <!-- Roster -->
+          <div class="card">
+            <div class="flex justify-between items-center">
+              <h3 class="h-section" style="font-size: 18px;">Roster (${myRoster.length})</h3>
+              <button id="add-player-btn" class="btn btn-amber btn-sm">+ Add player</button>
+            </div>
+
+            <div class="mt-16">
+              ${myRoster.length === 0 ? `<p class="text-mute" style="font-size: 13px;">No players yet. Add your squad above.</p>` : myRoster.map(r => r.player ? `
+                <div class="flex items-center gap-12" style="padding: 8px 0; border-bottom: 0.5px solid var(--c-rule);">
+                  <div style="width: 32px; height: 32px; border-radius: 50%; background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; overflow: hidden;">
+                    ${r.player.headshot ? `<img src="${r.player.headshot}" style="width: 100%; height: 100%; object-fit: cover;"/>` : r.player.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                  </div>
+                  <div style="flex: 1;">
+                    <p style="margin: 0; font-size: 13px; font-weight: 500;">${r.player.name}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
+                    <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${r.player.email || 'no email'}</p>
+                  </div>
+                  ${r.role !== 'captain' ? `<button class="btn btn-sm" data-remove="${r.player.id}" style="font-size: 11px; padding: 4px 8px; box-shadow: none; background: transparent; color: var(--c-coral);">Remove</button>` : ''}
+                </div>
+              ` : '').join('')}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Matches & score entry -->
+        <div class="card mt-24">
+          <h3 class="h-section" style="font-size: 18px;">Upcoming matches</h3>
+          ${upcoming.length === 0 ? `<p class="text-mute mt-16" style="font-size: 13px;">No upcoming matches.</p>` : `
+            <div class="mt-16">
+              ${upcoming.map(m => {
+                const oppId = m.homeTeamId === myTeam.id ? m.awayTeamId : m.homeTeamId;
+                const isHome = m.homeTeamId === myTeam.id;
+                return `
+                  <div style="padding: 16px 0; border-bottom: 0.5px solid var(--c-rule);">
+                    <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 12px;">
+                      <div>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500;">Wk ${m.week} · ${isHome ? 'vs' : '@'} ${getTeamName(oppId)}</p>
+                        <p style="margin: 4px 0 0; font-size: 12px; color: var(--c-ink-mute);">${fmtDate(m.date)} ${m.court ? `· ${m.court}` : ''} ${m.isRivalry ? '· ⚔' : ''}</p>
+                      </div>
+                      <button class="btn btn-amber btn-sm" data-score-match="${m.id}">${m.status === 'awaiting_confirmation' ? 'Confirm score' : 'Submit score'}</button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        ${recent.length > 0 ? `
+          <div class="card mt-16">
+            <h3 class="h-section" style="font-size: 18px;">Recent results</h3>
+            <div class="mt-16">
+              ${recent.map(m => {
+                const oppId = m.homeTeamId === myTeam.id ? m.awayTeamId : m.homeTeamId;
+                const isHome = m.homeTeamId === myTeam.id;
+                let myW = 0, oppW = 0;
+                for (const g of m.finalScore.games) {
+                  const myPts = isHome ? g.home : g.away;
+                  const oppPts = isHome ? g.away : g.home;
+                  if (myPts > oppPts) myW++; else oppW++;
+                }
+                const won = myW > oppW;
+                return `
+                  <div class="flex justify-between items-center" style="padding: 8px 0; border-bottom: 0.5px solid var(--c-rule);">
+                    <div>
+                      <p style="margin: 0; font-size: 13px;">${isHome ? 'vs' : '@'} ${getTeamName(oppId)} — ${m.finalScore.games.map(g => `${g.home}-${g.away}`).join(', ')}</p>
+                      <p style="margin: 4px 0 0; font-size: 11px; color: var(--c-ink-mute);">${fmtDate(m.date)}</p>
+                    </div>
+                    <span style="font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--r-pill); ${won ? 'background: #EAF3DE; color: #3B6D11;' : 'background: #FCEBEB; color: #A32D2D;'}">${won ? 'W' : 'L'}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Score entry modal -->
+        <div id="score-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div class="card" style="max-width: 480px; width: 90%; padding: 28px;">
+            <h3 class="h-section" style="font-size: 20px;">Submit match score</h3>
+            <p class="text-mute mt-8" style="font-size: 12px;">Both captains must enter matching scores. If you and the opposing captain disagree, the match is flagged as disputed and an admin will resolve.</p>
+            <form id="score-form" class="mt-16">
+              <input type="hidden" name="matchId" />
+              <div id="score-game-rows"></div>
+              <div class="field"><label>Notes (optional)</label><textarea name="notes" rows="2" placeholder="Anything notable..."></textarea></div>
+              <div class="flex gap-8 mt-16">
+                <button type="button" id="cancel-score" class="btn btn-sm" style="background: transparent; box-shadow: none; color: var(--c-ink-soft);">Cancel</button>
+                <button class="btn btn-primary btn-sm">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Add player modal -->
+        <div id="player-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div class="card" style="max-width: 420px; width: 90%; padding: 28px;">
+            <h3 class="h-section" style="font-size: 20px;">Add player</h3>
+            <form id="player-form" class="mt-16">
+              <div class="field"><label>Name</label><input name="name" required /></div>
+              <div class="field"><label>Email</label><input type="email" name="email" placeholder="optional, for player login" /></div>
+              <div class="field"><label>Phone</label><input name="phone" placeholder="optional" /></div>
+              <div class="field"><label>Jersey #</label><input type="number" name="jerseyNumber" /></div>
+              <div class="flex gap-8 mt-16">
+                <button type="button" id="cancel-player" class="btn btn-sm" style="background: transparent; box-shadow: none; color: var(--c-ink-soft);">Cancel</button>
+                <button class="btn btn-primary btn-sm">Add to roster</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      wireUp();
+    }
+
+    function wireUp() {
+      // Save team
+      document.getElementById('team-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = Object.fromEntries(new FormData(e.target));
+        const patch = {
+          name: fd.name,
+          colors: { primary: fd.primary, secondary: fd.secondary },
+          motto: fd.motto,
+          neighborhood: fd.neighborhood,
+          logo: fd.logo || null,
+        };
+        await captainFetch('update-team', { id: myTeam.id, patch });
+        await bootApp();
+      };
+
+      // Pay now
+      const pay = document.getElementById('pay-now');
+      if (pay) pay.onclick = async () => {
+        // Note: requires registration ID - you'd need to pass through to checkout
+        alert('Payment flow: Stripe checkout will be initiated. (Hookup: pass your registration ID to /api/stripe-checkout)');
+      };
+
+      // Add player modal
+      document.getElementById('add-player-btn').onclick = () => {
+        document.getElementById('player-modal').style.display = 'flex';
+      };
+      document.getElementById('cancel-player').onclick = () => {
+        document.getElementById('player-modal').style.display = 'none';
+      };
+      document.getElementById('player-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = Object.fromEntries(new FormData(e.target));
+        await captainFetch('add-player', { ...fd, teamId: myTeam.id });
+        document.getElementById('player-modal').style.display = 'none';
+        await bootApp();
+      };
+
+      // Remove player
+      document.querySelectorAll('[data-remove]').forEach(btn => {
+        btn.onclick = async () => {
+          if (!confirm('Remove this player from your roster?')) return;
+          await captainFetch('remove-player', { teamId: myTeam.id, playerId: btn.dataset.remove });
+          await bootApp();
+        };
+      });
+
+      // Score entry modal
+      document.querySelectorAll('[data-score-match]').forEach(btn => {
+        btn.onclick = () => openScoreModal(btn.dataset.scoreMatch);
+      });
+      document.getElementById('cancel-score').onclick = () => {
+        document.getElementById('score-modal').style.display = 'none';
+      };
+      document.getElementById('score-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const games = [];
+        for (let i = 1; i <= 3; i++) {
+          const home = fd.get(`g${i}home`);
+          const away = fd.get(`g${i}away`);
+          if (home && away) games.push({ home: Number(home), away: Number(away) });
+        }
+        if (games.length < 2) {
+          alert('Enter at least 2 games.');
+          return;
+        }
+        const result = await captainFetch('submit-score', {
+          matchId: fd.get('matchId'),
+          teamId: myTeam.id,
+          games,
+          notes: fd.get('notes'),
+        });
+        document.getElementById('score-modal').style.display = 'none';
+        if (result.confirmed) alert('Score confirmed! Both captains agree. Match is final.');
+        else if (result.disputed) alert('⚠ Score disputed. Your entry doesn\'t match the other captain\'s. An admin will resolve.');
+        else alert('Score submitted. Waiting for the other captain to confirm.');
+        await bootApp();
+      };
+    }
+
+    function openScoreModal(matchId) {
+      const match = myMatches.find(m => m.id === matchId);
+      const oppId = match.homeTeamId === myTeam.id ? match.awayTeamId : match.homeTeamId;
+      const isHome = match.homeTeamId === myTeam.id;
+
+      const homeName = isHome ? myTeam.name : getTeamName(oppId);
+      const awayName = isHome ? getTeamName(oppId) : myTeam.name;
+
+      document.querySelector('#score-form input[name="matchId"]').value = matchId;
+      document.getElementById('score-game-rows').innerHTML = `
+        <p class="text-mute" style="font-size: 12px; margin-bottom: 12px;">Enter scores for each game (best of 3). Format: ${homeName} (home) vs ${awayName}.</p>
+        ${[1,2,3].map(n => `
+          <div class="field">
+            <label>Game ${n}${n === 3 ? ' (only if needed)' : ''}</label>
+            <div class="flex gap-8">
+              <input type="number" name="g${n}home" placeholder="${homeName}" style="flex: 1;" min="0" />
+              <span style="align-self: center; color: var(--c-ink-mute);">—</span>
+              <input type="number" name="g${n}away" placeholder="${awayName}" style="flex: 1;" min="0" />
+            </div>
+          </div>
+        `).join('')}
+      `;
+      document.getElementById('score-modal').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
