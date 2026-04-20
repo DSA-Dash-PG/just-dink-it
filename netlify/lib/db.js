@@ -18,7 +18,21 @@
 import { getStore } from '@netlify/blobs';
 
 // Get a typed store. Each "store" is a namespace in Netlify Blobs.
-const store = (name) => getStore({ name, consistency: 'strong' });
+//
+// We pass siteID and token explicitly because Netlify Blobs v8 requires them
+// when running in the classic Functions v1 handler format. These values come
+// from env vars NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN which you set in the
+// Netlify dashboard (see README for setup).
+const store = (name) => {
+  const opts = { name, consistency: 'strong' };
+  const siteID = process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN;
+  if (siteID && token) {
+    opts.siteID = siteID;
+    opts.token = token;
+  }
+  return getStore(opts);
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
