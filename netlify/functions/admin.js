@@ -62,6 +62,13 @@ export const handler = async (event, context) => {
         return ok(await players.update(body.id, body.patch));
 
       // ─── Roster (move players between teams) ───
+      case 'list-roster': {
+        const entries = await roster.listByTeam(params.seasonId, params.teamId);
+        const hydrated = await Promise.all(
+          entries.map(async (r) => ({ ...r, player: await players.get(r.playerId) }))
+        );
+        return ok(hydrated);
+      }
       case 'add-to-roster':
         return ok(await roster.addPlayer(body));
       case 'remove-from-roster':
@@ -70,9 +77,9 @@ export const handler = async (event, context) => {
       case 'move-player': {
         // Move player from one team to another in the SAME season
         // (for cross-season moves, just add to new season's roster — old stats stay tied via player ID)
-        const { playerId, seasonId, fromTeamId, toTeamId, jerseyNumber } = body;
+        const { playerId, seasonId, fromTeamId, toTeamId } = body;
         if (fromTeamId) await roster.removePlayer({ seasonId, teamId: fromTeamId, playerId });
-        await roster.addPlayer({ seasonId, teamId: toTeamId, playerId, jerseyNumber });
+        await roster.addPlayer({ seasonId, teamId: toTeamId, playerId });
         await stats.recomputePlayerCareerStats(playerId);
         return ok({ success: true });
       }
