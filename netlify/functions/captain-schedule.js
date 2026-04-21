@@ -49,6 +49,7 @@ export default async (req) => {
           circuit,
           division,
           court: m.court || null,
+          venue: m.venue || null,
           scheduledAt: m.scheduledAt || null,
           myRole,
           opponent: {
@@ -62,6 +63,7 @@ export default async (req) => {
           },
           scoreA: m.scoreA ?? null,
           scoreB: m.scoreB ?? null,
+          finalizedAt: m.finalizedAt || null,
         });
       }
     }
