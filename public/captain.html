@@ -1,476 +1,460 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Captain — Just Dink It</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/style.css" />
-</head>
-<body>
-  <div id="header"></div>
-
-  <section style="padding: 32px 0;">
-    <div class="container">
-      <div class="flex justify-between items-center mb-24" style="flex-wrap: wrap; gap: 12px;">
-        <div>
-          <p class="eyebrow">Captain console</p>
-          <h1 class="h-display" style="font-size: 36px; margin-top: 4px;">Run your <em>squad</em>.</h1>
-        </div>
-        <div id="auth-status" class="flex items-center gap-12">
-          <span class="text-mute" style="font-size: 13px;">Loading...</span>
-        </div>
-      </div>
-
-      <div id="not-authed" style="display: none;" class="card-coral">
-        <p class="eyebrow">Sign in required</p>
-        <p style="margin: 8px 0 0;">Sign in with the email you used to register your team.</p>
-        <button id="btn-login" class="btn btn-primary mt-16">Sign in</button>
-      </div>
-
-      <div id="captain-app" style="display: none;"></div>
-    </div>
-  </section>
-
-  <div id="footer"></div>
-
-  <script type="module">
-    import { mountChrome, getCurrentUser, getAccessToken, signOut, onAuthChange, fmtDate } from '/js/shared.js';
-    import { openAuthModal } from '/js/auth-modal.js';
-
-    mountChrome('');
-
-    async function captainFetch(action, body) {
-      const token = await getAccessToken();
-      const res = await fetch(`/api/captain?action=${action}`, {
-        method: body ? 'POST' : 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+  <title>Captain Dashboard — The Dink Society</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .dash-shell {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 24px var(--gutter);
     }
 
-    async function checkAuth() {
-      const user = await getCurrentUser();
-      const statusEl = document.getElementById('auth-status');
+    /* ── Login state ── */
+    .login-card {
+      max-width: 420px;
+      margin: 60px auto;
+      padding: 32px;
+      background: rgba(13,59,64,0.6);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+    }
+    .login-card h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .login-card p { font-size: 13px; color: var(--sage); line-height: 1.5; margin-bottom: 22px; }
+    .login-card .form-field { margin-bottom: 14px; }
+    .login-card .form-field label {
+      display: block; font-size: 10px; letter-spacing: 0.16em;
+      color: var(--sage); margin-bottom: 6px; text-transform: uppercase;
+    }
+    .login-card .magic-link {
+      margin-top: 12px; font-size: 11px; color: var(--sage); text-align: center;
+    }
+    .login-card .magic-link a { color: var(--gold); }
 
-      if (!user) {
-        statusEl.innerHTML = `<button id="btn-login-top" class="btn btn-primary btn-sm">Sign in</button>`;
-        document.getElementById('btn-login-top').onclick = () => openAuthModal();
-        document.getElementById('not-authed').style.display = 'block';
-        document.getElementById('captain-app').style.display = 'none';
+    .login-error {
+      background: rgba(184,117,74,0.12);
+      border: 1px solid rgba(184,117,74,0.4);
+      color: var(--cream);
+      padding: 10px 12px;
+      font-size: 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+    }
+
+    /* ── Dashboard state ── */
+    .dash-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(245,235,212,0.1);
+      margin-bottom: 24px;
+    }
+    .dash-header .who { display: flex; align-items: center; gap: 14px; }
+    .dash-header h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
+    .dash-header .meta { font-size: 11px; color: var(--sage); letter-spacing: 0.1em; margin-top: 4px; }
+    .dash-header .signout {
+      font-size: 11px; letter-spacing: 0.14em; color: var(--sage); text-transform: uppercase; cursor: pointer;
+    }
+
+    .dash-grid {
+      display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+      padding: 20px 22px;
+    }
+    .panel-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(245,235,212,0.08);
+    }
+    .panel-head h3 {
+      font-size: 12px; letter-spacing: 0.18em; color: var(--gold);
+      font-weight: 500; text-transform: uppercase;
+    }
+    .panel-head .helper { font-size: 11px; color: var(--sage); }
+
+    .roster-list { display: flex; flex-direction: column; gap: 6px; }
+    .roster-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      background: rgba(13,59,64,0.4);
+      border-radius: var(--radius-sm);
+    }
+    .roster-item .name { font-size: 13px; font-weight: 500; }
+    .roster-item .meta { font-size: 10px; color: var(--sage); letter-spacing: 0.08em; margin-top: 2px; }
+    .roster-item .status {
+      font-size: 10px; letter-spacing: 0.14em;
+      padding: 3px 8px; border-radius: var(--radius-sm); text-transform: uppercase;
+    }
+    .roster-item .status.signed { background: rgba(232,181,66,0.2); color: var(--gold); }
+    .roster-item .status.pending { background: rgba(245,235,212,0.08); color: var(--sage); }
+    .roster-item .x {
+      font-size: 16px; color: var(--sage-300); cursor: pointer; padding: 0 6px;
+    }
+    .roster-item .x:hover { color: var(--rust); }
+
+    .add-player-row {
+      display: grid; grid-template-columns: 1fr 1fr 110px; gap: 8px; margin-top: 12px;
+    }
+    .add-player-row input { font-size: 12px; }
+    .add-player-row button {
+      background: var(--gold); color: var(--teal-900);
+      border: none; padding: 11px; font-size: 11px;
+      letter-spacing: 0.14em; cursor: pointer;
+      border-radius: var(--radius-sm); text-transform: uppercase; font-weight: 500;
+    }
+
+    .photo-upload {
+      aspect-ratio: 4 / 3;
+      border: 2px dashed rgba(245,235,212,0.2);
+      border-radius: var(--radius-sm);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s var(--ease);
+      position: relative;
+      overflow: hidden;
+      background: rgba(13,59,64,0.3);
+    }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload .preview-bg { position: absolute; inset: 0; }
+    .photo-upload .empty {
+      text-align: center; padding: 20px;
+      position: relative; z-index: 1;
+    }
+    .photo-upload .empty .label {
+      font-size: 12px; letter-spacing: 0.14em; color: var(--sage);
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .photo-upload .empty .hint {
+      font-size: 11px; color: var(--sage-300); line-height: 1.4;
+    }
+
+    .score-form .form-field { margin-bottom: 12px; }
+    .score-form .form-field label {
+      display: block; font-size: 10px; letter-spacing: 0.16em;
+      color: var(--sage); margin-bottom: 6px; text-transform: uppercase;
+    }
+    .score-form .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .score-form .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    .quick-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      margin-bottom: 24px;
+    }
+    .quick-stat {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+    }
+    .quick-stat .num { font-size: 22px; font-weight: 500; line-height: 1; }
+    .quick-stat .num.gold { color: var(--gold); }
+    .quick-stat .lbl { font-size: 9px; letter-spacing: 0.18em; color: var(--sage); margin-top: 6px; text-transform: uppercase; }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--sage);
+    }
+    .empty-state h2 {
+      font-size: 24px; font-weight: 500; letter-spacing: -0.01em;
+      color: var(--cream); margin-bottom: 10px;
+    }
+    .empty-state p { font-size: 13px; line-height: 1.5; max-width: 380px; margin: 0 auto 20px; }
+
+    .hide { display: none !important; }
+
+    @media (max-width: 800px) {
+      .dash-grid { grid-template-columns: 1fr; }
+      .quick-stats { grid-template-columns: 1fr 1fr; }
+      .add-player-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="">
+  <div data-partial="nav"></div>
+  <div data-partial="ticker"></div>
+
+  <!-- ─── Login state (default) ─── -->
+  <div id="login-state" class="dash-shell">
+    <div class="login-card">
+      <h2>Captain sign-in</h2>
+      <p>Enter the email you registered with. We'll send a magic sign-in link.</p>
+
+      <div id="login-error" class="login-error hide"></div>
+
+      <form onsubmit="return handleLogin(event)">
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="captain@email.com" required />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Send sign-in link →</button>
+      </form>
+
+      <div class="magic-link">
+        Not a captain? <a href="/register.html">Register a team</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Dashboard state ─── -->
+  <div id="dash-state" class="dash-shell hide">
+
+    <div class="dash-header">
+      <div class="who">
+        <div class="avatar avatar-lg" id="dash-monogram">JN</div>
+        <div>
+          <h1 id="dash-team-name">Salty Servers</h1>
+          <div class="meta" id="dash-team-meta">CAPTAIN: JAMES NGUYEN · MANHATTAN</div>
+        </div>
+      </div>
+      <a href="#" class="signout" onclick="signOut(); return false;">Sign out</a>
+    </div>
+
+    <div class="quick-stats">
+      <div class="quick-stat"><div class="num gold" id="qs-record">4–0</div><div class="lbl">Record</div></div>
+      <div class="quick-stat"><div class="num gold" id="qs-rank">#1</div><div class="lbl">Rank</div></div>
+      <div class="quick-stat"><div class="num" id="qs-roster">6</div><div class="lbl">Roster</div></div>
+      <div class="quick-stat"><div class="num" id="qs-waivers">4 / 6</div><div class="lbl">Waivers signed</div></div>
+    </div>
+
+    <div class="dash-grid">
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Roster</h3>
+          <span class="helper">4–12 players · 18+</span>
+        </div>
+        <div class="roster-list" id="roster-list"><!-- JS --></div>
+        <form class="add-player-row" onsubmit="return addPlayer(event)">
+          <input type="text" id="new-player-name" placeholder="Player name" required />
+          <input type="email" id="new-player-email" placeholder="Email (for waiver)" required />
+          <button type="submit">Add player</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Team photo</h3>
+          <span class="helper">4:3 · max 5MB</span>
+        </div>
+        <label class="photo-upload" for="photo-input" id="photo-upload">
+          <input type="file" id="photo-input" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)" />
+          <div class="empty" id="photo-empty">
+            <div class="label">Upload team photo</div>
+            <div class="hint">Drop an image here or click to browse. Replaces the monogram on the Teams page.</div>
+          </div>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="dash-grid">
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Submit a score</h3>
+          <span class="helper">Both captains submit independently</span>
+        </div>
+        <form class="score-form" onsubmit="return submitScore(event)">
+          <div class="grid-2">
+            <div class="form-field">
+              <label>Match week</label>
+              <select required>
+                <option value="">Pick week</option>
+                <option>Week 4 · vs Pier Pressure</option>
+                <option>Week 3 · @ Dinks &amp; Drinks</option>
+                <option>Week 2 · vs Smash Brothers</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Round</label>
+              <select required>
+                <option value="">Pick round</option>
+                <option>WD — Women's Doubles</option>
+                <option>MD — Men's Doubles</option>
+                <option>MXD — Mixed Doubles</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-field">
+              <label>Our score</label>
+              <input type="number" min="0" max="30" placeholder="11" required />
+            </div>
+            <div class="form-field">
+              <label>Their score</label>
+              <input type="number" min="0" max="30" placeholder="9" required />
+            </div>
+            <div class="form-field">
+              <label>&nbsp;</label>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 11px;">Submit →</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Edit team info</h3>
+          <span class="helper">Shows on team page</span>
+        </div>
+        <form onsubmit="return saveTeamInfo(event)">
+          <div class="form-field" style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 10px; letter-spacing: 0.16em; color: var(--sage); margin-bottom: 6px; text-transform: uppercase;">Team motto</label>
+            <input type="text" id="motto-input" value="Soft hands, salty attitude." />
+          </div>
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 10px; letter-spacing: 0.16em; color: var(--sage); margin-bottom: 6px; text-transform: uppercase;">Neighborhood</label>
+            <input type="text" id="hood-input" value="Manhattan" />
+          </div>
+          <button type="submit" class="btn btn-ghost" style="width: 100%;">Save changes</button>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div data-partial="footer"></div>
+
+  <script src="/js/partials.js"></script>
+  <script>
+    // ─── Sample roster data ───
+    let ROSTER = [
+      { name: 'James Nguyen', meta: 'CAPTAIN · MD', captain: true, monogram: 'JN', waiver: 'signed' },
+      { name: 'Maya Ávila', meta: 'WD / MXD', monogram: 'MA', waiver: 'signed' },
+      { name: 'Chris Park', meta: 'MD / MXD', monogram: 'CP', waiver: 'signed' },
+      { name: 'Hana Sato', meta: 'WD / MXD', monogram: 'HS', waiver: 'signed' },
+      { name: 'Tom Bradley', meta: 'MD', monogram: 'TB', waiver: 'pending' },
+      { name: 'Lily Chen', meta: 'WD / MXD', monogram: 'LC', waiver: 'pending' },
+    ];
+
+    function renderRoster() {
+      const html = ROSTER.map((p, i) => `
+        <div class="roster-item">
+          <div class="avatar avatar-sm">${p.monogram}</div>
+          <div>
+            <div class="name">${p.name}</div>
+            <div class="meta">${p.meta || 'PLAYER'}</div>
+          </div>
+          <span class="status ${p.waiver}">${p.waiver === 'signed' ? '✓ WAIVER' : 'WAIVER PENDING'}</span>
+          ${p.captain ? '' : `<span class="x" title="Remove" onclick="removePlayer(${i})">×</span>`}
+        </div>
+      `).join('');
+      document.getElementById('roster-list').innerHTML = html;
+
+      const signed = ROSTER.filter(p => p.waiver === 'signed').length;
+      document.getElementById('qs-roster').textContent = ROSTER.length;
+      document.getElementById('qs-waivers').textContent = `${signed} / ${ROSTER.length}`;
+    }
+
+    function addPlayer(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-player-name').value.trim();
+      const email = document.getElementById('new-player-email').value.trim();
+      if (!name || !email) return false;
+
+      const monogram = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+      ROSTER.push({ name, monogram, meta: 'PLAYER', waiver: 'pending' });
+
+      // POST to /api/captain (when wired)
+      // fetch('/api/captain', { method: 'POST', body: JSON.stringify({ action: 'add-player', name, email }) });
+
+      renderRoster();
+      document.getElementById('new-player-name').value = '';
+      document.getElementById('new-player-email').value = '';
+      return false;
+    }
+
+    function removePlayer(i) {
+      if (!confirm(`Remove ${ROSTER[i].name} from the roster?`)) return;
+      ROSTER.splice(i, 1);
+      renderRoster();
+    }
+
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Photo too large — please pick something under 5MB.');
         return;
       }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const upload = document.getElementById('photo-upload');
+        const empty = document.getElementById('photo-empty');
+        upload.style.background = `url('${ev.target.result}') center/cover no-repeat`;
+        empty.style.display = 'none';
+        upload.style.borderStyle = 'solid';
+        upload.style.borderColor = 'var(--gold)';
+      };
+      reader.readAsDataURL(file);
 
-      statusEl.innerHTML = `
-        <span class="text-soft" style="font-size: 13px;">${user.email}</span>
-        <button class="btn btn-sm" id="btn-logout">Logout</button>
-      `;
-      document.getElementById('btn-logout').onclick = signOut;
-      document.getElementById('not-authed').style.display = 'none';
-      document.getElementById('captain-app').style.display = 'block';
-      bootApp();
+      // POST to /api/captain (when wired)
+      // const fd = new FormData(); fd.append('photo', file);
+      // fetch('/api/captain?action=upload-photo', { method: 'POST', body: fd });
     }
 
-    onAuthChange(() => checkAuth());
-    checkAuth();
+    function submitScore(e) {
+      e.preventDefault();
+      alert('Score submitted. Awaiting confirmation from the other captain.');
+      e.target.reset();
+      return false;
+    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('btn-login');
-      if (btn) btn.onclick = () => openAuthModal();
-    });
+    function saveTeamInfo(e) {
+      e.preventDefault();
+      alert('Team info saved.');
+      return false;
+    }
 
-    let myTeam = null;
-    let myRoster = [];
-    let allTeams = [];
-    let myMatches = [];
+    function signOut() {
+      // Clear Supabase session (when wired)
+      // await supabase.auth.signOut();
+      document.getElementById('dash-state').classList.add('hide');
+      document.getElementById('login-state').classList.remove('hide');
+    }
 
-    async function bootApp() {
-      const target = document.getElementById('captain-app');
-      target.innerHTML = '<p class="text-mute" style="text-align: center; padding: 32px;">Loading your team...</p>';
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const errorEl = document.getElementById('login-error');
+      errorEl.classList.add('hide');
 
-      try {
-        const data = await captainFetch('my-team');
-        if (!data.team) {
-          const currentUser = await getCurrentUser();
-          target.innerHTML = `
-            <div class="card-coral">
-              <p class="eyebrow">No team found</p>
-              <p style="margin: 8px 0 0;">We couldn't find a team registered to <strong>${currentUser?.email || 'this account'}</strong>.</p>
-              <p style="margin: 8px 0 0; font-size: 13px;">If you registered with a different email, sign in with that one. Otherwise, <a href="/register.html" class="text-coral">register a team</a> or text Richard.</p>
-            </div>
-          `;
-          return;
-        }
-        myTeam = data.team;
-        myRoster = data.roster;
-
-        // Get matches for this team
-        const seasonData = await fetch(`/api/public-data?action=season-overview&seasonId=${myTeam.seasonId}`).then(r => r.json());
-        allTeams = seasonData.teams || [];
-        myMatches = (seasonData.matches || []).filter(m =>
-          m.homeTeamId === myTeam.id || m.awayTeamId === myTeam.id
-        );
-
-        render();
-      } catch (e) {
-        target.innerHTML = `<div class="card-coral"><p class="eyebrow">Error</p><p style="margin: 8px 0 0;">${e.message}</p></div>`;
+      // In production: send magic link via Supabase Auth
+      // const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/captain.html' } });
+      // For demo: just flip to dashboard
+      if (email.toLowerCase().includes('captain') || email.toLowerCase().includes('demo')) {
+        document.getElementById('login-state').classList.add('hide');
+        document.getElementById('dash-state').classList.remove('hide');
+      } else {
+        errorEl.textContent = 'Sign-in link sent. Check your email.';
+        errorEl.classList.remove('hide');
+        errorEl.style.background = 'rgba(232,181,66,0.12)';
+        errorEl.style.borderColor = 'rgba(232,181,66,0.4)';
       }
+      return false;
     }
 
-    function getTeamName(id) {
-      const t = allTeams.find(x => x.id === id);
-      return t?.name || 'TBD';
-    }
+    // ─── Init ───
+    renderRoster();
 
-    function render() {
-      const target = document.getElementById('captain-app');
-      const primary = myTeam.colors?.primary || '#D85A30';
-      const initials = myTeam.name.split(' ').map(w => w[0]).slice(0, 2).join('');
-
-      const upcoming = myMatches.filter(m => m.status === 'scheduled' || m.status === 'awaiting_confirmation');
-      const recent = myMatches.filter(m => m.status === 'final').slice(-3).reverse();
-
-      target.innerHTML = `
-        <!-- Team header -->
-        <div style="background: ${primary}; border-radius: var(--r-lg); padding: 28px; color: #fff; position: relative; overflow: hidden;">
-          <div class="flex items-center gap-16" style="flex-wrap: wrap;">
-            <div style="width: 64px; height: 64px; border-radius: var(--r-md); background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-style: italic; font-size: 24px; overflow: hidden;">
-              ${myTeam.logo ? `<img src="${myTeam.logo}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-md);"/>` : initials}
-            </div>
-            <div style="flex: 1;">
-              <p style="margin: 0; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.85;">Your team</p>
-              <h2 style="margin: 4px 0 0; font-family: var(--font-serif); font-size: 32px; font-weight: 500;">${myTeam.name}</h2>
-              ${myTeam.motto ? `<p style="margin: 4px 0 0; font-style: italic; opacity: 0.95; font-family: var(--font-serif);">"${myTeam.motto}"</p>` : ''}
-            </div>
-            <div class="flex gap-8">
-              <a href="/teams/${myTeam.slug}" class="btn btn-amber btn-sm" style="box-shadow: none;">View public page</a>
-              <span class="pill ${myTeam.paymentStatus === 'paid' ? 'pill-teal' : 'pill-live'}">${myTeam.paymentStatus}</span>
-            </div>
-          </div>
-        </div>
-
-        ${myTeam.paymentStatus !== 'paid' ? `
-          <div class="card-coral mt-16">
-            <p class="eyebrow">⚠ Payment required</p>
-            <p style="margin: 8px 0 0;">Your team isn't paid yet. Pay $450 via Zelle or Venmo to lock your spot. Payment details were included in your approval email — text Richard if you need them resent.</p>
-          </div>
-        ` : ''}
-
-        <div class="grid-2 mt-24" style="grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
-
-          <!-- Edit team -->
-          <div class="card">
-            <h3 class="h-section" style="font-size: 18px;">Edit team</h3>
-            <form id="team-form" class="mt-16">
-              <div class="field"><label>Name</label><input name="name" value="${myTeam.name}" required /></div>
-              <div class="field-row">
-                <div class="field"><label>Primary color</label><input type="color" name="primary" value="${myTeam.colors?.primary || '#D85A30'}" /></div>
-                <div class="field"><label>Secondary</label><input type="color" name="secondary" value="${myTeam.colors?.secondary || '#2C2C2A'}" /></div>
-              </div>
-              <div class="field"><label>Motto</label><input name="motto" value="${myTeam.motto || ''}" placeholder="We dink under stress" /></div>
-              <div class="field"><label>Neighborhood</label><input name="neighborhood" value="${myTeam.neighborhood || ''}" placeholder="Hermosa Beach" /></div>
-              <div class="field"><label>Logo URL</label><input name="logo" value="${myTeam.logo || ''}" placeholder="https://..." /></div>
-              <button class="btn btn-primary btn-sm">Save changes</button>
-            </form>
-          </div>
-
-          <!-- Roster -->
-          <div class="card">
-            <div class="flex justify-between items-center">
-              <h3 class="h-section" style="font-size: 18px;">Roster (${myRoster.length})</h3>
-            </div>
-
-            <div class="mt-16">
-              ${myRoster.length === 0 ? `<p class="text-mute" style="font-size: 13px;">No players on roster yet. Add them below.</p>` : myRoster.map(r => r.player ? `
-                <div class="flex items-center gap-12" style="padding: 8px 0; border-bottom: 0.5px solid var(--c-rule);">
-                  <div style="width: 32px; height: 32px; border-radius: 50%; background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; overflow: hidden;">
-                    ${r.player.headshot ? `<img src="${r.player.headshot}" style="width: 100%; height: 100%; object-fit: cover;"/>` : r.player.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
-                  </div>
-                  <div style="flex: 1;">
-                    <p style="margin: 0; font-size: 13px; font-weight: 500;">${r.player.name}${r.player.nickname ? ` <span style="color: var(--c-ink-mute); font-weight: 400;">"${r.player.nickname}"</span>` : ''}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
-                    <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${[r.player.email, r.player.phone, r.player.sex, r.player.city].filter(Boolean).join(' · ') || 'no details'}</p>
-                  </div>
-                  ${r.role !== 'captain' ? `<button class="btn btn-sm" data-remove="${r.player.id}" style="font-size: 11px; padding: 4px 8px; box-shadow: none; background: transparent; color: var(--c-coral);">Remove</button>` : ''}
-                </div>
-              ` : '').join('')}
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Add players — inline spreadsheet -->
-        <div class="card mt-24">
-          <h3 class="h-section" style="font-size: 18px;">Add players</h3>
-          <p class="text-mute" style="font-size: 12px; margin-top: 4px;">Fill in one row per player. First and last name are required — everything else is optional. Hit "Save all" when done.</p>
-
-          <div style="overflow-x: auto; margin-top: 16px;">
-            <table id="roster-table" style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 820px;">
-              <thead>
-                <tr style="background: var(--c-teal-dark); color: #fff; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em;">
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">#</th>
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">First Name *</th>
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Last Name *</th>
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Nickname</th>
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Email</th>
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Phone</th>
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">Sex</th>
-                  <th style="padding: 8px 6px; text-align: left; font-weight: 600;">City</th>
-                  <th style="padding: 8px 6px; width: 36px;"></th>
-                </tr>
-              </thead>
-              <tbody id="roster-rows">
-              </tbody>
-            </table>
-          </div>
-
-          <div class="flex gap-8 mt-16" style="flex-wrap: wrap;">
-            <button id="add-row-btn" class="btn btn-sm" style="background: var(--c-cream); box-shadow: none; color: var(--c-ink);">+ Add row</button>
-            <button id="save-roster-btn" class="btn btn-primary btn-sm">Save all players</button>
-            <span id="roster-save-status" style="font-size: 12px; color: var(--c-teal); align-self: center;"></span>
-          </div>
-        </div>
-
-        <!-- Matches & score entry -->
-        <div class="card mt-24">
-          <h3 class="h-section" style="font-size: 18px;">Upcoming matches</h3>
-          ${upcoming.length === 0 ? `<p class="text-mute mt-16" style="font-size: 13px;">No upcoming matches.</p>` : `
-            <div class="mt-16">
-              ${upcoming.map(m => {
-                const oppId = m.homeTeamId === myTeam.id ? m.awayTeamId : m.homeTeamId;
-                const isHome = m.homeTeamId === myTeam.id;
-                return `
-                  <div style="padding: 16px 0; border-bottom: 0.5px solid var(--c-rule);">
-                    <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 12px;">
-                      <div>
-                        <p style="margin: 0; font-size: 14px; font-weight: 500;">Wk ${m.week} · ${isHome ? 'vs' : '@'} ${getTeamName(oppId)}</p>
-                        <p style="margin: 4px 0 0; font-size: 12px; color: var(--c-ink-mute);">${fmtDate(m.date)} ${m.court ? `· ${m.court}` : ''} ${m.isRivalry ? '· ⚔' : ''}</p>
-                      </div>
-                      <button class="btn btn-amber btn-sm" data-score-match="${m.id}">${m.status === 'awaiting_confirmation' ? 'Confirm score' : 'Submit score'}</button>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          `}
-        </div>
-
-        ${recent.length > 0 ? `
-          <div class="card mt-16">
-            <h3 class="h-section" style="font-size: 18px;">Recent results</h3>
-            <div class="mt-16">
-              ${recent.map(m => {
-                const oppId = m.homeTeamId === myTeam.id ? m.awayTeamId : m.homeTeamId;
-                const isHome = m.homeTeamId === myTeam.id;
-                let myW = 0, oppW = 0;
-                for (const g of m.finalScore.games) {
-                  const myPts = isHome ? g.home : g.away;
-                  const oppPts = isHome ? g.away : g.home;
-                  if (myPts > oppPts) myW++; else oppW++;
-                }
-                const won = myW > oppW;
-                return `
-                  <div class="flex justify-between items-center" style="padding: 8px 0; border-bottom: 0.5px solid var(--c-rule);">
-                    <div>
-                      <p style="margin: 0; font-size: 13px;">${isHome ? 'vs' : '@'} ${getTeamName(oppId)} — ${m.finalScore.games.map(g => `${g.home}-${g.away}`).join(', ')}</p>
-                      <p style="margin: 4px 0 0; font-size: 11px; color: var(--c-ink-mute);">${fmtDate(m.date)}</p>
-                    </div>
-                    <span style="font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--r-pill); ${won ? 'background: #EAF3DE; color: #3B6D11;' : 'background: #FCEBEB; color: #A32D2D;'}">${won ? 'W' : 'L'}</span>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        <!-- Score entry modal -->
-        <div id="score-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-          <div class="card" style="max-width: 480px; width: 90%; padding: 28px;">
-            <h3 class="h-section" style="font-size: 20px;">Submit match score</h3>
-            <p class="text-mute mt-8" style="font-size: 12px;">Both captains must enter matching scores. If you and the opposing captain disagree, the match is flagged as disputed and an admin will resolve.</p>
-            <form id="score-form" class="mt-16">
-              <input type="hidden" name="matchId" />
-              <div id="score-game-rows"></div>
-              <div class="field"><label>Notes (optional)</label><textarea name="notes" rows="2" placeholder="Anything notable..."></textarea></div>
-              <div class="flex gap-8 mt-16">
-                <button type="button" id="cancel-score" class="btn btn-sm" style="background: transparent; box-shadow: none; color: var(--c-ink-soft);">Cancel</button>
-                <button class="btn btn-primary btn-sm">Submit</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-      `;
-
-      wireUp();
-    }
-
-    function wireUp() {
-      // Save team
-      document.getElementById('team-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = Object.fromEntries(new FormData(e.target));
-        const patch = {
-          name: fd.name,
-          colors: { primary: fd.primary, secondary: fd.secondary },
-          motto: fd.motto,
-          neighborhood: fd.neighborhood,
-          logo: fd.logo || null,
-        };
-        await captainFetch('update-team', { id: myTeam.id, patch });
-        await bootApp();
-      };
-
-      // Remove player
-      document.querySelectorAll('[data-remove]').forEach(btn => {
-        btn.onclick = async () => {
-          if (!confirm('Remove this player from your roster?')) return;
-          await captainFetch('remove-player', { teamId: myTeam.id, playerId: btn.dataset.remove });
-          await bootApp();
-        };
-      });
-
-      // ─── Roster spreadsheet ───
-      let rowCount = 0;
-      const inputStyle = 'width: 100%; padding: 5px 6px; border: 1px solid var(--c-rule-strong); border-radius: var(--r-sm); font-size: 12px; font-family: var(--font-sans); background: var(--c-paper);';
-
-      function addRow() {
-        rowCount++;
-        const tbody = document.getElementById('roster-rows');
-        const tr = document.createElement('tr');
-        tr.dataset.row = rowCount;
-        tr.style.borderBottom = '0.5px solid var(--c-rule)';
-        const altBg = rowCount % 2 === 0 ? 'background: var(--c-cream);' : '';
-        tr.innerHTML = `
-          <td style="padding: 4px 6px; color: var(--c-ink-mute); font-size: 11px; ${altBg}">${rowCount}</td>
-          <td style="padding: 4px 4px; ${altBg}"><input name="firstName" style="${inputStyle}" placeholder="First" /></td>
-          <td style="padding: 4px 4px; ${altBg}"><input name="lastName" style="${inputStyle}" placeholder="Last" /></td>
-          <td style="padding: 4px 4px; ${altBg}"><input name="nickname" style="${inputStyle}" placeholder="Nickname" /></td>
-          <td style="padding: 4px 4px; ${altBg}"><input name="email" type="email" style="${inputStyle}" placeholder="email@..." /></td>
-          <td style="padding: 4px 4px; ${altBg}"><input name="phone" style="${inputStyle}" placeholder="(310)..." /></td>
-          <td style="padding: 4px 4px; ${altBg}">
-            <select name="sex" style="${inputStyle}">
-              <option value="">—</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </td>
-          <td style="padding: 4px 4px; ${altBg}"><input name="city" style="${inputStyle}" placeholder="City" /></td>
-          <td style="padding: 4px 4px; ${altBg}"><button type="button" class="remove-row" style="background: none; border: none; cursor: pointer; color: var(--c-coral); font-size: 16px; padding: 2px;" title="Remove row">×</button></td>
-        `;
-        tbody.appendChild(tr);
-        tr.querySelector('.remove-row').onclick = () => { tr.remove(); };
-        // Focus the first input of the new row
-        tr.querySelector('input[name="firstName"]').focus();
-      }
-
-      // Start with 4 blank rows
-      for (let i = 0; i < 4; i++) addRow();
-
-      document.getElementById('add-row-btn').onclick = addRow;
-
-      document.getElementById('save-roster-btn').onclick = async () => {
-        const rows = document.querySelectorAll('#roster-rows tr');
-        const playersToAdd = [];
-        for (const row of rows) {
-          const firstName = row.querySelector('input[name="firstName"]')?.value.trim();
-          const lastName = row.querySelector('input[name="lastName"]')?.value.trim();
-          if (!firstName || !lastName) continue;
-          playersToAdd.push({
-            firstName,
-            lastName,
-            nickname: row.querySelector('input[name="nickname"]')?.value.trim() || '',
-            email: row.querySelector('input[name="email"]')?.value.trim() || '',
-            phone: row.querySelector('input[name="phone"]')?.value.trim() || '',
-            sex: row.querySelector('select[name="sex"]')?.value || '',
-            city: row.querySelector('input[name="city"]')?.value.trim() || '',
-          });
-        }
-        if (playersToAdd.length === 0) {
-          alert('Fill in at least one player (first + last name required).');
-          return;
-        }
-        const btn = document.getElementById('save-roster-btn');
-        const statusEl = document.getElementById('roster-save-status');
-        btn.disabled = true;
-        btn.textContent = 'Saving...';
-        statusEl.textContent = '';
-        try {
-          const result = await captainFetch('add-players-bulk', { teamId: myTeam.id, players: playersToAdd });
-          statusEl.textContent = `✓ ${result.count} player${result.count === 1 ? '' : 's'} added`;
-          setTimeout(() => bootApp(), 800);
-        } catch (err) {
-          statusEl.style.color = 'var(--c-coral)';
-          statusEl.textContent = 'Error: ' + err.message;
-          btn.disabled = false;
-          btn.textContent = 'Save all players';
-        }
-      };
-
-      // Score entry modal
-      document.querySelectorAll('[data-score-match]').forEach(btn => {
-        btn.onclick = () => openScoreModal(btn.dataset.scoreMatch);
-      });
-      document.getElementById('cancel-score').onclick = () => {
-        document.getElementById('score-modal').style.display = 'none';
-      };
-      document.getElementById('score-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        const games = [];
-        for (let i = 1; i <= 3; i++) {
-          const home = fd.get(`g${i}home`);
-          const away = fd.get(`g${i}away`);
-          if (home && away) games.push({ home: Number(home), away: Number(away) });
-        }
-        if (games.length < 2) {
-          alert('Enter at least 2 games.');
-          return;
-        }
-        const result = await captainFetch('submit-score', {
-          matchId: fd.get('matchId'),
-          teamId: myTeam.id,
-          games,
-          notes: fd.get('notes'),
-        });
-        document.getElementById('score-modal').style.display = 'none';
-        if (result.confirmed) alert('Score confirmed! Both captains agree. Match is final.');
-        else if (result.disputed) alert('⚠ Score disputed. Your entry doesn\'t match the other captain\'s. An admin will resolve.');
-        else alert('Score submitted. Waiting for the other captain to confirm.');
-        await bootApp();
-      };
-    }
-
-    function openScoreModal(matchId) {
-      const match = myMatches.find(m => m.id === matchId);
-      const oppId = match.homeTeamId === myTeam.id ? match.awayTeamId : match.homeTeamId;
-      const isHome = match.homeTeamId === myTeam.id;
-
-      const homeName = isHome ? myTeam.name : getTeamName(oppId);
-      const awayName = isHome ? getTeamName(oppId) : myTeam.name;
-
-      document.querySelector('#score-form input[name="matchId"]').value = matchId;
-      document.getElementById('score-game-rows').innerHTML = `
-        <p class="text-mute" style="font-size: 12px; margin-bottom: 12px;">Enter scores for each game (best of 3). Format: ${homeName} (home) vs ${awayName}.</p>
-        ${[1,2,3].map(n => `
-          <div class="field">
-            <label>Game ${n}${n === 3 ? ' (only if needed)' : ''}</label>
-            <div class="flex gap-8">
-              <input type="number" name="g${n}home" placeholder="${homeName}" style="flex: 1;" min="0" />
-              <span style="align-self: center; color: var(--c-ink-mute);">—</span>
-              <input type="number" name="g${n}away" placeholder="${awayName}" style="flex: 1;" min="0" />
-            </div>
-          </div>
-        `).join('')}
-      `;
-      document.getElementById('score-modal').style.display = 'flex';
+    // Auto-show dashboard if URL has ?demo=1 (handy for development)
+    if (new URLSearchParams(location.search).get('demo') === '1') {
+      document.getElementById('login-state').classList.add('hide');
+      document.getElementById('dash-state').classList.remove('hide');
     }
   </script>
 </body>

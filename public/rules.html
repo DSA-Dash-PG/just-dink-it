@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rules — The Dink Society</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .rules-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      margin-bottom: 24px;
+    }
+    .rules-section {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+      padding: 22px 24px;
+    }
+    .rules-section h3 {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .rules-section h3 .icon {
+      width: 6px; height: 6px; background: var(--gold);
+    }
+    .rules-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .rules-section li {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--cream);
+      padding: 6px 0 6px 18px;
+      position: relative;
+      border-bottom: 1px solid rgba(245,235,212,0.05);
+    }
+    .rules-section li:last-child { border-bottom: none; }
+    .rules-section li::before {
+      content: '';
+      position: absolute; left: 0; top: 14px;
+      width: 6px; height: 1px; background: var(--gold);
+    }
+    .rules-section li strong { color: var(--gold); font-weight: 500; }
+
+    .point-block {
+      background: linear-gradient(135deg, rgba(232,181,66,0.12) 0%, rgba(232,181,66,0.03) 100%);
+      border: 1px solid rgba(232,181,66,0.3);
+      padding: 28px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 24px;
+    }
+    .point-block h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .point-block p { font-size: 13px; color: var(--cream); line-height: 1.6; margin-bottom: 18px; max-width: 520px; }
+    .point-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    }
+    .point-cell {
+      background: rgba(13,59,64,0.5);
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      text-align: left;
+    }
+    .point-cell .lbl {
+      font-size: 9px; letter-spacing: 0.2em; color: var(--sage);
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .point-cell .num { font-size: 26px; font-weight: 500; line-height: 1; color: var(--cream); }
+    .point-cell .num.gold { color: var(--gold); }
+    .point-cell .sub { font-size: 10px; color: var(--sage); margin-top: 4px; }
+
+    .composite-formula {
+      background: rgba(13,59,64,0.6);
+      padding: 18px 22px;
+      border-radius: var(--radius-sm);
+      font-family: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 13px;
+      color: var(--gold);
+      margin-bottom: 14px;
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 800px) {
+      .rules-grid { grid-template-columns: 1fr; }
+      .point-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-page="rules">
+  <div data-partial="nav"></div>
+  <div data-partial="ticker"></div>
+
+  <header class="page-header">
+    <span class="kicker">League Rules · Summer 2026</span>
+    <h1 class="h1">How it all works.</h1>
+    <p class="lede" style="margin-bottom: 28px;">
+      Six teams, seven weeks, doubles round robin. Below is everything you need to know — roster, format, scoring, etiquette, and the Society Circuit prize.
+    </p>
+  </header>
+
+  <section class="container">
+
+    <div class="point-block">
+      <span class="kicker" style="display: block; margin-bottom: 8px;">Society Circuit · Year-end prize</span>
+      <h2>Every league counts toward one cup.</h2>
+      <p>Players earn Society Circuit points across every league they play in. Top of the Circuit at year-end takes the Society Champion title — paddle, cash, and bragging rights for a year.</p>
+      <div class="point-grid">
+        <div class="point-cell"><div class="lbl">League win</div><div class="num gold">100</div><div class="sub">points</div></div>
+        <div class="point-cell"><div class="lbl">Finalist</div><div class="num">75</div><div class="sub">points</div></div>
+        <div class="point-cell"><div class="lbl">3rd place</div><div class="num">50</div><div class="sub">points</div></div>
+        <div class="point-cell"><div class="lbl">4th place</div><div class="num">30</div><div class="sub">points</div></div>
+        <div class="point-cell"><div class="lbl">5th–8th</div><div class="num">15</div><div class="sub">points</div></div>
+        <div class="point-cell"><div class="lbl">Player of week</div><div class="num">+10</div><div class="sub">per week</div></div>
+        <div class="point-cell"><div class="lbl">Format MVP</div><div class="num">+25</div><div class="sub">bonus</div></div>
+        <div class="point-cell"><div class="lbl">Undefeated</div><div class="num">+50</div><div class="sub">bonus</div></div>
+      </div>
+    </div>
+
+    <div class="rules-grid">
+
+      <div class="rules-section">
+        <h3><span class="icon"></span>Team Rosters</h3>
+        <ul>
+          <li>League fee is due at registration to confirm your team's spot.</li>
+          <li>Final rosters due <strong>one week prior</strong> to the first game.</li>
+          <li>Players must be at least <strong>18 years of age</strong>.</li>
+          <li>Captains are responsible for collecting waivers, rosters, and payment.</li>
+          <li>Minimum <strong>4 players</strong> per match; max <strong>8 per day</strong>.</li>
+          <li>Maximum <strong>12 rostered players</strong> per team.</li>
+          <li>Only rostered players may compete.</li>
+        </ul>
+      </div>
+
+      <div class="rules-section">
+        <h3><span class="icon"></span>League Format</h3>
+        <ul>
+          <li>Doubles round-robin format.</li>
+          <li>Each match has rounds in mixed formats: <strong>WD, MD, MXD</strong>.</li>
+          <li>Five round-robin weeks → one rivalry week → one championship week.</li>
+          <li>Top 2 teams play for <strong>gold</strong> at Week 7.</li>
+          <li>Weekly standings updates after every match.</li>
+        </ul>
+      </div>
+
+      <div class="rules-section">
+        <h3><span class="icon"></span>Match Day Rules</h3>
+        <ul>
+          <li>Check in <strong>30 minutes</strong> prior to start.</li>
+          <li>Exchange lineups <strong>10 minutes</strong> prior to play.</li>
+          <li>Games to <strong>11, win by 1</strong>.</li>
+          <li>10-minute grace period for the first game.</li>
+          <li>Rotate partners each game — only play with same partner once per round.</li>
+          <li>Max <strong>3 games per player</strong>.</li>
+          <li>Non-rostered player = <strong>automatic forfeit</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="rules-section">
+        <h3><span class="icon"></span>Match Scoring</h3>
+        <ul>
+          <li><strong>2 points = win</strong> · 1 point = tie · 0 points = loss.</li>
+          <li>Max <strong>4 match points</strong> per match (2 rounds × 2 max).</li>
+          <li>Top 4 teams advance to playoffs after Week 6.</li>
+          <li>Tiebreakers: <strong>PTS → GW → PS → DIFF</strong>.</li>
+          <li>(Match points → Games won → Points scored → Differential.)</li>
+        </ul>
+      </div>
+
+      <div class="rules-section">
+        <h3><span class="icon"></span>Officiating</h3>
+        <ul>
+          <li>Self-regulated games.</li>
+          <li>Sideline players may <strong>NOT</strong> make calls or coach during play.</li>
+          <li>Kitchen line foot faults: 1st call = warning; 2nd = point lost.</li>
+          <li>Scores submitted by both captains. If they disagree, the league reviews.</li>
+        </ul>
+      </div>
+
+      <div class="rules-section">
+        <h3><span class="icon"></span>Etiquette</h3>
+        <ul>
+          <li>Fun, friendly competition for those that love the game.</li>
+          <li>Swearing, negative taunting, or poor sportsmanship is <strong>not tolerated</strong>.</li>
+          <li>Cheer good play — yours or theirs.</li>
+          <li>Stay after if you can. The post-match hang is the league.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="point-block" style="background: rgba(245,235,212,0.04); border-color: rgba(245,235,212,0.1);">
+      <span class="kicker" style="display: block; margin-bottom: 8px;">The Composite Score</span>
+      <h2>How we rank players individually.</h2>
+      <p>The Composite is a 0–100 score that balances winning consistently, dominating when you do, and showing up. It's the default sort on the Leaderboard's League tab.</p>
+      <div class="composite-formula">Composite = (Win % × 40) + (Avg margin ÷ 2) + (Games won × 1.5)</div>
+      <p style="margin-bottom: 0; max-width: 520px; font-size: 12px; color: var(--sage);">
+        Example: 10–2 record (.833), +42 differential across 12 games, 18 games won. Composite = (.833 × 40) + (3.5 × 24 ÷ 12 ÷ 2) + (18 × 1.5) ≈ 92.
+      </p>
+    </div>
+
+  </section>
+
+  <div data-partial="footer"></div>
+
+  <script src="/js/partials.js"></script>
+</body>
+</html>

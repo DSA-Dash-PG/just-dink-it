@@ -3,112 +3,227 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Teams — Just Dink It</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/style.css" />
+  <title>Teams — The Dink Society</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .teams-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    .team-card {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.2s var(--ease), border-color 0.2s var(--ease);
+    }
+    .team-card:hover { transform: translateY(-2px); border-color: rgba(232,181,66,0.3); }
+    .team-card.featured {
+      background: rgba(232,181,66,0.08);
+      border-color: rgba(232,181,66,0.35);
+    }
+
+    .team-photo {
+      aspect-ratio: 4 / 3;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      overflow: hidden;
+    }
+    /* Background gradient slot — replaced by team photo when uploaded */
+    .team-photo .bg-gradient {
+      position: absolute; inset: 0;
+      z-index: 0;
+    }
+    .team-photo .monogram {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 64px; font-weight: 500; letter-spacing: -0.04em;
+      color: rgba(245,235,212,0.13);
+      z-index: 1;
+    }
+    .team-photo.featured-photo .monogram { color: rgba(13,59,64,0.2); }
+    .team-photo .badge {
+      position: absolute;
+      top: 12px; left: 12px;
+      background: rgba(245,235,212,0.9);
+      color: var(--teal-900);
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      border-radius: var(--radius-sm);
+      z-index: 2;
+    }
+    .team-photo .badge-gold {
+      background: rgba(232,181,66,0.95);
+      color: var(--teal-900);
+    }
+    .team-photo .featured-stripe {
+      position: absolute;
+      top: -1px; right: -1px;
+      background: var(--gold);
+      color: var(--teal-900);
+      padding: 6px 14px;
+      font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
+      z-index: 3;
+    }
+    .team-photo .meta {
+      position: relative; z-index: 2;
+    }
+    .team-photo .meta .neighborhood {
+      font-size: 10px; letter-spacing: 0.14em; color: var(--sage); margin-bottom: 2px;
+    }
+    .team-photo .meta .name {
+      font-size: 21px; font-weight: 500; line-height: 1; color: var(--cream);
+    }
+    .team-photo.featured-photo .meta .neighborhood { color: rgba(13,59,64,0.7); }
+    .team-photo.featured-photo .meta .name { color: var(--teal-900); }
+
+    .team-card-body { padding: 14px 16px; }
+    .team-motto {
+      font-size: 12px; font-style: italic; color: var(--sage);
+      line-height: 1.5; margin-bottom: 10px;
+    }
+    .team-stats {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--sage-300);
+      letter-spacing: 0.1em;
+      border-top: 1px solid rgba(245,235,212,0.08);
+      padding-top: 10px;
+    }
+    .team-stats .record { color: var(--cream); }
+    .team-stats .record.gold { color: var(--gold); }
+
+    .upload-note {
+      padding: 0 var(--gutter) 28px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 11px; letter-spacing: 0.14em; color: var(--sage-300);
+    }
+    .upload-note .dot { width: 5px; height: 5px; background: var(--gold); }
+
+    @media (max-width: 900px) {
+      .teams-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 540px) {
+      .teams-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
-<body>
-  <div id="header"></div>
+<body data-page="teams">
+  <div data-partial="nav"></div>
+  <div data-partial="ticker"></div>
 
-  <section style="padding: 48px 0;">
-    <div class="container">
-      <p class="eyebrow">The lineup</p>
-      <h1 class="h-display" style="font-size: 44px; margin-top: 6px;">Twelve teams. <em>One champion.</em></h1>
-      <p class="text-soft" style="margin-top: 12px; font-size: 14px;">Click any team to see their roster, schedule, and results.</p>
+  <header class="page-header">
+    <span class="kicker">Summer 2026 · Six Teams</span>
+    <h1 class="h1">Meet the table.</h1>
+    <p class="lede" style="margin-bottom: 28px;">
+      Six teams, Tuesdays at 6:30pm, from the South Bay to the Eastside. Every team plays every other team once before rivalry week and the cup.
+    </p>
+  </header>
 
-      <div id="teams-content" class="mt-32">
-        <p class="text-mute" style="text-align: center; padding: 32px;">Loading teams...</p>
-      </div>
-    </div>
+  <section class="container" style="padding-bottom: 12px;">
+    <div class="teams-grid" id="teams-grid"><!-- rendered by JS --></div>
   </section>
 
-  <div id="footer"></div>
+  <div class="upload-note container">
+    <span class="dot"></span>
+    <span>Captains: upload a team photo from your captain dashboard — it replaces the monogram.</span>
+  </div>
 
-  <script type="module">
-    import { mountChrome, apiGet } from '/js/shared.js';
-    mountChrome('teams');
+  <div data-partial="footer"></div>
 
-    async function load() {
-      try {
-        const data = await apiGet('public-data?action=season-overview');
-        render(data);
-      } catch (e) {
-        document.getElementById('teams-content').innerHTML =
-          '<p class="text-mute" style="text-align: center; padding: 32px;">Season not yet configured.</p>';
-      }
-    }
+  <script src="/js/partials.js"></script>
+  <script>
+    // ─── Sample team data — wire to /api/public-data when ready ───
+    const TEAMS = [
+      {
+        slug: 'pier-pressure', name: 'Pier Pressure', monogram: 'PP',
+        neighborhood: 'HERMOSA · SOUTH BAY', captain: 'M. Ramirez',
+        record: '3W 0T 1L', rank: 2, points: 6, motto: 'We dink under stress.',
+        bgGradient: 'linear-gradient(135deg, #1A5560 0%, #0D3B40 60%, #082227 100%)',
+        photo: null
+      },
+      {
+        slug: 'salty-servers', name: 'Salty Servers', monogram: 'SS',
+        neighborhood: 'MANHATTAN · SOUTH BAY', captain: 'J. Nguyen',
+        record: '4W 0T 0L', rank: 1, points: 8, motto: 'Soft hands, salty attitude.',
+        bgGradient: 'linear-gradient(135deg, #E8B542 0%, #A47A0E 55%, #0D3B40 100%)',
+        photo: null, featured: true
+      },
+      {
+        slug: 'kitchen-sink', name: 'The Kitchen Sink', monogram: 'KS',
+        neighborhood: 'REDONDO · SOUTH BAY', captain: 'A. Patel',
+        record: '2W 0T 2L', rank: 3, points: 4, motto: 'Everything but the win.',
+        bgGradient: 'linear-gradient(135deg, #2A4158 0%, #0D3B40 55%, #082227 100%)',
+        photo: null
+      },
+      {
+        slug: 'dinks-and-drinks', name: 'Dinks & Drinks', monogram: 'DD',
+        neighborhood: 'TORRANCE', captain: 'R. Thompson',
+        record: '1W 1T 2L', rank: 4, points: 3, motto: 'Beer league, A+ effort.',
+        bgGradient: 'linear-gradient(135deg, #4A5B3E 0%, #2C3E2E 55%, #0D3B40 100%)',
+        photo: null
+      },
+      {
+        slug: 'net-profits', name: 'Net Profits', monogram: 'NP',
+        neighborhood: 'PALOS VERDES', captain: 'D. Kim',
+        record: '1W 0T 3L', rank: 5, points: 2, motto: 'Always in the green.',
+        bgGradient: 'linear-gradient(135deg, #6B3F52 0%, #3E2638 55%, #0D3B40 100%)',
+        photo: null
+      },
+      {
+        slug: 'smash-brothers', name: 'Smash Brothers', monogram: 'SB',
+        neighborhood: 'HERMOSA · SOUTH BAY', captain: 'T. Walsh',
+        record: '0W 1T 3L', rank: 6, points: 1, motto: 'Less dink, more smash.',
+        bgGradient: 'linear-gradient(135deg, #3D3A5A 0%, #23223E 55%, #0D3B40 100%)',
+        photo: null
+      },
+    ];
 
-    function render(data) {
-      const target = document.getElementById('teams-content');
-      if (!data.divisions || data.divisions.length === 0) {
-        target.innerHTML = '<p class="text-mute" style="text-align: center; padding: 32px;">No divisions yet.</p>';
-        return;
-      }
+    function renderTeams() {
+      const grid = document.getElementById('teams-grid');
+      const html = TEAMS.map(t => {
+        const featuredCard = t.featured ? 'featured' : '';
+        const featuredPhoto = t.featured ? 'featured-photo' : '';
+        const badgeHTML = t.featured
+          ? `<div class="featured-stripe">#${t.rank} · UNDEFEATED</div>`
+          : `<div class="badge ${t.rank <= 2 ? 'badge-gold' : ''}">#${t.rank} · ${t.points} PT${t.points === 1 ? '' : 'S'}</div>`;
 
-      const standings = data.standings || [];
-      const standingMap = Object.fromEntries(standings.map(s => [s.teamId, s]));
+        const photoBG = t.photo
+          ? `<div class="bg-gradient" style="background: url('${t.photo}') center/cover no-repeat;"></div>`
+          : `<div class="bg-gradient" style="background: ${t.bgGradient};"></div><div class="monogram">${t.monogram}</div>`;
 
-      target.innerHTML = data.divisions.map(div => {
-        const divTeams = (data.teams || []).filter(t => t.divisionId === div.id);
-        const remaining = Math.max(0, div.capacity - divTeams.length);
-
-        // Sort by standings if available
-        divTeams.sort((a, b) => {
-          const sA = standingMap[a.id];
-          const sB = standingMap[b.id];
-          if (sA && sB) return sB.winPct - sA.winPct;
-          return a.name.localeCompare(b.name);
-        });
+        const recordClass = (t.rank === 1) ? 'gold' : '';
 
         return `
-          <div class="mb-32">
-            <div class="flex justify-between items-center mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--c-rule);">
-              <div>
-                <p class="eyebrow eyebrow-amber">Division</p>
-                <h2 style="margin: 4px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 28px; color: var(--c-teal-dark);">${div.name}</h2>
+          <a href="/team.html?slug=${t.slug}" class="team-card ${featuredCard}">
+            <div class="team-photo ${featuredPhoto}">
+              ${photoBG}
+              ${badgeHTML}
+              <div class="meta">
+                <div class="neighborhood">${t.neighborhood}</div>
+                <div class="name">${t.name}</div>
               </div>
-              <p class="text-mute" style="font-size: 13px;">${divTeams.length} of ${div.capacity} teams</p>
             </div>
-
-            <div class="grid-3">
-              ${divTeams.map(team => {
-                const s = standingMap[team.id];
-                const record = s ? `${s.wins}–${s.losses}` : '0–0';
-                const primary = team.colors?.primary || '#D85A30';
-                return `
-                  <a href="/teams/${team.slug}" class="card" style="text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; padding: 18px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='var(--shadow-soft)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                    <div class="flex items-center gap-12">
-                      <div style="width: 44px; height: 44px; border-radius: var(--r-md); background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500; overflow: hidden; flex-shrink: 0;">
-                        ${team.logo ? `<img src="${team.logo}" style="width: 100%; height: 100%; object-fit: cover;"/>` : team.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
-                      </div>
-                      <div style="flex: 1; min-width: 0;">
-                        <p class="h-card" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${team.name}</p>
-                        <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${team.neighborhood || 'South Bay'}</p>
-                      </div>
-                      <div style="text-align: right;">
-                        <p class="serif-num" style="font-size: 18px;">${record}</p>
-                      </div>
-                    </div>
-                    ${team.motto ? `<p style="margin: 12px 0 0; font-size: 12px; color: var(--c-ink-mute); font-family: var(--font-serif); font-style: italic;">"${team.motto}"</p>` : ''}
-                  </a>
-                `;
-              }).join('')}
-
-              ${Array.from({length: remaining}).map(() => `
-                <a href="/register.html" style="background: var(--c-coral-light); border: 1.5px dashed var(--c-coral); border-radius: var(--r-lg); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 92px; text-decoration: none;">
-                  <p style="margin: 0; font-size: 13px; font-weight: 500; color: var(--c-coral-dark);">Open spot</p>
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--c-coral-dark);">Register a team →</p>
-                </a>
-              `).join('')}
+            <div class="team-card-body">
+              <div class="team-motto">"${t.motto}"</div>
+              <div class="team-stats">
+                <span>CAPT · ${t.captain}</span>
+                <span class="record ${recordClass}">${t.record}</span>
+              </div>
             </div>
-          </div>
+          </a>
         `;
       }).join('');
+      grid.innerHTML = html;
     }
 
-    load();
+    renderTeams();
   </script>
 </body>
 </html>

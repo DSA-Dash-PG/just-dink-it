@@ -3,217 +3,307 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Team — Just Dink It</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/style.css" />
-</head>
-<body>
-  <div id="header"></div>
+  <title>Team — The Dink Society</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .team-hero {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 32px var(--gutter) 16px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .team-hero-photo {
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius-sm);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      padding: 24px;
+    }
+    .team-hero-photo .bg { position: absolute; inset: 0; z-index: 0; }
+    .team-hero-photo .monogram {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 140px; font-weight: 500; letter-spacing: -0.05em;
+      color: rgba(245,235,212,0.13);
+      z-index: 1;
+    }
+    .team-hero-photo.featured .monogram { color: rgba(13,59,64,0.18); }
+    .team-hero-photo .meta { position: relative; z-index: 2; }
+    .team-hero-photo .neighborhood {
+      font-size: 11px; letter-spacing: 0.18em; color: var(--sage); margin-bottom: 4px;
+    }
+    .team-hero-photo.featured .neighborhood { color: rgba(13,59,64,0.7); }
+    .team-hero-photo .name {
+      font-size: 38px; font-weight: 500; letter-spacing: -0.02em; line-height: 1;
+      color: var(--cream);
+    }
+    .team-hero-photo.featured .name { color: var(--teal-900); }
+    .team-hero-photo .badge {
+      position: absolute; top: 16px; left: 16px;
+      background: rgba(245,235,212,0.92);
+      color: var(--teal-900);
+      padding: 5px 12px;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.14em;
+      border-radius: var(--radius-sm);
+      z-index: 3;
+    }
+    .team-hero-photo .badge.gold { background: var(--gold); }
 
-  <div id="team-content" style="padding: 56px 0;">
-    <div class="container">
-      <p class="text-mute" style="text-align: center;">Loading team...</p>
-    </div>
+    .team-hero-info { display: flex; flex-direction: column; gap: 14px; justify-content: space-between; }
+    .team-hero-info .motto {
+      font-size: 18px; font-style: italic; color: var(--gold);
+      line-height: 1.4;
+    }
+    .team-hero-info .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .team-hero-info .stat-box {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+    }
+    .team-hero-info .stat-box .num { font-size: 26px; font-weight: 500; line-height: 1; color: var(--cream); }
+    .team-hero-info .stat-box .num.gold { color: var(--gold); }
+    .team-hero-info .stat-box .lbl { font-size: 9px; letter-spacing: 0.18em; color: var(--sage); margin-top: 6px; text-transform: uppercase; }
+
+    .team-hero-info .captain-row {
+      padding: 14px 16px;
+      background: rgba(232,181,66,0.08);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .team-hero-info .captain-row .lbl {
+      font-size: 9px; letter-spacing: 0.2em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 2px;
+    }
+    .team-hero-info .captain-row .name { font-size: 14px; font-weight: 500; }
+
+    .team-section {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 16px var(--gutter);
+    }
+    .team-section h2 {
+      font-size: 11px; letter-spacing: 0.22em; color: var(--gold);
+      margin-bottom: 16px; text-transform: uppercase;
+    }
+
+    .roster-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .roster-card {
+      padding: 14px 16px;
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .roster-card .name { font-size: 13px; font-weight: 500; line-height: 1.2; }
+    .roster-card .meta { font-size: 10px; color: var(--sage); letter-spacing: 0.08em; margin-top: 2px; }
+    .roster-card.captain {
+      background: rgba(232,181,66,0.08);
+      border-color: rgba(232,181,66,0.3);
+    }
+
+    .schedule-grid {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .schedule-row {
+      padding: 12px 16px;
+      background: rgba(245,235,212,0.04);
+      border-radius: var(--radius-sm);
+      display: grid;
+      grid-template-columns: 80px 1fr auto auto;
+      gap: 16px;
+      align-items: center;
+    }
+    .schedule-row .week { font-size: 10px; letter-spacing: 0.18em; color: var(--sage); }
+    .schedule-row .opp { font-size: 13px; font-weight: 500; }
+    .schedule-row .opp .vs { color: var(--sage-300); font-weight: 400; }
+    .schedule-row .result { font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
+    .schedule-row .result.W { color: var(--gold); }
+    .schedule-row .result.L { color: var(--tan); }
+    .schedule-row .result.T { color: var(--sage); }
+    .schedule-row .result.upcoming { color: var(--sage-300); font-weight: 400; }
+    .schedule-row .score { font-size: 11px; color: var(--sage); }
+
+    @media (max-width: 800px) {
+      .team-hero { grid-template-columns: 1fr; }
+      .roster-grid { grid-template-columns: 1fr 1fr; }
+      .schedule-row { grid-template-columns: 60px 1fr auto; }
+      .schedule-row .score { display: none; }
+    }
+  </style>
+</head>
+<body data-page="teams">
+  <div data-partial="nav"></div>
+  <div data-partial="ticker"></div>
+
+  <div style="max-width: var(--max-w); margin: 0 auto; padding: 24px var(--gutter) 0;">
+    <a href="/teams.html" style="font-size: 11px; letter-spacing: 0.14em; color: var(--sage); text-transform: uppercase;">← All teams</a>
   </div>
 
-  <div id="footer"></div>
+  <header class="team-hero">
+    <div class="team-hero-photo" id="hero-photo">
+      <!-- JS fills this -->
+    </div>
 
-  <script type="module">
-    import { mountChrome, apiGet, fmtDate, matchResult } from '/js/shared.js';
+    <div class="team-hero-info">
+      <div>
+        <div class="kicker" id="hero-kicker" style="display: block; margin-bottom: 14px;">SUMMER 2026 · #1 OVERALL</div>
+        <div class="motto" id="hero-motto">"Soft hands, salty attitude."</div>
+      </div>
 
-    mountChrome('teams');
+      <div class="stats-grid">
+        <div class="stat-box"><div class="num gold" id="stat-record">4–0</div><div class="lbl">Record</div></div>
+        <div class="stat-box"><div class="num gold" id="stat-pts">8</div><div class="lbl">Match points</div></div>
+        <div class="stat-box"><div class="num" id="stat-diff">+32</div><div class="lbl">Differential</div></div>
+        <div class="stat-box"><div class="num" id="stat-comp">87</div><div class="lbl">Team composite</div></div>
+      </div>
 
-    // Extract slug from path or query param
-    // Netlify rewrites /teams/ohana → /team.html?slug=ohana
-    const slug = new URLSearchParams(location.search).get('slug')
-      || location.pathname.replace(/^\/teams\//, '').replace(/\/$/, '') || null;
+      <div class="captain-row">
+        <div class="avatar avatar-md" id="captain-avatar">JN</div>
+        <div>
+          <div class="lbl">Captain</div>
+          <div class="name" id="captain-name">James Nguyen</div>
+        </div>
+      </div>
+    </div>
+  </header>
 
-    let allTeams = [];
+  <section class="team-section">
+    <h2>Roster</h2>
+    <div class="roster-grid" id="roster-grid"><!-- JS --></div>
+  </section>
 
-    async function load() {
-      if (!slug || slug === 'team.html') {
-        document.getElementById('team-content').innerHTML = `
-          <div class="container"><p class="text-mute" style="text-align: center;">No team specified.</p></div>`;
-        return;
-      }
+  <section class="team-section">
+    <h2>Season schedule</h2>
+    <div class="schedule-grid" id="schedule-grid"><!-- JS --></div>
+  </section>
 
-      try {
-        const data = await apiGet(`public-data?action=team&slug=${encodeURIComponent(slug)}`);
+  <div data-partial="footer"></div>
 
-        // Also fetch all teams in the season to resolve opponent names
-        if (data.team) {
-          try {
-            const seasonData = await apiGet(`public-data?action=season-overview&seasonId=${data.team.seasonId}`);
-            allTeams = seasonData.teams || [];
-          } catch {}
-        }
+  <script src="/js/partials.js"></script>
+  <script>
+    // ─── Sample team data — keyed by slug. Wire to API later. ───
+    const TEAM_DATA = {
+      'salty-servers': {
+        name: 'Salty Servers', monogram: 'SS', neighborhood: 'MANHATTAN · SOUTH BAY',
+        motto: 'Soft hands, salty attitude.',
+        captain: { name: 'James Nguyen', monogram: 'JN' },
+        record: '4–0', pts: 8, diff: '+32', composite: 87, rank: 1, featured: true,
+        bgGradient: 'linear-gradient(135deg, #E8B542 0%, #A47A0E 55%, #0D3B40 100%)',
+        photo: null,
+        roster: [
+          { name: 'James Nguyen', meta: 'CAPTAIN · MD', captain: true, monogram: 'JN' },
+          { name: 'Maya Ávila', meta: 'WD / MXD', monogram: 'MA' },
+          { name: 'Chris Park', meta: 'MD / MXD', monogram: 'CP' },
+          { name: 'Hana Sato', meta: 'WD / MXD', monogram: 'HS' },
+          { name: 'Tom Bradley', meta: 'MD', monogram: 'TB' },
+          { name: 'Lily Chen', meta: 'WD / MXD', monogram: 'LC' },
+        ],
+        schedule: [
+          { week: 'WK 1', opp: 'Net Profits', vs: 'vs', result: 'W', score: '4–0' },
+          { week: 'WK 2', opp: 'Smash Brothers', vs: 'vs', result: 'W', score: '4–1' },
+          { week: 'WK 3', opp: 'Dinks & Drinks', vs: '@', result: 'W', score: '3–1' },
+          { week: 'WK 4', opp: 'Pier Pressure', vs: 'vs', result: 'upcoming', score: 'TONIGHT' },
+          { week: 'WK 5', opp: 'Kitchen Sink', vs: '@', result: 'upcoming', score: 'JUN 16' },
+          { week: 'WK 6', opp: 'TBD · Rivalry', vs: '', result: 'upcoming', score: 'JUN 23' },
+          { week: 'WK 7', opp: 'TBD · 🏆 Cup', vs: '', result: 'upcoming', score: 'JUN 30' },
+        ],
+      },
+      'pier-pressure': {
+        name: 'Pier Pressure', monogram: 'PP', neighborhood: 'HERMOSA · SOUTH BAY',
+        motto: 'We dink under stress.',
+        captain: { name: 'Marcus Ramirez', monogram: 'MR' },
+        record: '3–1', pts: 6, diff: '+18', composite: 78, rank: 2,
+        bgGradient: 'linear-gradient(135deg, #1A5560 0%, #0D3B40 60%, #082227 100%)',
+        roster: [
+          { name: 'Marcus Ramirez', meta: 'CAPTAIN · MD', captain: true, monogram: 'MR' },
+          { name: 'Sofia Tanaka', meta: 'WD / MXD', monogram: 'ST' },
+          { name: 'Kai Brennan', meta: 'MD', monogram: 'KB' },
+          { name: 'Nina Adams', meta: 'WD / MXD', monogram: 'NA' },
+        ],
+        schedule: [
+          { week: 'WK 1', opp: 'Smash Brothers', vs: 'vs', result: 'W', score: '4–0' },
+          { week: 'WK 2', opp: 'Kitchen Sink', vs: '@', result: 'W', score: '3–1' },
+          { week: 'WK 3', opp: 'Salty Servers', vs: '@', result: 'L', score: '1–3' },
+          { week: 'WK 4', opp: 'Salty Servers', vs: 'vs', result: 'upcoming', score: 'TONIGHT' },
+        ],
+      },
+    };
 
-        if (!data.team) {
-          document.getElementById('team-content').innerHTML = `
-            <div class="container">
-              <p class="eyebrow">Not found</p>
-              <h1 class="h-display">No team here.</h1>
-              <p class="text-soft">That team slug doesn't match anything in the league.</p>
-              <a href="/teams.html" class="btn btn-ghost mt-16">← Back to all teams</a>
-            </div>`;
-          return;
-        }
+    // Get slug from URL
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('slug') || 'salty-servers';
+    const team = TEAM_DATA[slug] || TEAM_DATA['salty-servers'];
 
-        render(data);
-      } catch (err) {
-        console.error('Team page error:', err);
-        document.getElementById('team-content').innerHTML = `
-          <div class="container">
-            <p class="eyebrow" style="color: var(--c-coral);">Error loading team</p>
-            <p class="text-soft" style="margin-top: 8px;">${err.message}</p>
-            <a href="/teams.html" class="btn btn-ghost mt-16">← Back to all teams</a>
-          </div>`;
-      }
-    }
+    document.title = `${team.name} — The Dink Society`;
 
-    function render(data) {
-      const { team, season, division, roster, matches } = data;
-      const primary = team.colors?.primary || '#D85A30';
-      const initials = team.name.split(' ').map(w => w[0]).slice(0, 2).join('');
-
-      const upcomingMatches = matches.filter(m => m.status !== 'final').slice(0, 5);
-      const recentMatches = matches.filter(m => m.status === 'final').slice(-5).reverse();
-
-      document.getElementById('team-content').innerHTML = `
-        <div class="container">
-
-          <!-- Team header card -->
-          <div style="background: ${primary}; border-radius: var(--r-lg); padding: 32px; color: #fff; position: relative; overflow: hidden;">
-            <svg style="position: absolute; right: -30px; top: -30px; opacity: 0.15;" width="200" height="200" viewBox="0 0 200 200">
-              <circle cx="100" cy="100" r="90" fill="#fff"/>
-            </svg>
-
-            <div style="position: relative; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
-              <div style="width: 96px; height: 96px; border-radius: var(--r-md); background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-style: italic; font-size: 36px; font-weight: 500;">
-                ${team.logo ? `<img src="${team.logo}" alt="${team.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-md);"/>` : initials}
-              </div>
-              <div style="flex: 1;">
-                <p style="margin: 0; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.85;">${division?.name || ''} Division · ${season?.name || ''}</p>
-                <h1 class="h-display" style="color: #fff; font-size: 48px; margin-top: 4px;">${team.name}</h1>
-                ${team.motto ? `<p style="margin: 8px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 18px; opacity: 0.95;">"${team.motto}"</p>` : ''}
-                ${team.neighborhood ? `<p style="margin: 8px 0 0; font-size: 13px; opacity: 0.85;">📍 ${team.neighborhood}</p>` : ''}
-              </div>
-            </div>
-          </div>
-
-          <!-- Stats row -->
-          <div class="grid-4 mt-24">
-            <div class="card">
-              <p class="eyebrow">Record</p>
-              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${countWins(matches, team.id)}–${countLosses(matches, team.id)}</p>
-            </div>
-            <div class="card">
-              <p class="eyebrow">Win %</p>
-              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${calcWinPct(matches, team.id)}%</p>
-            </div>
-            <div class="card">
-              <p class="eyebrow">Roster</p>
-              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${roster.length}</p>
-            </div>
-            <div class="card">
-              <p class="eyebrow">Matches</p>
-              <p class="serif-num" style="font-size: 32px; margin-top: 6px;">${matches.length}</p>
-            </div>
-          </div>
-
-          <div class="grid-2 mt-24" style="grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start;">
-
-            <!-- Roster -->
-            <div class="card">
-              <div class="flex justify-between items-center mb-16">
-                <h2 class="h-section" style="font-size: 22px;">Roster</h2>
-                <span class="text-mute" style="font-size: 12px;">${roster.length} player${roster.length === 1 ? '' : 's'}</span>
-              </div>
-              ${roster.length === 0 ? `
-                <p class="text-mute" style="font-size: 13px;">Captain hasn't added players yet.</p>
-              ` : `
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                  ${roster.map(r => r.player ? `
-                    <a href="/players/${r.player.slug}" class="flex items-center gap-12" style="padding: 10px; border-radius: var(--r-md); transition: background 0.15s; text-decoration: none;" onmouseover="this.style.background='var(--c-cream)'" onmouseout="this.style.background=''">
-                      <div style="width: 40px; height: 40px; border-radius: 50%; background: ${primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; overflow: hidden;">
-                        ${r.player.headshot ? `<img src="${r.player.headshot}" alt="${r.player.name}" style="width: 100%; height: 100%; object-fit: cover;"/>` : r.player.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
-                      </div>
-                      <div style="flex: 1;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 500;">${r.player.name}${r.player.nickname ? ` <span style="color: var(--c-ink-mute); font-weight: 400;">"${r.player.nickname}"</span>` : ''}${r.role === 'captain' ? ' <span class="pill pill-amber" style="font-size: 9px; padding: 2px 6px;">CAPTAIN</span>' : ''}</p>
-                        <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${[r.player.city, r.player.sex, r.player.careerStats?.matchesPlayed ? r.player.careerStats.matchesPlayed + ' career matches' : ''].filter(Boolean).join(' · ') || ''}</p>
-                      </div>
-                    </a>
-                  ` : '').join('')}
-                </div>
-              `}
-            </div>
-
-            <!-- Schedule + recent results -->
-            <div>
-              <div class="card mb-16">
-                <h3 class="h-section" style="font-size: 18px;">Upcoming</h3>
-                ${upcomingMatches.length === 0 ? `
-                  <p class="text-mute mt-8" style="font-size: 13px;">No upcoming matches.</p>
-                ` : upcomingMatches.map(m => `
-                  <div style="padding: 10px 0; border-bottom: 0.5px solid var(--c-rule);">
-                    <p style="margin: 0; font-size: 11px; color: var(--c-ink-mute);">${fmtDate(m.date)} ${m.isRivalry ? '· ⚔ Rivalry' : ''}</p>
-                    <p style="margin: 4px 0 0; font-size: 13px;">vs ${opponentName(m, team.id, data)}</p>
-                  </div>
-                `).join('')}
-              </div>
-
-              <div class="card">
-                <h3 class="h-section" style="font-size: 18px;">Recent</h3>
-                ${recentMatches.length === 0 ? `
-                  <p class="text-mute mt-8" style="font-size: 13px;">No matches played yet.</p>
-                ` : recentMatches.map(m => {
-                  const won = didTeamWin(m, team.id);
-                  return `
-                    <div style="padding: 10px 0; border-bottom: 0.5px solid var(--c-rule);">
-                      <div class="flex justify-between items-center">
-                        <p style="margin: 0; font-size: 13px;">vs ${opponentName(m, team.id, data)}</p>
-                        <span style="font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--r-pill); ${won ? 'background: #EAF3DE; color: #3B6D11;' : 'background: #FCEBEB; color: #A32D2D;'}">${won ? 'W' : 'L'}</span>
-                      </div>
-                      <p class="text-mute" style="margin: 4px 0 0; font-size: 11px;">${fmtDate(m.date)}</p>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          </div>
-
+    // Render hero photo
+    (function renderHero() {
+      const el = document.getElementById('hero-photo');
+      if (team.featured) el.classList.add('featured');
+      const photoBG = team.photo
+        ? `<div class="bg" style="background: url('${team.photo}') center/cover no-repeat;"></div>`
+        : `<div class="bg" style="background: ${team.bgGradient};"></div><div class="monogram">${team.monogram}</div>`;
+      const badgeClass = team.rank <= 2 ? 'badge gold' : 'badge';
+      const badgeText = team.rank === 1 && team.record.startsWith(team.record.split('–')[0]) && team.record.endsWith('0')
+        ? `#${team.rank} · UNDEFEATED`
+        : `#${team.rank} OVERALL`;
+      el.innerHTML = `
+        ${photoBG}
+        <div class="${badgeClass}">${badgeText}</div>
+        <div class="meta">
+          <div class="neighborhood">${team.neighborhood}</div>
+          <div class="name">${team.name}</div>
         </div>
       `;
-    }
 
-    function countWins(matches, teamId) {
-      return matches.filter(m => m.status === 'final' && didTeamWin(m, teamId)).length;
-    }
-    function countLosses(matches, teamId) {
-      return matches.filter(m => m.status === 'final' && !didTeamWin(m, teamId)).length;
-    }
-    function calcWinPct(matches, teamId) {
-      const w = countWins(matches, teamId);
-      const l = countLosses(matches, teamId);
-      const total = w + l;
-      return total > 0 ? Math.round((w / total) * 100) : 0;
-    }
-    function didTeamWin(match, teamId) {
-      if (!match.finalScore) return false;
-      const mr = matchResult(match.finalScore);
-      const isHome = match.homeTeamId === teamId;
-      return isHome ? mr.homeMP > mr.awayMP : mr.awayMP > mr.homeMP;
-    }
-    function opponentName(match, teamId, data) {
-      const oppId = match.homeTeamId === teamId ? match.awayTeamId : match.homeTeamId;
-      const opp = allTeams.find(t => t.id === oppId);
-      if (!opp) return '<span class="text-mute">TBD</span>';
-      return `<a href="/teams/${opp.slug}" style="color: var(--c-coral); font-weight: 500;">${opp.name}</a>`;
-    }
+      document.getElementById('hero-kicker').textContent = `SUMMER 2026 · #${team.rank} OVERALL`;
+      document.getElementById('hero-motto').textContent = `"${team.motto}"`;
+      document.getElementById('stat-record').textContent = team.record;
+      document.getElementById('stat-pts').textContent = team.pts;
+      document.getElementById('stat-diff').textContent = team.diff;
+      document.getElementById('stat-comp').textContent = team.composite;
+      document.getElementById('captain-name').textContent = team.captain.name;
+      document.getElementById('captain-avatar').textContent = team.captain.monogram;
+    })();
 
-    load();
+    // Roster
+    (function renderRoster() {
+      const html = team.roster.map(p => `
+        <div class="roster-card ${p.captain ? 'captain' : ''}">
+          <div class="avatar avatar-sm">${p.monogram}</div>
+          <div>
+            <div class="name">${p.name}</div>
+            <div class="meta">${p.meta}</div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('roster-grid').innerHTML = html;
+    })();
+
+    // Schedule
+    (function renderSchedule() {
+      const html = team.schedule.map(s => `
+        <div class="schedule-row">
+          <span class="week">${s.week}</span>
+          <span class="opp"><span class="vs">${s.vs}</span> ${s.opp}</span>
+          <span class="result ${s.result}">${s.result === 'upcoming' ? '—' : s.result}</span>
+          <span class="score">${s.score}</span>
+        </div>
+      `).join('');
+      document.getElementById('schedule-grid').innerHTML = html;
+    })();
   </script>
 </body>
 </html>
