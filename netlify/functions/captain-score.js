@@ -24,8 +24,8 @@
 //   unsubmit-final  {}
 
 import { getStore } from '@netlify/blobs';
-import { requireCaptain, unauthResponse } from './lib/captain-auth.js';
-import { computeRoundDerivatives, computeMatchPoints, ROUND_GAME_KEYS } from './lib/score-derivatives.js';
+import { requireCaptain, unauthResponse } from '../lib/captain-auth.js';
+import { computeRoundDerivatives, computeMatchPoints, ROUND_GAME_KEYS } from '../lib/score-derivatives.js';
 
 const ROUND_KEYS = ['r1', 'r2'];
 const SLOT_KEYS = ROUND_GAME_KEYS; // ['g1'..'g6']
