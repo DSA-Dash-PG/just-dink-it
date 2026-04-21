@@ -1,59 +1,57 @@
 // netlify/functions/captain-login.js
-// Email/password sign-in for captains. Validates that the email matches
-// a team's captainEmail before issuing a session cookie.
+// Accepts an email, creates a magic-link token, emails the captain a
+// one-tap sign-in URL. ALWAYS returns 200 with a generic success message
+// regardless of whether the email is a captain — prevents enumeration.
 
-import { createClient } from '@supabase/supabase-js';
-import { buildCaptainCookie, findTeamByCaptainEmail } from './lib/captain-auth.js';
+import { createMagicToken, findTeamByCaptainEmail } from './lib/captain-auth.js';
+import { sendEmail, renderCaptainMagicLink } from './lib/email.js';
+
+const GENERIC_RESPONSE = {
+  ok: true,
+  message: "If that email is registered as a captain, we just sent a sign-in link. Check your inbox.",
+};
 
 export default async (req) => {
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
-  const supabaseUrl = Netlify.env.get('SUPABASE_URL');
-  const anonKey = Netlify.env.get('SUPABASE_ANON_KEY');
-  if (!supabaseUrl || !anonKey) {
-    return json({ error: 'Supabase not configured' }, 500);
-  }
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
   try {
-    const { email, password } = await req.json();
-    if (!email || !password) {
-      return json({ error: 'Email and password required' }, 400);
+    const { email } = await req.json();
+    const normalized = (email || '').toString().trim().toLowerCase();
+    if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      return json({ error: 'Valid email required' }, 400);
     }
 
-    // Check captain allowlist (email must be a team captain) BEFORE hitting Supabase
-    const team = await findTeamByCaptainEmail(email.trim());
+    // Always succeed externally. Only send the email if it's a real captain.
+    const team = await findTeamByCaptainEmail(normalized);
     if (!team) {
-      return json({ error: 'Invalid credentials' }, 401);
+      // Artificial delay to make response time uniform
+      await new Promise(r => setTimeout(r, 300));
+      return json(GENERIC_RESPONSE);
     }
 
-    const supabase = createClient(supabaseUrl, anonKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
+    const token = await createMagicToken(normalized, team.id);
+    const siteUrl = Netlify.env.get('SITE_URL') || 'https://dinksociety.netlify.app';
+    const magicUrl = `${siteUrl}/.netlify/functions/captain-link?token=${token}`;
+
+    await sendEmail({
+      to: normalized,
+      subject: `Sign in to ${team.name} — The Dink Society`,
+      html: renderCaptainMagicLink(magicUrl, team.name),
     });
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data?.session) {
-      return json({ error: 'Invalid credentials' }, 401);
-    }
-
-    return new Response(JSON.stringify({ ok: true, team: { id: team.id, name: team.name } }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': buildCaptainCookie(data.session.access_token),
-        'Cache-Control': 'private, no-store',
-      },
-    });
+    return json(GENERIC_RESPONSE);
   } catch (err) {
     console.error('captain-login error:', err);
-    return json({ error: 'Sign-in failed' }, 500);
+    // Still return generic success — don't leak errors that could hint at
+    // which addresses trigger paths
+    return json(GENERIC_RESPONSE);
   }
 };
 
-function json(body, status) {
+function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
-    status, headers: { 'Content-Type': 'application/json' },
+    status,
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
