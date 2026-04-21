@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Captain Dashboard — The Dink Society</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .dash-shell {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 24px var(--gutter);
+    }
+
+    /* ── Login state ── */
+    .login-card {
+      max-width: 420px;
+      margin: 60px auto;
+      padding: 32px;
+      background: rgba(13,59,64,0.6);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+    }
+    .login-card h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .login-card p { font-size: 13px; color: var(--sage); line-height: 1.5; margin-bottom: 22px; }
+    .login-card .form-field { margin-bottom: 14px; }
+    .login-card .form-field label {
+      display: block; font-size: 10px; letter-spacing: 0.16em;
+      color: var(--sage); margin-bottom: 6px; text-transform: uppercase;
+    }
+    .login-card .magic-link {
+      margin-top: 12px; font-size: 11px; color: var(--sage); text-align: center;
+    }
+    .login-card .magic-link a { color: var(--gold); }
+
+    .login-error {
+      background: rgba(184,117,74,0.12);
+      border: 1px solid rgba(184,117,74,0.4);
+      color: var(--cream);
+      padding: 10px 12px;
+      font-size: 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+    }
+
+    /* ── Dashboard state ── */
+    .dash-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(245,235,212,0.1);
+      margin-bottom: 24px;
+    }
+    .dash-header .who { display: flex; align-items: center; gap: 14px; }
+    .dash-header h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
+    .dash-header .meta { font-size: 11px; color: var(--sage); letter-spacing: 0.1em; margin-top: 4px; }
+    .dash-header .signout {
+      font-size: 11px; letter-spacing: 0.14em; color: var(--sage); text-transform: uppercase; cursor: pointer;
+    }
+
+    .dash-grid {
+      display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+      padding: 20px 22px;
+    }
+    .panel-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(245,235,212,0.08);
+    }
+    .panel-head h3 {
+      font-size: 12px; letter-spacing: 0.18em; color: var(--gold);
+      font-weight: 500; text-transform: uppercase;
+    }
+    .panel-head .helper { font-size: 11px; color: var(--sage); }
+
+    .roster-list { display: flex; flex-direction: column; gap: 6px; }
+    .roster-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      background: rgba(13,59,64,0.4);
+      border-radius: var(--radius-sm);
+    }
+    .roster-item .name { font-size: 13px; font-weight: 500; }
+    .roster-item .meta { font-size: 10px; color: var(--sage); letter-spacing: 0.08em; margin-top: 2px; }
+    .roster-item .status {
+      font-size: 10px; letter-spacing: 0.14em;
+      padding: 3px 8px; border-radius: var(--radius-sm); text-transform: uppercase;
+    }
+    .roster-item .status.signed { background: rgba(232,181,66,0.2); color: var(--gold); }
+    .roster-item .status.pending { background: rgba(245,235,212,0.08); color: var(--sage); }
+    .roster-item .x {
+      font-size: 16px; color: var(--sage-300); cursor: pointer; padding: 0 6px;
+    }
+    .roster-item .x:hover { color: var(--rust); }
+
+    .add-player-row {
+      display: grid; grid-template-columns: 1fr 1fr 110px; gap: 8px; margin-top: 12px;
+    }
+    .add-player-row input { font-size: 12px; }
+    .add-player-row button {
+      background: var(--gold); color: var(--teal-900);
+      border: none; padding: 11px; font-size: 11px;
+      letter-spacing: 0.14em; cursor: pointer;
+      border-radius: var(--radius-sm); text-transform: uppercase; font-weight: 500;
+    }
+
+    .photo-upload {
+      aspect-ratio: 4 / 3;
+      border: 2px dashed rgba(245,235,212,0.2);
+      border-radius: var(--radius-sm);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s var(--ease);
+      position: relative;
+      overflow: hidden;
+      background: rgba(13,59,64,0.3);
+    }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload .preview-bg { position: absolute; inset: 0; }
+    .photo-upload .empty {
+      text-align: center; padding: 20px;
+      position: relative; z-index: 1;
+    }
+    .photo-upload .empty .label {
+      font-size: 12px; letter-spacing: 0.14em; color: var(--sage);
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .photo-upload .empty .hint {
+      font-size: 11px; color: var(--sage-300); line-height: 1.4;
+    }
+
+    .score-form .form-field { margin-bottom: 12px; }
+    .score-form .form-field label {
+      display: block; font-size: 10px; letter-spacing: 0.16em;
+      color: var(--sage); margin-bottom: 6px; text-transform: uppercase;
+    }
+    .score-form .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .score-form .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    .quick-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      margin-bottom: 24px;
+    }
+    .quick-stat {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+    }
+    .quick-stat .num { font-size: 22px; font-weight: 500; line-height: 1; }
+    .quick-stat .num.gold { color: var(--gold); }
+    .quick-stat .lbl { font-size: 9px; letter-spacing: 0.18em; color: var(--sage); margin-top: 6px; text-transform: uppercase; }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--sage);
+    }
+    .empty-state h2 {
+      font-size: 24px; font-weight: 500; letter-spacing: -0.01em;
+      color: var(--cream); margin-bottom: 10px;
+    }
+    .empty-state p { font-size: 13px; line-height: 1.5; max-width: 380px; margin: 0 auto 20px; }
+
+    .hide { display: none !important; }
+
+    @media (max-width: 800px) {
+      .dash-grid { grid-template-columns: 1fr; }
+      .quick-stats { grid-template-columns: 1fr 1fr; }
+      .add-player-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="">
+  <div data-partial="nav"></div>
+  <div data-partial="ticker"></div>
+
+  <!-- ─── Login state (default) ─── -->
+  <div id="login-state" class="dash-shell">
+    <div class="login-card">
+      <h2>Captain sign-in</h2>
+      <p>Enter the email you registered with. We'll send a magic sign-in link.</p>
+
+      <div id="login-error" class="login-error hide"></div>
+
+      <form onsubmit="return handleLogin(event)">
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="captain@email.com" required />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Send sign-in link →</button>
+      </form>
+
+      <div class="magic-link">
+        Not a captain? <a href="/register.html">Register a team</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Dashboard state ─── -->
+  <div id="dash-state" class="dash-shell hide">
+
+    <div class="dash-header">
+      <div class="who">
+        <div class="avatar avatar-lg" id="dash-monogram">JN</div>
+        <div>
+          <h1 id="dash-team-name">Salty Servers</h1>
+          <div class="meta" id="dash-team-meta">CAPTAIN: JAMES NGUYEN · MANHATTAN</div>
+        </div>
+      </div>
+      <a href="#" class="signout" onclick="signOut(); return false;">Sign out</a>
+    </div>
+
+    <div class="quick-stats">
+      <div class="quick-stat"><div class="num gold" id="qs-record">4–0</div><div class="lbl">Record</div></div>
+      <div class="quick-stat"><div class="num gold" id="qs-rank">#1</div><div class="lbl">Rank</div></div>
+      <div class="quick-stat"><div class="num" id="qs-roster">6</div><div class="lbl">Roster</div></div>
+      <div class="quick-stat"><div class="num" id="qs-waivers">4 / 6</div><div class="lbl">Waivers signed</div></div>
+    </div>
+
+    <div class="dash-grid">
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Roster</h3>
+          <span class="helper">4–12 players · 18+</span>
+        </div>
+        <div class="roster-list" id="roster-list"><!-- JS --></div>
+        <form class="add-player-row" onsubmit="return addPlayer(event)">
+          <input type="text" id="new-player-name" placeholder="Player name" required />
+          <input type="email" id="new-player-email" placeholder="Email (for waiver)" required />
+          <button type="submit">Add player</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Team photo</h3>
+          <span class="helper">4:3 · max 5MB</span>
+        </div>
+        <label class="photo-upload" for="photo-input" id="photo-upload">
+          <input type="file" id="photo-input" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)" />
+          <div class="empty" id="photo-empty">
+            <div class="label">Upload team photo</div>
+            <div class="hint">Drop an image here or click to browse. Replaces the monogram on the Teams page.</div>
+          </div>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="dash-grid">
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Submit a score</h3>
+          <span class="helper">Both captains submit independently</span>
+        </div>
+        <form class="score-form" onsubmit="return submitScore(event)">
+          <div class="grid-2">
+            <div class="form-field">
+              <label>Match week</label>
+              <select required>
+                <option value="">Pick week</option>
+                <option>Week 4 · vs Pier Pressure</option>
+                <option>Week 3 · @ Dinks &amp; Drinks</option>
+                <option>Week 2 · vs Smash Brothers</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Round</label>
+              <select required>
+                <option value="">Pick round</option>
+                <option>WD — Women's Doubles</option>
+                <option>MD — Men's Doubles</option>
+                <option>MXD — Mixed Doubles</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-field">
+              <label>Our score</label>
+              <input type="number" min="0" max="30" placeholder="11" required />
+            </div>
+            <div class="form-field">
+              <label>Their score</label>
+              <input type="number" min="0" max="30" placeholder="9" required />
+            </div>
+            <div class="form-field">
+              <label>&nbsp;</label>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 11px;">Submit →</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Edit team info</h3>
+          <span class="helper">Shows on team page</span>
+        </div>
+        <form onsubmit="return saveTeamInfo(event)">
+          <div class="form-field" style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 10px; letter-spacing: 0.16em; color: var(--sage); margin-bottom: 6px; text-transform: uppercase;">Team motto</label>
+            <input type="text" id="motto-input" value="Soft hands, salty attitude." />
+          </div>
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 10px; letter-spacing: 0.16em; color: var(--sage); margin-bottom: 6px; text-transform: uppercase;">Neighborhood</label>
+            <input type="text" id="hood-input" value="Manhattan" />
+          </div>
+          <button type="submit" class="btn btn-ghost" style="width: 100%;">Save changes</button>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div data-partial="footer"></div>
+
+  <script src="/js/partials.js"></script>
+  <script>
+    // ─── Sample roster data ───
+    let ROSTER = [
+      { name: 'James Nguyen', meta: 'CAPTAIN · MD', captain: true, monogram: 'JN', waiver: 'signed' },
+      { name: 'Maya Ávila', meta: 'WD / MXD', monogram: 'MA', waiver: 'signed' },
+      { name: 'Chris Park', meta: 'MD / MXD', monogram: 'CP', waiver: 'signed' },
+      { name: 'Hana Sato', meta: 'WD / MXD', monogram: 'HS', waiver: 'signed' },
+      { name: 'Tom Bradley', meta: 'MD', monogram: 'TB', waiver: 'pending' },
+      { name: 'Lily Chen', meta: 'WD / MXD', monogram: 'LC', waiver: 'pending' },
+    ];
+
+    function renderRoster() {
+      const html = ROSTER.map((p, i) => `
+        <div class="roster-item">
+          <div class="avatar avatar-sm">${p.monogram}</div>
+          <div>
+            <div class="name">${p.name}</div>
+            <div class="meta">${p.meta || 'PLAYER'}</div>
+          </div>
+          <span class="status ${p.waiver}">${p.waiver === 'signed' ? '✓ WAIVER' : 'WAIVER PENDING'}</span>
+          ${p.captain ? '' : `<span class="x" title="Remove" onclick="removePlayer(${i})">×</span>`}
+        </div>
+      `).join('');
+      document.getElementById('roster-list').innerHTML = html;
+
+      const signed = ROSTER.filter(p => p.waiver === 'signed').length;
+      document.getElementById('qs-roster').textContent = ROSTER.length;
+      document.getElementById('qs-waivers').textContent = `${signed} / ${ROSTER.length}`;
+    }
+
+    function addPlayer(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-player-name').value.trim();
+      const email = document.getElementById('new-player-email').value.trim();
+      if (!name || !email) return false;
+
+      const monogram = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+      ROSTER.push({ name, monogram, meta: 'PLAYER', waiver: 'pending' });
+
+      // POST to /api/captain (when wired)
+      // fetch('/api/captain', { method: 'POST', body: JSON.stringify({ action: 'add-player', name, email }) });
+
+      renderRoster();
+      document.getElementById('new-player-name').value = '';
+      document.getElementById('new-player-email').value = '';
+      return false;
+    }
+
+    function removePlayer(i) {
+      if (!confirm(`Remove ${ROSTER[i].name} from the roster?`)) return;
+      ROSTER.splice(i, 1);
+      renderRoster();
+    }
+
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Photo too large — please pick something under 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const upload = document.getElementById('photo-upload');
+        const empty = document.getElementById('photo-empty');
+        upload.style.background = `url('${ev.target.result}') center/cover no-repeat`;
+        empty.style.display = 'none';
+        upload.style.borderStyle = 'solid';
+        upload.style.borderColor = 'var(--gold)';
+      };
+      reader.readAsDataURL(file);
+
+      // POST to /api/captain (when wired)
+      // const fd = new FormData(); fd.append('photo', file);
+      // fetch('/api/captain?action=upload-photo', { method: 'POST', body: fd });
+    }
+
+    function submitScore(e) {
+      e.preventDefault();
+      alert('Score submitted. Awaiting confirmation from the other captain.');
+      e.target.reset();
+      return false;
+    }
+
+    function saveTeamInfo(e) {
+      e.preventDefault();
+      alert('Team info saved.');
+      return false;
+    }
+
+    function signOut() {
+      // Clear Supabase session (when wired)
+      // await supabase.auth.signOut();
+      document.getElementById('dash-state').classList.add('hide');
+      document.getElementById('login-state').classList.remove('hide');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const errorEl = document.getElementById('login-error');
+      errorEl.classList.add('hide');
+
+      // In production: send magic link via Supabase Auth
+      // const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/captain.html' } });
+      // For demo: just flip to dashboard
+      if (email.toLowerCase().includes('captain') || email.toLowerCase().includes('demo')) {
+        document.getElementById('login-state').classList.add('hide');
+        document.getElementById('dash-state').classList.remove('hide');
+      } else {
+        errorEl.textContent = 'Sign-in link sent. Check your email.';
+        errorEl.classList.remove('hide');
+        errorEl.style.background = 'rgba(232,181,66,0.12)';
+        errorEl.style.borderColor = 'rgba(232,181,66,0.4)';
+      }
+      return false;
+    }
+
+    // ─── Init ───
+    renderRoster();
+
+    // Auto-show dashboard if URL has ?demo=1 (handy for development)
+    if (new URLSearchParams(location.search).get('demo') === '1') {
+      document.getElementById('login-state').classList.add('hide');
+      document.getElementById('dash-state').classList.remove('hide');
+    }
+  </script>
+</body>
+</html>
