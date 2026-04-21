@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard &middot; The Dink Society</title>
+  <meta name="description" content="Live standings, player stats, and the Society Circuit for The Dink Society." />
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+
+  <style>
+    body { background: var(--cream); }
+
+    .lb-shell { max-width: var(--max-w); margin: 0 auto; padding: 24px var(--gutter) 80px; }
+
+    /* Header */
+    .lb-header {
+      background: #0D3B40;
+      color: var(--cream);
+      padding: 32px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .lb-header__brand {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 18px;
+      color: var(--gold);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+    .lb-header__title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 38px;
+      font-weight: 500;
+      margin: 0;
+      line-height: 1.05;
+    }
+    .lb-header__title .sep { opacity: 0.45; padding: 0 12px; font-style: normal; }
+    .lb-header__title .div {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-style: normal;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+    .lb-header__sub {
+      font-size: 13px;
+      opacity: 0.8;
+      margin: 6px 0 0;
+      line-height: 1.5;
+    }
+    .lb-header__nav { font-size: 13px; }
+    .lb-header__nav a {
+      color: var(--cream);
+      text-decoration: none;
+      opacity: 0.75;
+      margin-left: 14px;
+    }
+    .lb-header__nav a:hover { opacity: 1; color: var(--gold); }
+
+    /* Controls */
+    .lb-controls {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      margin-bottom: 18px;
+    }
+    .lb-control {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff;
+      border: 1px solid rgba(13,59,64,0.12);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+    }
+    .lb-control label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      font-weight: 500;
+    }
+    .lb-control select {
+      border: 0; background: transparent; font: inherit;
+      color: var(--teal-900); font-weight: 500;
+      padding: 4px 0; min-width: 60px; cursor: pointer;
+    }
+    .lb-control select:focus { outline: none; }
+    .lb-asof { margin-left: auto; font-size: 12px; opacity: 0.6; }
+
+    /* Tabs */
+    .lb-tabs {
+      display: flex; gap: 4px;
+      background: #fff;
+      border: 1px solid rgba(13,59,64,0.1);
+      border-radius: var(--radius-sm);
+      padding: 6px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+    .lb-tab {
+      background: transparent;
+      border: none;
+      color: var(--teal-900);
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      opacity: 0.7;
+    }
+    .lb-tab:hover { opacity: 1; background: rgba(13,59,64,0.04); }
+    .lb-tab.is-active { background: #0D3B40; color: var(--gold); opacity: 1; }
+
+    /* Cards */
+    .lb-card {
+      background: #fff;
+      border: 1px solid rgba(13,59,64,0.1);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .lb-card__header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 20px; padding-bottom: 16px;
+      border-bottom: 1px solid rgba(13,59,64,0.08);
+      flex-wrap: wrap; gap: 10px;
+    }
+    .lb-card__title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic; font-size: 24px; font-weight: 500;
+      margin: 0;
+    }
+    .lb-card__sub {
+      font-size: 12px; opacity: 0.6; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+
+    /* Tables */
+    .lb-table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0 24px; }
+    .lb-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .lb-table th, .lb-table td {
+      text-align: left; padding: 10px 12px;
+      border-bottom: 1px solid rgba(13,59,64,0.06);
+    }
+    .lb-table th {
+      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      opacity: 0.55; font-weight: 500;
+    }
+    .lb-table tr:last-child td { border-bottom: 0; }
+    .lb-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .lb-rank {
+      width: 30px;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 20px; font-weight: 500;
+      color: var(--teal-900);
+      line-height: 1;
+    }
+    .lb-rank.top { color: var(--gold-deep, #C9972E); }
+    .lb-team-name, .lb-player-name { font-weight: 500; color: var(--teal-900); }
+    .lb-meta { font-size: 12px; opacity: 0.6; }
+
+    .lb-streak {
+      display: inline-block; min-width: 30px; padding: 2px 7px;
+      border-radius: 4px; font-size: 11px; font-weight: 600;
+      text-align: center; font-variant-numeric: tabular-nums;
+    }
+    .lb-streak.W { background: rgba(29,158,117,0.12); color: #0F6E56; }
+    .lb-streak.L { background: rgba(231,70,70,0.1); color: #a32d2d; }
+    .lb-streak.T { background: rgba(13,59,64,0.08); color: var(--teal-900); }
+
+    .lb-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 100px;
+      font-size: 10px; font-weight: 500; letter-spacing: 0.04em;
+      margin-left: 6px; vertical-align: middle;
+    }
+    .lb-pill--gold { background: rgba(232,181,66,0.2); color: #854F0B; }
+    .lb-pill--teal { background: rgba(13,59,64,0.1); color: var(--teal-900); }
+    .lb-pill--win { background: rgba(29,158,117,0.12); color: #0F6E56; }
+    .lb-pill--loss { background: rgba(231,70,70,0.1); color: #a32d2d; }
+
+    /* Match of the week */
+    .lb-motw {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+      margin-bottom: 0;
+    }
+    @media (max-width: 760px) { .lb-motw { grid-template-columns: 1fr; } }
+    .lb-motw__card {
+      background: linear-gradient(135deg, #0D3B40 0%, #000 100%);
+      color: var(--cream);
+      border-radius: var(--radius-sm);
+      padding: 20px 22px;
+      border: 1px solid rgba(232,181,66,0.2);
+    }
+    .lb-motw__card--empty { opacity: 0.45; }
+    .lb-motw__kind {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--gold); font-weight: 500; margin-bottom: 8px;
+    }
+    .lb-motw__matchup {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic; font-size: 20px; line-height: 1.2;
+      margin: 4px 0 10px;
+    }
+    .lb-motw__stats {
+      font-size: 12px; opacity: 0.72;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Match rows (recent / upcoming) */
+    .lb-strip-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    @media (max-width: 760px) { .lb-strip-grid { grid-template-columns: 1fr; } }
+
+    .lb-match {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(13,59,64,0.06);
+    }
+    .lb-match:last-child { border-bottom: 0; padding-bottom: 0; }
+    .lb-match:first-child { padding-top: 0; }
+    .lb-match__top {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 12px; align-items: center;
+    }
+    .lb-match__teams {
+      font-size: 14px; font-weight: 500; color: var(--teal-900);
+    }
+    .lb-match__teams .winner { font-weight: 600; }
+    .lb-match__teams .loser { opacity: 0.6; }
+    .lb-match__teams .vs { opacity: 0.5; padding: 0 6px; font-size: 12px; }
+    .lb-match__meta { font-size: 12px; opacity: 0.6; margin-top: 4px; }
+    .lb-match__when { font-size: 12px; opacity: 0.6; text-align: right; }
+    .lb-score-pill {
+      background: #0D3B40; color: var(--gold);
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 13px; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .lb-score-pill--gold { background: var(--gold); color: #0D3B40; }
+    .lb-toggle {
+      background: none; border: 0; padding: 0;
+      color: var(--teal-900); opacity: 0.65;
+      font: inherit; font-size: 11px; cursor: pointer;
+      margin-top: 6px; text-decoration: underline; text-underline-offset: 2px;
+    }
+    .lb-toggle:hover { opacity: 1; }
+    .lb-round-detail {
+      margin-top: 10px; padding: 10px 12px;
+      background: rgba(13,59,64,0.04);
+      border-radius: 6px;
+      font-size: 12px;
+      display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px 14px;
+      font-variant-numeric: tabular-nums;
+    }
+    .lb-round-detail .lbl { opacity: 0.6; font-weight: 500; }
+
+    /* Final summary on read-only past matches */
+    .lb-final-summary {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic; font-size: 28px; line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      color: var(--cream);
+    }
+    .lb-final-summary .vs { opacity: 0.55; padding: 0 8px; }
+
+    /* Society projection pill */
+    .lb-proj { display: inline-block; font-size: 10px; color: var(--gold-deep, #C9972E); margin-left: 6px; }
+
+    /* Empty / loading */
+    .lb-empty { text-align: center; padding: 40px 20px; opacity: 0.6; }
+    .lb-empty__big {
+      display: block; margin-bottom: 6px;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic; font-size: 22px; color: var(--teal-900); opacity: 0.9;
+    }
+    .lb-loading { text-align: center; padding: 60px 20px; opacity: 0.6; }
+
+    @media (max-width: 600px) {
+      .lb-hide-sm { display: none; }
+      .lb-header { padding: 24px 20px; }
+      .lb-header__title { font-size: 28px; }
+      .lb-header__title .sep { display: none; }
+      .lb-header__title .div { display: block; margin-top: 4px; font-size: 13px; }
+      .lb-card { padding: 20px; }
+      .lb-table-wrap { margin: 0 -20px; padding: 0 20px; }
+    }
+    @media (max-width: 420px) { .lb-hide-xs { display: none; } }
+  </style>
+</head>
+<body data-page="leaderboard">
+
+  <div class="lb-shell">
+
+    <header class="lb-header">
+      <div>
+        <div class="lb-header__brand">The Dink Society</div>
+        <h1 class="lb-header__title">
+          Circuit <span id="lb-circuit">—</span>
+          <span class="sep">·</span>
+          <span class="div" id="lb-division">—</span>
+        </h1>
+        <p class="lb-header__sub" id="lb-sub">Loading…</p>
+      </div>
+      <nav class="lb-header__nav">
+        <a href="/">Home</a>
+        <a href="/moments.html">Moments</a>
+        <a href="/captain.html">Captain</a>
+      </nav>
+    </header>
+
+    <div class="lb-controls">
+      <div class="lb-control">
+        <label for="lb-circuit-select">Circuit</label>
+        <select id="lb-circuit-select"></select>
+      </div>
+      <div class="lb-control">
+        <label for="lb-division-select">Division</label>
+        <select id="lb-division-select"></select>
+      </div>
+      <div class="lb-asof" id="lb-asof"></div>
+    </div>
+
+    <nav class="lb-tabs">
+      <button class="lb-tab is-active" data-tab="teams">Teams</button>
+      <button class="lb-tab" data-tab="players">Players</button>
+      <button class="lb-tab" data-tab="society">Society Circuit</button>
+    </nav>
+
+    <div id="lb-content">
+      <div class="lb-loading">Loading standings…</div>
+    </div>
+
+  </div>
+
+  <script>
+    // =============================================================
+    // DINK SOCIETY — PUBLIC LEADERBOARD
+    // =============================================================
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const content = $('lb-content');
+      const circuitSelect = $('lb-circuit-select');
+      const divisionSelect = $('lb-division-select');
+
+      const state = {
+        circuit: null, division: null, view: 'teams',
+        data: null, cacheByView: {},
+      };
+
+      function readUrl() {
+        const p = new URLSearchParams(location.search);
+        state.circuit = p.get('circuit') || null;
+        state.division = p.get('division') || null;
+        state.view = p.get('view') || 'teams';
+      }
+      function writeUrl() {
+        const p = new URLSearchParams();
+        if (state.circuit) p.set('circuit', state.circuit);
+        if (state.division) p.set('division', state.division);
+        if (state.view && state.view !== 'teams') p.set('view', state.view);
+        const qs = p.toString();
+        history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+      }
+
+      async function load() {
+        content.innerHTML = '<div class="lb-loading">Loading…</div>';
+        const p = new URLSearchParams();
+        if (state.circuit) p.set('circuit', state.circuit);
+        if (state.division) p.set('division', state.division);
+        p.set('view', state.view);
+        try {
+          const res = await fetch(`/.netlify/functions/public-leaderboard?${p.toString()}`);
+          if (!res.ok) throw new Error('load failed');
+          const data = await res.json();
+          state.data = data;
+          state.cacheByView[state.view] = data;
+          state.circuit = data.meta.circuit;
+          state.division = data.meta.division;
+          writeUrl();
+          renderControls();
+          renderHero();
+          render();
+        } catch {
+          content.innerHTML = `<div class="lb-empty"><span class="lb-empty__big">Couldn't load the leaderboard</span>Try refreshing in a moment.</div>`;
+        }
+      }
+
+      function renderControls() {
+        const m = state.data.meta;
+        circuitSelect.innerHTML = '';
+        for (const c of m.circuits) {
+          const o = document.createElement('option');
+          o.value = c; o.textContent = `Circuit ${c}`;
+          if (c === m.circuit) o.selected = true;
+          circuitSelect.appendChild(o);
+        }
+        divisionSelect.innerHTML = '';
+        for (const d of m.divisions) {
+          const o = document.createElement('option');
+          o.value = d; o.textContent = d;
+          if (d === m.division) o.selected = true;
+          divisionSelect.appendChild(o);
+        }
+        const asOf = new Date(m.asOf);
+        $('lb-asof').textContent = `Updated ${asOf.toLocaleString(undefined, {
+          month:'short', day:'numeric', hour:'numeric', minute:'2-digit'
+        })}`;
+      }
+
+      function renderHero() {
+        const m = state.data.meta;
+        $('lb-circuit').textContent = m.circuit || '—';
+        $('lb-division').textContent = m.division || '—';
+        $('lb-sub').textContent = m.isActive
+          ? 'Circuit in progress. Standings update as matches finalize.'
+          : (state.data.recent.length
+              ? 'Circuit complete. Final standings below.'
+              : 'Schedule pending. Check back once matches are underway.');
+      }
+
+      function render() {
+        if (state.view === 'teams') return renderTeams();
+        if (state.view === 'players') return renderPlayers();
+        if (state.view === 'society') return renderSociety();
+      }
+
+      // ============================ TEAMS ============================
+      function renderTeams() {
+        const { standings, recent, upcoming, weekHighlights } = state.data;
+        let html = '';
+
+        if (weekHighlights && weekHighlights.length) {
+          const latest = weekHighlights[0];
+          html += `<div class="lb-card">
+            <div class="lb-card__header">
+              <h2 class="lb-card__title">Week ${latest.week} highlights</h2>
+              <span class="lb-card__sub">+10 Society pts each</span>
+            </div>
+            <div class="lb-motw">
+              ${motwCard(latest.biggestSweep, 'Biggest sweep')}
+              ${motwCard(latest.biggestComeback, 'Biggest comeback')}
+              ${motwCard(latest.closest, 'Closest match')}
+            </div>
+          </div>`;
+        }
+
+        html += `<div class="lb-card">
+          <div class="lb-card__header">
+            <h2 class="lb-card__title">Standings</h2>
+            <span class="lb-card__sub">Tiebreakers · H2H · Diff · Games</span>
+          </div>`;
+        if (!standings.length) {
+          html += `<div class="lb-empty"><span class="lb-empty__big">No matches played yet</span>Standings appear once the first match finalizes.</div>`;
+        } else {
+          html += `<div class="lb-table-wrap"><table class="lb-table">
+            <thead><tr>
+              <th>#</th><th>Team</th>
+              <th class="num">GP</th>
+              <th class="num">W</th><th class="num">L</th><th class="num lb-hide-sm">T</th>
+              <th class="num">Pts</th>
+              <th class="num lb-hide-sm">Diff</th>
+              <th class="num lb-hide-sm">Games</th>
+              <th class="num lb-hide-sm">Pt Diff</th>
+              <th class="num lb-hide-xs">Sweeps</th>
+              <th class="num lb-hide-xs">Cmbk</th>
+              <th class="num lb-hide-sm">Clutch</th>
+              <th class="lb-hide-xs">Streak</th>
+            </tr></thead><tbody>`;
+          for (const r of standings) {
+            const clutchTotal = r.closeWins + r.closeLosses;
+            const clutchStr = clutchTotal ? `${r.closeWins}-${r.closeLosses}` : '—';
+            html += `<tr>
+              <td class="lb-rank ${r.rank <= 2 ? 'top' : ''}">${r.rank}</td>
+              <td class="lb-team-name">${esc(r.name)}</td>
+              <td class="num">${r.played}</td>
+              <td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num lb-hide-sm">${r.t}</td>
+              <td class="num"><strong>${r.mp}</strong></td>
+              <td class="num lb-hide-sm">${signed(r.diff)}</td>
+              <td class="num lb-hide-sm">${r.gamesWon}-${r.gamesLost}</td>
+              <td class="num lb-hide-sm">${signed(r.pointDiff)}</td>
+              <td class="num lb-hide-xs">${r.sweeps || '—'}</td>
+              <td class="num lb-hide-xs">${r.comebacks || '—'}</td>
+              <td class="num lb-hide-sm">${clutchStr}</td>
+              <td class="lb-hide-xs">${r.streak ? `<span class="lb-streak ${r.streak.type}">${r.streak.type}${r.streak.count}</span>` : '—'}</td>
+            </tr>`;
+          }
+          html += `</tbody></table></div>`;
+        }
+        html += `</div>`;
+
+        html += `<div class="lb-strip-grid">${renderRecentCard(recent)}${renderUpcomingCard(upcoming)}</div>`;
+
+        content.innerHTML = html;
+        wireToggles();
+      }
+
+      function motwCard(h, label) {
+        if (!h) {
+          return `<div class="lb-motw__card lb-motw__card--empty">
+            <div class="lb-motw__kind">${label}</div>
+            <div class="lb-motw__matchup">No candidate this week</div>
+          </div>`;
+        }
+        const aWon = h.scoreA > h.scoreB;
+        return `<div class="lb-motw__card">
+          <div class="lb-motw__kind">${label}</div>
+          <div class="lb-motw__matchup">
+            <span style="${aWon?'':'opacity:.6'}">${esc(h.teamAName)}</span>
+            <span style="opacity:.4"> vs </span>
+            <span style="${!aWon?'':'opacity:.6'}">${esc(h.teamBName)}</span>
+          </div>
+          <div class="lb-motw__stats">
+            Match ${h.scoreA}–${h.scoreB} · Pts ${h.homePoints}–${h.awayPoints} · Margin ${h.margin}
+          </div>
+        </div>`;
+      }
+
+      function renderRecentCard(recent) {
+        let html = `<div class="lb-card"><div class="lb-card__header"><h2 class="lb-card__title">Recent results</h2></div>`;
+        if (!recent.length) {
+          html += `<div class="lb-empty">No finalized matches yet.</div>`;
+        } else {
+          for (const m of recent) {
+            const aWon = m.scoreA > m.scoreB;
+            const bWon = m.scoreB > m.scoreA;
+            const when = m.finalizedAt
+              ? new Date(m.finalizedAt).toLocaleDateString(undefined, { month:'short', day:'numeric' })
+              : '';
+            const pills = [
+              m.sweep ? '<span class="lb-pill lb-pill--gold">Sweep</span>' : '',
+              m.comeback ? '<span class="lb-pill lb-pill--teal">Comeback</span>' : '',
+            ].join('');
+            html += `<div class="lb-match">
+              <div class="lb-match__top">
+                <div>
+                  <div class="lb-match__teams">
+                    <span class="${aWon?'winner':'loser'}">${esc(m.teamAName)}</span>
+                    <span class="vs">vs</span>
+                    <span class="${bWon?'winner':'loser'}">${esc(m.teamBName)}</span>
+                    ${pills}
+                  </div>
+                  <div class="lb-match__meta">Week ${m.week} · ${when}</div>
+                  ${(m.round1 && m.round2) ? `<button class="lb-toggle" data-toggle="round-${m.id}">Show per-round scores</button>` : ''}
+                </div>
+                <div>
+                  <span class="lb-score-pill ${(aWon||bWon)?'lb-score-pill--gold':''}">${m.scoreA}–${m.scoreB}</span>
+                </div>
+              </div>
+              ${(m.round1 && m.round2) ? `<div class="lb-round-detail" id="round-${m.id}" hidden>
+                <div class="lbl">Round 1</div>
+                <div>Games <strong>${m.round1.homeGames}–${m.round1.awayGames}</strong></div>
+                <div>Pts <strong>${m.round1.homePoints ?? '—'}–${m.round1.awayPoints ?? '—'}</strong></div>
+                <div class="lbl">Round 2</div>
+                <div>Games <strong>${m.round2.homeGames}–${m.round2.awayGames}</strong></div>
+                <div>Pts <strong>${m.round2.homePoints ?? '—'}–${m.round2.awayPoints ?? '—'}</strong></div>
+              </div>` : ''}
+            </div>`;
+          }
+        }
+        html += `</div>`;
+        return html;
+      }
+
+      function renderUpcomingCard(upcoming) {
+        let html = `<div class="lb-card"><div class="lb-card__header"><h2 class="lb-card__title">Upcoming</h2></div>`;
+        if (!upcoming.length) {
+          html += `<div class="lb-empty">No upcoming matches scheduled.</div>`;
+        } else {
+          for (const m of upcoming) {
+            const when = m.scheduledAt
+              ? new Date(m.scheduledAt).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })
+              : 'TBD';
+            const where = [m.venue, m.court].filter(Boolean).join(' · ');
+            html += `<div class="lb-match">
+              <div class="lb-match__top">
+                <div>
+                  <div class="lb-match__teams">${esc(m.teamAName)} <span class="vs">vs</span> ${esc(m.teamBName)}</div>
+                  <div class="lb-match__meta">Week ${m.week}${where?' · '+esc(where):''}</div>
+                </div>
+                <div class="lb-match__when">${when}</div>
+              </div>
+            </div>`;
+          }
+        }
+        html += `</div>`;
+        return html;
+      }
+
+      function wireToggles() {
+        document.querySelectorAll('.lb-toggle[data-toggle]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const el = document.getElementById(btn.dataset.toggle);
+            if (!el) return;
+            if (el.hasAttribute('hidden')) {
+              el.removeAttribute('hidden');
+              btn.textContent = 'Hide per-round scores';
+            } else {
+              el.setAttribute('hidden', '');
+              btn.textContent = 'Show per-round scores';
+            }
+          });
+        });
+      }
+
+      // ============================ PLAYERS ============================
+      function renderPlayers() {
+        const players = state.data.players || [];
+        const mvps = state.data.matchMVPs || [];
+        let html = '';
+
+        if (mvps.length) {
+          const recent5 = [...mvps].sort((a,b) => b.week - a.week).slice(0, 5);
+          html += `<div class="lb-card">
+            <div class="lb-card__header">
+              <h2 class="lb-card__title">Recent Match MVPs</h2>
+              <span class="lb-card__sub">Best plus/minus per match</span>
+            </div>`;
+          for (const mvp of recent5) {
+            html += `<div class="lb-match">
+              <div class="lb-match__top">
+                <div>
+                  <div class="lb-player-name">${esc(mvp.name)} <span class="lb-meta">· ${esc(mvp.teamName)}</span></div>
+                  <div class="lb-match__meta">Week ${mvp.week}</div>
+                </div>
+                <div style="text-align:right;">
+                  <span class="lb-pill ${mvp.plusMinus >= 0 ? 'lb-pill--win' : 'lb-pill--loss'}">${signed(mvp.plusMinus)}</span>
+                  <div class="lb-match__when">${mvp.gamesWon} game${mvp.gamesWon===1?'':'s'} won</div>
+                </div>
+              </div>
+            </div>`;
+          }
+          html += `</div>`;
+        }
+
+        html += `<div class="lb-card">
+          <div class="lb-card__header">
+            <h2 class="lb-card__title">Players</h2>
+            <span class="lb-card__sub">Sorted by Win% · Plus/Minus</span>
+          </div>`;
+        if (!players.length) {
+          html += `<div class="lb-empty"><span class="lb-empty__big">No player data yet</span>Stats appear once finalized matches are recorded.</div>`;
+        } else {
+          html += `<div class="lb-table-wrap"><table class="lb-table"><thead><tr>
+            <th>Player</th>
+            <th class="lb-hide-sm">Team</th>
+            <th class="num">GP</th>
+            <th class="num">W-L</th>
+            <th class="num">Win%</th>
+            <th class="num lb-hide-sm">+/−</th>
+            <th class="num lb-hide-sm">Pts</th>
+            <th class="num lb-hide-sm">Clutch</th>
+            <th class="lb-hide-sm">Best partner</th>
+            <th class="num lb-hide-xs">W's</th>
+            <th class="num lb-hide-xs">M's</th>
+            <th class="num lb-hide-xs">Mxd</th>
+          </tr></thead><tbody>`;
+          for (const p of players) {
+            const clutchTotal = p.clutchW + p.clutchL;
+            const clutchStr = clutchTotal
+              ? `${p.clutchW}-${p.clutchL} <span class="lb-meta">(${Math.round(p.clutchPct*100)}%)</span>`
+              : '—';
+            const partnerStr = p.bestPartner
+              ? `${esc(p.bestPartner.name)} <span class="lb-meta">(${p.bestPartner.w}-${p.bestPartner.l})</span>`
+              : '—';
+            html += `<tr>
+              <td class="lb-player-name">${esc(p.name)}</td>
+              <td class="lb-hide-sm lb-meta">${esc(p.teamName || '')}</td>
+              <td class="num">${p.gp}</td>
+              <td class="num">${p.w}-${p.l}</td>
+              <td class="num"><strong>${(p.winPct*100).toFixed(0)}%</strong></td>
+              <td class="num lb-hide-sm">${signed(p.plusMinus)}</td>
+              <td class="num lb-hide-sm">${p.pf}-${p.pa}</td>
+              <td class="num lb-hide-sm">${clutchStr}</td>
+              <td class="lb-hide-sm">${partnerStr}</td>
+              <td class="num lb-hide-xs">${slotCell(p.bySlot.womens)}</td>
+              <td class="num lb-hide-xs">${slotCell(p.bySlot.mens)}</td>
+              <td class="num lb-hide-xs">${slotCell(p.bySlot.mixed)}</td>
+            </tr>`;
+          }
+          html += `</tbody></table></div>`;
+        }
+        html += `</div>`;
+        content.innerHTML = html;
+      }
+
+      function slotCell(s) {
+        if (!s.gp) return '<span class="lb-meta">—</span>';
+        return `${s.w}-${s.l}`;
+      }
+
+      // ============================ SOCIETY ============================
+      function renderSociety() {
+        const society = state.data.society;
+        if (!society) { content.innerHTML = `<div class="lb-loading">Loading Society standings…</div>`; return; }
+        let html = '';
+        const anyProjected = society.standings.some(s => s.projectedTotal > 0);
+
+        html += `<div class="lb-card">
+          <div class="lb-card__header">
+            <h2 class="lb-card__title">Society Circuit standings</h2>
+            <span class="lb-card__sub">Placement 100/75/50/30/15 · Bonuses +10 each</span>
+          </div>`;
+        if (!society.standings.length) {
+          html += `<div class="lb-empty"><span class="lb-empty__big">No Society points yet</span>Points are awarded once a Circuit's first match finalizes.</div>`;
+        } else {
+          html += `<div class="lb-table-wrap"><table class="lb-table"><thead><tr>
+            <th>#</th><th>Team</th>
+            <th class="num">Locked</th>
+            <th class="num">Projected</th>
+            <th class="num">Bonuses</th>
+            <th class="num">Total</th>
+          </tr></thead><tbody>`;
+          for (let i = 0; i < society.standings.length; i++) {
+            const s = society.standings[i];
+            const bonusTotal = s.lockedBonus + s.projectedBonus;
+            html += `<tr>
+              <td class="lb-rank ${i < 2 ? 'top' : ''}">${i+1}</td>
+              <td class="lb-team-name">${esc(s.name)}</td>
+              <td class="num">${s.locked}</td>
+              <td class="num lb-proj">${s.projected ? `+${s.projected}` : '—'}</td>
+              <td class="num">${bonusTotal || '—'}</td>
+              <td class="num"><strong>${s.total}</strong></td>
+            </tr>`;
+          }
+          html += `</tbody></table></div>`;
+          if (anyProjected) {
+            html += `<div class="lb-meta" style="padding-top:12px">Projected placement points are based on current standings and lock when the Circuit ends. Bonus points lock as soon as the week's matches finalize.</div>`;
+          }
+        }
+        html += `</div>`;
+
+        html += `<div class="lb-card"><div class="lb-card__header"><h2 class="lb-card__title">Circuit breakdown</h2></div>`;
+        for (const c of society.circuits) {
+          html += `<div style="padding:12px 0;border-bottom:1px solid rgba(13,59,64,0.06);">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:20px;color:var(--teal-900);margin-bottom:10px">
+              Circuit ${c.circuit}
+              ${c.locked ? '<span class="lb-pill lb-pill--teal">Final</span>' : '<span class="lb-pill lb-pill--gold">In progress</span>'}
+            </div>
+            <div class="lb-table-wrap"><table class="lb-table"><thead><tr>
+              <th>Place</th><th>Team</th>
+              <th class="num">Placement</th>
+              <th class="num">Bonus</th>
+              <th class="num">Total</th>
+            </tr></thead><tbody>`;
+          for (const r of c.standings) {
+            html += `<tr>
+              <td>${r.rank}</td>
+              <td>${esc(r.name)}</td>
+              <td class="num">${r.placementPoints}${r.projected ? ' <span class="lb-proj">proj</span>' : ''}</td>
+              <td class="num">${r.bonusPoints || '—'}</td>
+              <td class="num"><strong>${r.total}</strong></td>
+            </tr>`;
+          }
+          html += `</tbody></table></div></div>`;
+        }
+        html += `</div>`;
+        content.innerHTML = html;
+      }
+
+      // ============================ UTIL ============================
+      function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[c]));
+      }
+      function signed(n) {
+        if (n === 0 || n === null || n === undefined) return '0';
+        return n > 0 ? `+${n}` : `${n}`;
+      }
+
+      // ============================ WIRE ============================
+      document.querySelectorAll('.lb-tab').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          state.view = btn.dataset.tab;
+          writeUrl();
+          if (state.cacheByView[state.view]) {
+            state.data = state.cacheByView[state.view];
+            render();
+          } else {
+            load();
+          }
+        });
+      });
+      circuitSelect.addEventListener('change', () => {
+        state.circuit = circuitSelect.value;
+        state.division = null;
+        state.cacheByView = {};
+        load();
+      });
+      divisionSelect.addEventListener('change', () => {
+        state.division = divisionSelect.value;
+        state.cacheByView = {};
+        load();
+      });
+
+      readUrl();
+      document.querySelectorAll('.lb-tab').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.tab === state.view);
+      });
+      load();
+    })();
+  </script>
+</body>
+</html>
