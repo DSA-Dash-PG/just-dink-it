@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -312,30 +313,6 @@
       opacity: 1;
     }
 
-    .gender-warning {
-      background: rgba(232,181,66,0.15);
-      border: 1px solid rgba(232,181,66,0.4);
-      color: #854F0B;
-      padding: 14px 18px;
-      border-radius: var(--radius-sm);
-      margin-bottom: 16px;
-      font-size: 13px;
-      line-height: 1.5;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .gender-warning strong { font-weight: 500; }
-    .gender-warning a {
-      color: #854F0B;
-      text-decoration: underline;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
     .locked-notice {
       background: rgba(232,181,66,0.15);
       border: 1px solid rgba(232,181,66,0.4);
@@ -392,418 +369,145 @@
       margin-bottom: 4px;
     }
 
-    /* ===== Scoresheet ===== */
-    .scoresheet {
-      background: #fff;
-      border: 1px solid rgba(13,59,64,0.1);
+    .empty-state { text-align: center; padding: 40px 20px; opacity: 0.6; }
+
+    /* ===== SCORESHEET ===== */
+    .ss-banner {
+      padding: 12px 16px;
       border-radius: var(--radius-sm);
-      padding: 24px;
-      margin-top: 20px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      line-height: 1.5;
     }
-    .scoresheet__header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding-bottom: 16px;
-      margin-bottom: 20px;
-      border-bottom: 1px solid rgba(13,59,64,0.08);
-      flex-wrap: wrap;
-      gap: 8px;
+    .ss-banner--info  { background: rgba(13,59,64,0.06); color: var(--teal-900); border: 1px solid rgba(13,59,64,0.15); }
+    .ss-banner--warn  { background: rgba(232,181,66,0.15); color: #854F0B; border: 1px solid rgba(232,181,66,0.4); }
+    .ss-banner--good  { background: rgba(29,158,117,0.1); color: #0F6E56; border: 1px solid rgba(29,158,117,0.3); }
+    .ss-banner--final {
+      background: linear-gradient(135deg, #0D3B40 0%, #000 100%);
+      color: var(--cream);
+      border: 1px solid rgba(232,181,66,0.3);
+      padding: 22px 24px;
     }
-    .scoresheet__title {
+
+    .ss-final-summary {
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-style: italic;
-      font-size: 22px;
-      font-weight: 500;
-      margin: 0;
+      font-size: 30px;
+      color: var(--cream);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      margin: 8px 0 6px;
     }
-    .scoresheet__meta { font-size: 12px; opacity: 0.6; letter-spacing: 0.08em; text-transform: uppercase; }
-
-    .ss-banner {
-      background: rgba(13,59,64,0.04);
-      border-radius: 6px;
-      padding: 12px 16px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      line-height: 1.5;
-      display: block;
-    }
-    .ss-banner--final { background: rgba(29,158,117,0.12); color: #0F6E56; }
-    .ss-banner--ready { background: rgba(232,181,66,0.15); color: #854F0B; border: 1px solid rgba(232,181,66,0.3); }
-    .ss-banner--mismatch { background: rgba(231,70,70,0.08); color: #A32D2D; border: 1px solid rgba(231,70,70,0.25); }
-    .ss-banner--mine-submitted { background: rgba(13,59,64,0.06); color: var(--teal-900); }
-    .ss-banner__detail {
-      display: block;
-      margin-top: 6px;
-      font-size: 11px;
-      letter-spacing: 0.05em;
-      opacity: 0.85;
-    }
-
-    .ss-row--confirmed { background: rgba(29,158,117,0.04); }
-    .ss-row--mismatch { background: rgba(231,70,70,0.04); }
-
-    .ss-pill {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 100px;
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.05em;
-      white-space: nowrap;
-    }
-    .ss-pill--empty { background: rgba(13,59,64,0.06); color: var(--teal-900); opacity: 0.55; }
-    .ss-pill--partial { background: rgba(232,181,66,0.18); color: #854F0B; }
-    .ss-pill--confirmed { background: rgba(29,158,117,0.15); color: #0F6E56; }
-    .ss-pill--mismatch { background: rgba(231,70,70,0.12); color: #A32D2D; }
-    .ss-status-cell { text-align: right; white-space: nowrap; }
-    .ss-table th.ss-th--status { text-align: right; width: 100px; }
-
-    .ss-type-label {
-      font-style: normal;
-      font-size: 11px;
-      opacity: 0.65;
-      margin-left: 4px;
-    }
+    .ss-final-summary .vs { opacity: 0.5; padding: 0 10px; color: var(--gold); font-size: 22px; }
 
     .ss-round {
-      margin-bottom: 20px;
+      background: rgba(13,59,64,0.03);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+    .ss-round__head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 12px;
     }
     .ss-round__title {
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      opacity: 0.7;
-      font-weight: 500;
-      margin: 0 0 8px;
-    }
-    .ss-round__sub { font-size: 11px; opacity: 0.55; margin: 0 0 12px; }
-
-    .ss-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .ss-table th {
-      padding: 8px 6px;
-      text-align: left;
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      opacity: 0.6;
-      font-weight: 500;
-      border-bottom: 1px solid rgba(13,59,64,0.1);
-    }
-    .ss-table th.ss-th--score { text-align: center; width: 70px; }
-    .ss-table td {
-      padding: 8px 6px;
-      border-bottom: 1px solid rgba(13,59,64,0.05);
-      vertical-align: middle;
-    }
-    .ss-table tr:last-child td { border-bottom: none; }
-    .ss-type {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-style: italic;
-      font-size: 14px;
-      color: var(--gold-deep, #C9972E);
-      white-space: nowrap;
-    }
-    .ss-pair { font-size: 13px; line-height: 1.3; }
-    .ss-pair__names { font-weight: 500; }
-    .ss-pair__gender { opacity: 0.55; font-size: 11px; margin-left: 6px; }
-    .ss-score-input {
-      width: 60px;
-      padding: 6px 8px !important;
-      text-align: center;
-      font-weight: 500 !important;
-      font-size: 14px !important;
-      border: 1px solid rgba(13,59,64,0.2) !important;
-    }
-    .ss-score-input:disabled {
-      background: rgba(13,59,64,0.04);
-      color: var(--teal-900);
-      opacity: 0.85;
-      cursor: default;
-    }
-    .ss-score-input--mine-entered {
-      border-color: #E8B542 !important;
-      background: #FDF7E7;
-    }
-    .ss-score-input--other-entered {
-      border-color: rgba(13,59,64,0.35) !important;
-      background: rgba(13,59,64,0.02);
-    }
-    .ss-score-input--awaiting-other {
-      border-style: dashed !important;
-      border-color: rgba(13,59,64,0.3) !important;
-    }
-    .ss-score-input--confirmed {
-      border-color: #1D9E75 !important;
-      background: rgba(29,158,117,0.08) !important;
-      color: #0F6E56;
-    }
-    .ss-score-input--mismatch {
-      border-width: 1.5px !important;
-      border-color: #E24B4A !important;
-      background: #fff !important;
-      color: #A32D2D;
-    }
-    .ss-cell--winner { color: #0F6E56; font-weight: 500; }
-
-    .ss-round-summary {
-      display: flex;
-      gap: 12px;
-      padding: 10px 12px;
-      background: rgba(13,59,64,0.03);
-      border-radius: 6px;
-      margin-top: 8px;
-      font-size: 12px;
-    }
-    .ss-round-summary__block { flex: 1; }
-    .ss-round-summary__label {
-      font-size: 9px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      opacity: 0.55;
-      font-weight: 500;
-      margin-bottom: 3px;
-    }
-    .ss-round-summary__value { font-weight: 500; font-size: 13px; }
-    .ss-round-summary__gold { color: var(--gold-deep, #C9972E); }
-
-    .ss-total {
-      margin-top: 16px;
-      padding: 16px 20px;
-      background: #0D3B40;
-      color: var(--cream);
-      border-radius: var(--radius-sm);
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 16px;
-      align-items: center;
-    }
-    .ss-total__team { font-size: 13px; opacity: 0.85; }
-    .ss-total__team--right { text-align: right; }
-    .ss-total__score {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-style: italic;
-      font-size: 36px;
-      color: var(--gold);
-      font-weight: 500;
-      line-height: 1;
-    }
-    .ss-total__vs {
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-align: center;
-      opacity: 0.7;
-    }
-    .ss-total__winner {
-      color: var(--gold);
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      text-align: center;
-      margin-top: 6px;
-    }
-
-    .ss-approvals {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 16px;
-    }
-    .ss-approval {
-      background: rgba(13,59,64,0.03);
-      padding: 12px 14px;
-      border-radius: 6px;
-      font-size: 12px;
-      border: 1px solid transparent;
-    }
-    .ss-approval--mine { border-color: rgba(232,181,66,0.35); }
-    .ss-approval--done { background: rgba(29,158,117,0.1); color: #0F6E56; }
-    .ss-approval__label {
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      opacity: 0.55;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-    .ss-approval__value { font-weight: 500; }
-    .ss-approval__time { font-size: 11px; opacity: 0.7; margin-top: 2px; }
-
-    @media (max-width: 720px) {
-      .ss-table { font-size: 12px; }
-      .ss-score-input { width: 48px; font-size: 13px !important; }
-      .ss-total { grid-template-columns: 1fr; text-align: center; gap: 8px; }
-      .ss-total__team--right { text-align: center; }
-      .ss-approvals { grid-template-columns: 1fr; }
-    }
-
-    /* ==== Scoresheet ==== */
-    .scoresheet {
-      background: #fff;
-      border: 1px solid rgba(13,59,64,0.1);
-      border-radius: var(--radius-sm);
-      padding: 20px;
-      margin-top: 16px;
-    }
-    .scoresheet__round-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #0D3B40;
-    }
-    .scoresheet__round-title {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-style: italic;
-      font-size: 20px;
-      font-weight: 500;
-      margin: 0;
-    }
-    .scoresheet__round-note {
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      opacity: 0.55;
-    }
-
-    .sg-row {
-      display: grid;
-      grid-template-columns: 100px 1fr 54px 54px 1fr 80px;
-      gap: 10px;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(13,59,64,0.06);
-      font-size: 13px;
-    }
-    .sg-row--head {
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      opacity: 0.5;
-      font-weight: 500;
-      padding: 4px 0;
-    }
-    .sg-row__type { font-size: 11px; opacity: 0.75; font-weight: 500; }
-    .sg-row__type-num {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-style: italic;
-      font-size: 14px;
-      color: var(--gold-deep, #C9972E);
-      margin-right: 4px;
-    }
-    .sg-row__pair { font-size: 12px; line-height: 1.4; }
-    .sg-row__pair--away { text-align: right; }
-    .sg-score-input {
-      width: 50px !important;
-      padding: 6px 4px !important;
-      text-align: center;
-      font-weight: 500;
-      font-size: 14px !important;
-    }
-    .sg-score-input.winner { border-color: #0F6E56 !important; background: rgba(29,158,117,0.05); }
-    .sg-row__action { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
-    .sg-btn {
-      padding: 5px 10px !important;
-      font-size: 11px !important;
-      border-radius: 4px !important;
-    }
-
-    .sg-status-pill {
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 100px;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .sg-status-pill--empty { background: rgba(13,59,64,0.06); color: rgba(13,59,64,0.55); }
-    .sg-status-pill--pending { background: rgba(232,181,66,0.2); color: #854F0B; }
-    .sg-status-pill--approved { background: rgba(29,158,117,0.12); color: #0F6E56; }
-
-    .scoresheet__totals {
-      display: grid;
-      grid-template-columns: 1fr 100px 100px;
-      gap: 10px;
-      align-items: center;
-      padding: 12px 0 4px;
-      border-top: 2px solid #0D3B40;
-      margin-top: 8px;
-      font-size: 13px;
-    }
-    .scoresheet__totals strong {
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-style: italic;
       font-size: 18px;
       font-weight: 500;
+      margin: 0;
     }
-    .scoresheet__totals-label {
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      opacity: 0.6;
-      font-weight: 500;
-    }
-    .scoresheet__totals-val {
-      text-align: center;
-      font-size: 16px;
-      font-weight: 500;
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-style: italic;
+    .ss-round__tally {
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      opacity: 0.7; font-weight: 500;
+      font-variant-numeric: tabular-nums;
     }
 
-    .scoresheet__match-final {
-      margin-top: 16px;
-      padding: 18px 20px;
-      background: linear-gradient(135deg, #0D3B40 0%, #000 100%);
-      color: var(--cream);
-      border-radius: var(--radius-sm);
+    .ss-slot {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 14px;
+      grid-template-columns: 110px 1fr auto;
+      gap: 10px;
       align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(13,59,64,0.06);
     }
-    .scoresheet__match-final-team { font-size: 14px; font-weight: 500; }
-    .scoresheet__match-final-pts {
+    .ss-slot:last-child { border-bottom: none; }
+    .ss-slot__label {
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      opacity: 0.7; font-weight: 500;
+    }
+    .ss-slot__num {
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-style: italic;
-      font-size: 36px;
-      color: var(--gold);
-      line-height: 1;
+      font-size: 14px;
+      margin-right: 6px;
+      color: var(--gold-deep, #C9972E);
     }
-    .scoresheet__match-final-vs {
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      color: var(--gold);
-      opacity: 0.7;
-      text-align: center;
+    .ss-inputs { display: flex; align-items: center; gap: 8px; }
+    .ss-input {
+      width: 52px; height: 40px; text-align: center;
+      border: 1.5px solid rgba(13,59,64,0.18);
+      border-radius: 6px;
+      font: inherit; font-size: 18px; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--teal-900);
+      background: #fff;
+      -moz-appearance: textfield;
     }
-    .scoresheet__match-final-home { text-align: right; }
-    .scoresheet__match-final-final-label {
-      font-size: 9px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--gold);
-      opacity: 0.8;
-      margin-bottom: 4px;
+    .ss-input::-webkit-outer-spin-button,
+    .ss-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .ss-input:focus { outline: none; border-color: var(--gold); }
+    .ss-dash { opacity: 0.5; font-weight: 600; }
+
+    .ss-status {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+    .ss-status--empty     { background: rgba(13,59,64,0.06); color: var(--teal-900); opacity: 0.5; }
+    .ss-status--partial   { background: rgba(232,181,66,0.2); color: #854F0B; }
+    .ss-status--confirmed { background: rgba(29,158,117,0.15); color: #0F6E56; }
+    .ss-status--mismatch  { background: rgba(231,70,70,0.15); color: #a32d2d; }
+
+    .ss-mismatch-row {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(231,70,70,0.06);
+      border: 1px dashed rgba(231,70,70,0.35);
+      border-radius: 6px;
+      font-size: 12px;
+      color: #a32d2d;
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .ss-mismatch-row__pill {
+      background: #fff; border: 1px solid rgba(231,70,70,0.25);
+      padding: 2px 8px; border-radius: 100px;
+      font-variant-numeric: tabular-nums; font-weight: 600;
+    }
+    .ss-mismatch-row button {
+      background: #0D3B40; color: var(--cream);
+      border: none; padding: 4px 12px; border-radius: 100px;
+      font: inherit; font-size: 11px; font-weight: 500;
+      cursor: pointer;
     }
 
-    @media (max-width: 720px) {
-      .sg-row { grid-template-columns: 60px 40px 40px 1fr; gap: 6px; font-size: 12px; }
-      .sg-row__pair, .sg-row__pair--away { display: none; }
-      .sg-row--head .sg-row__pair,
-      .sg-row--head .sg-row__pair--away { display: block; font-size: 10px; }
-      .scoresheet__totals { grid-template-columns: 1fr 70px 70px; }
-      .scoresheet__match-final { grid-template-columns: 1fr; text-align: center; }
-      .scoresheet__match-final-home { text-align: center; }
+    .ss-ro-score {
+      font-size: 18px; font-weight: 600;
+      font-variant-numeric: tabular-nums;
     }
+    .ss-ro-score--winner { color: var(--teal-900); }
+    .ss-ro-score--loser  { color: var(--teal-900); opacity: 0.5; }
 
-    .empty-state { text-align: center; padding: 40px 20px; opacity: 0.6; }
+    .ss-actions {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      margin-top: 20px; padding-top: 20px;
+      border-top: 1px solid rgba(13,59,64,0.08);
+    }
+    .ss-progress {
+      flex: 1; min-width: 140px;
+      font-size: 13px; opacity: 0.7; font-weight: 500;
+    }
 
     @media (max-width: 720px) {
       .roster-row { grid-template-columns: 1fr 60px 36px; gap: 8px; }
@@ -812,6 +516,8 @@
       .reveal-matchup { grid-template-columns: 1fr; text-align: left; }
       .reveal-matchup__right { text-align: left; }
       .reveal-matchup__vs { opacity: 0.5; font-size: 11px; }
+      .ss-slot { grid-template-columns: 90px 1fr auto; }
+      .ss-input { width: 46px; height: 38px; font-size: 16px; }
     }
   </style>
 </head>
@@ -822,19 +528,17 @@
     <div class="login-card">
       <div class="login-card__brand">The Dink Society</div>
       <h1 class="login-card__title">Captains</h1>
-      <p class="login-card__sub">Enter your email and we'll send you a one-tap sign-in link. No password, no hassle.</p>
-
-      <div id="login-sent" style="display:none; background: rgba(232,181,66,0.15); border: 1px solid rgba(232,181,66,0.4); color: var(--gold); padding: 16px; border-radius: 6px; text-align: left; font-size: 14px; line-height: 1.55;">
-        <strong style="display:block; margin-bottom: 4px; color: var(--gold);">Link on the way.</strong>
-        Check the inbox for <span id="login-sent-email" style="font-weight: 500;"></span>. The link expires in 15 minutes. If it doesn't show up, check spam or make sure you're using the email on file with the Society.
-      </div>
-
+      <p class="login-card__sub">Roster in, lineups locked, then we play.</p>
       <form id="login-form" onsubmit="return false;" style="text-align:left;">
         <div class="cap-field">
           <label for="login-email">Email</label>
-          <input type="email" id="login-email" autocomplete="email" required placeholder="captain@example.com">
+          <input type="email" id="login-email" autocomplete="email" required>
         </div>
-        <button type="submit" class="cap-btn cap-btn--primary" id="login-submit">Send sign-in link</button>
+        <div class="cap-field">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="cap-btn cap-btn--primary" id="login-submit">Sign in</button>
         <div class="cap-status" id="login-status"></div>
       </form>
     </div>
@@ -851,35 +555,29 @@
       <div class="cap-header__meta">
         <span class="team" id="cap-team-meta">&mdash;</span>
         <span id="cap-email">&mdash;</span>
+        <a href="/leaderboard.html">Leaderboard</a>
         <a href="/">&larr; Site</a>
         <a href="#" id="cap-signout">Sign out</a>
       </div>
     </header>
 
     <nav class="cap-tabs">
-      <button class="cap-tab is-active" data-tab="next">Next match</button>
+      <button class="cap-tab is-active" data-tab="schedule">My matches</button>
       <button class="cap-tab" data-tab="roster">Roster</button>
-      <button class="cap-tab" data-tab="schedule">Schedule</button>
     </nav>
 
-    <!-- Gender-missing warning (shown only when roster has entries with no gender) -->
-    <div id="gender-warning-banner" class="gender-warning" style="display:none;">
-      <div>
-        <strong>Heads up:</strong> <span id="gender-warning-count">&mdash;</span> player(s) on your roster don't have a gender set. You won't be able to lock a lineup with them until you fix this.
-      </div>
-      <a id="go-to-roster">Fix roster &rarr;</a>
-    </div>
-
-    <div id="gender-warning" style="display: none; background: rgba(232,181,66,0.15); border: 1px solid rgba(232,181,66,0.4); color: #854F0B; padding: 14px 18px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 13px; line-height: 1.55;"></div>
-
-    <!-- NEXT MATCH (default landing) — uses the same section markup as match detail -->
-    <section class="cap-section is-active" data-section="next">
-      <div id="next-landing-area">
-        <div class="empty-state">Loading&hellip;</div>
+    <!-- SCHEDULE / MATCHES -->
+    <section class="cap-section is-active" data-section="schedule">
+      <div class="cap-card">
+        <div class="cap-card__header">
+          <h2 class="cap-card__title">My matches</h2>
+          <span class="cap-card__sub">Circuit I</span>
+        </div>
+        <div id="matches-list"><div class="empty-state">Loading&hellip;</div></div>
       </div>
     </section>
 
-    <!-- MATCH DETAIL (when entered from the schedule list) -->
+    <!-- MATCH DETAIL (lineup builder) -->
     <section class="cap-section" data-section="match">
       <a href="#" id="back-to-matches" style="font-size: 13px; color: var(--teal-900); opacity: 0.7; text-decoration: none; display: inline-block; margin-bottom: 12px;">&larr; All matches</a>
 
@@ -896,25 +594,13 @@
 
         <div id="lineup-builder"></div>
 
-        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap;" id="lineup-actions">
+        <div id="scoresheet-area"></div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap;">
           <button class="cap-btn cap-btn--ghost" id="save-draft-btn">Save draft</button>
           <button class="cap-btn cap-btn--gold" id="lock-lineup-btn">Lock lineup</button>
         </div>
         <div class="cap-status" id="lineup-status"></div>
-
-        <!-- Scoresheet — populated once lineups are revealed -->
-        <div id="scoresheet-area"></div>
-      </div>
-    </section>
-
-    <!-- SCHEDULE (all matches list) -->
-    <section class="cap-section" data-section="schedule">
-      <div class="cap-card">
-        <div class="cap-card__header">
-          <h2 class="cap-card__title">All my matches</h2>
-          <span class="cap-card__sub">Circuit I</span>
-        </div>
-        <div id="matches-list"><div class="empty-state">Loading&hellip;</div></div>
       </div>
     </section>
 
@@ -1009,109 +695,33 @@
       $id('cap-team-name').textContent = state.me.team.name;
       $id('cap-team-meta').textContent = `Circuit ${state.me.team.circuit} · ${state.me.team.division}`;
       $id('cap-email').textContent = state.me.email;
-      // Load roster + schedule, then dispatch to the right state
-      Promise.all([loadRoster(true), loadMatches(true)]).then(() => {
-        updateGenderWarning();
-        dispatchToNext();
-      });
-    }
-
-    function updateGenderWarning() {
-      const missing = (state.roster || []).filter(p => !p.gender || !['M','F'].includes(p.gender));
-      const banner = $id('gender-warning-banner');
-      // Only surface the floating banner on the schedule list and roster views.
-      // Next-match dispatcher renders its own state-0 view (more prominent),
-      // and the lineup builder already enforces gender on lock.
-      const activeSection = document.querySelector('.cap-section.is-active')?.dataset.section;
-      const allowedHere = activeSection === 'schedule';
-      if (missing.length > 0 && allowedHere) {
-        $id('gender-warning-count').textContent = missing.length;
-        banner.style.display = 'flex';
-      } else {
-        banner.style.display = 'none';
-      }
-    }
-
-    $id('go-to-roster').addEventListener('click', (e) => {
-      e.preventDefault();
-      document.querySelectorAll('.cap-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'roster'));
-      switchSection('roster');
-      loadRoster();
-    });
-
-    function maybeShowGenderWarning() {
-      const missing = state.roster.filter(p => !p.gender);
-      const banner = $id('gender-warning');
-      if (!banner) return;
-      if (missing.length === 0) {
-        banner.style.display = 'none';
-        return;
-      }
-      banner.style.display = 'block';
-      banner.innerHTML = `
-        <div>
-          <strong style="display: block; font-weight: 500; margin-bottom: 4px;">${missing.length} player${missing.length === 1 ? ' needs' : 's need'} a gender set.</strong>
-          Lineups won't lock until every player's gender is filled in (required for women's / men's / mixed slot assignment). Head to <a href="#" data-go-roster style="color: #854F0B; font-weight: 500; text-decoration: underline;">the Roster tab</a> to fix it.
-        </div>
-      `;
-      banner.querySelector('[data-go-roster]')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelectorAll('.cap-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'roster'));
-        switchSection('roster');
-        renderRoster();
-      });
+      loadMatches();
     }
 
     $id('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = $id('login-email').value.trim();
+      const password = $id('login-password').value;
       const status = $id('login-status');
       const btn = $id('login-submit');
-      if (!email) return;
-
       btn.disabled = true;
       status.className = 'cap-status is-info';
-      status.textContent = 'Sending link…';
-
+      status.textContent = 'Signing in…';
       try {
         const res = await fetch('/.netlify/functions/captain-login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          credentials: 'include',
+          body: JSON.stringify({ email, password }),
         });
-        // Response is always 200 with a generic message (prevents enumeration)
-        if (!res.ok) throw new Error('Could not send link — try again.');
-
-        // Show sent state regardless of whether the email was actually a captain
-        status.className = 'cap-status';
-        status.textContent = '';
-        $id('login-sent-email').textContent = email;
-        $id('login-sent').style.display = 'block';
-        $id('login-form').style.display = 'none';
+        if (!res.ok) throw new Error((await res.json()).error || 'Sign-in failed');
+        await checkAuth();
       } catch (err) {
         status.className = 'cap-status is-error';
         status.textContent = err.message;
         btn.disabled = false;
       }
     });
-
-    // Handle redirect error params from the magic-link consumer
-    (function handleAuthErrors() {
-      const params = new URLSearchParams(window.location.search);
-      const err = params.get('error');
-      if (!err) return;
-      const messages = {
-        missing: 'That link was missing a token. Try requesting a new one.',
-        invalid: 'That link is invalid or has already been used. Try requesting a new one.',
-        expired: 'That link has expired. Request a fresh one below.',
-        server: 'Something went wrong. Try again in a moment.',
-      };
-      const status = $id('login-status');
-      status.className = 'cap-status is-error';
-      status.textContent = messages[err] || 'Sign-in failed. Try requesting a new link.';
-      // Clean the URL so it doesn't persist on refresh
-      history.replaceState({}, '', window.location.pathname);
-    })();
 
     $id('cap-signout').addEventListener('click', async (e) => {
       e.preventDefault();
@@ -1124,15 +734,9 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('.cap-tab').forEach(b => b.classList.remove('is-active'));
         btn.classList.add('is-active');
-        const tab = btn.dataset.tab;
-        if (tab === 'next') {
-          // Re-dispatch to whatever the current state warrants
-          dispatchToNext();
-        } else {
-          switchSection(tab);
-          if (tab === 'schedule') loadMatches();
-          if (tab === 'roster') loadRoster();
-        }
+        switchSection(btn.dataset.tab);
+        if (btn.dataset.tab === 'schedule') loadMatches();
+        if (btn.dataset.tab === 'roster') loadRoster();
       });
     });
 
@@ -1141,19 +745,19 @@
         s.classList.toggle('is-active', s.dataset.section === name);
       });
       stopPolling();
-      updateGenderWarning();
+      if (name !== 'match') Scoresheet.unmount();
     }
 
     // ===== Matches list =====
-    async function loadMatches(silent) {
+    async function loadMatches() {
       try {
         const res = await fetch('/.netlify/functions/captain-schedule', { credentials: 'include' });
         if (!res.ok) throw new Error();
         const data = await res.json();
         state.matches = data.matches || [];
-        if (!silent) renderMatches();
+        renderMatches();
       } catch {
-        if (!silent) $id('matches-list').innerHTML = '<div class="empty-state">Could not load matches.</div>';
+        $id('matches-list').innerHTML = '<div class="empty-state">Could not load matches.</div>';
       }
     }
 
@@ -1164,7 +768,13 @@
       }
       $id('matches-list').innerHTML = state.matches.map(m => {
         let pill;
-        if (m.status.revealed) pill = '<span class="match-pill match-pill--revealed">Revealed</span>';
+        const isFinal = m.scoreA != null && m.scoreB != null;
+        if (isFinal) {
+          const aWon = m.scoreA > m.scoreB;
+          const myRoleIsWinner = (aWon && m.myRole === 'home') || (!aWon && m.myRole === 'away');
+          const result = m.scoreA === m.scoreB ? 'Tied' : (myRoleIsWinner ? 'Won' : 'Lost');
+          pill = `<span class="match-pill match-pill--revealed">${result} ${m.scoreA}&ndash;${m.scoreB}</span>`;
+        } else if (m.status.revealed) pill = '<span class="match-pill match-pill--revealed">Revealed</span>';
         else if (m.status.myLocked) pill = '<span class="match-pill match-pill--locked">You\u2019ve locked · waiting on opponent</span>';
         else pill = '<span class="match-pill match-pill--unlocked">Lineup not locked</span>';
 
@@ -1183,207 +793,14 @@
       }).join('');
 
       document.querySelectorAll('.match-tile').forEach(el => {
-        el.addEventListener('click', () => openMatch(el.dataset.matchId, { viaTab: 'schedule' }));
+        el.addEventListener('click', () => openMatch(el.dataset.matchId));
       });
-    }
-
-    // =================================================================
-    // NEXT MATCH DISPATCHER
-    // Routes the captain to the most-actionable view based on:
-    //   - Roster completeness (genders set)
-    //   - Schedule existence
-    //   - Per-match lineup + score state
-    // Always lands them where they need to act, never on a generic list.
-    // =================================================================
-
-    function dispatchToNext() {
-      switchSection('next');
-      document.querySelectorAll('.cap-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'next'));
-      stopPolling();
-
-      // STATE 0 — Roster incomplete
-      const missingGender = (state.roster || []).filter(p => !p.gender || !['M', 'F'].includes(p.gender));
-      const rosterEmpty = (state.roster || []).length === 0;
-      if (rosterEmpty) {
-        renderRosterIncomplete({ empty: true });
-        return;
-      }
-      if (missingGender.length > 0) {
-        renderRosterIncomplete({ missing: missingGender });
-        return;
-      }
-
-      // STATE 1 — No schedule yet
-      const matches = state.matches || [];
-      if (matches.length === 0) {
-        renderNoSchedule();
-        return;
-      }
-
-      // Pick the match that needs the most attention
-      const picked = pickNextMatch(matches);
-      if (!picked) {
-        renderAllDone();
-        return;
-      }
-
-      // Use the existing match detail view — we just open it without a back link
-      // and tell it the dispatcher is the entry point
-      openMatch(picked.id, { hideBackLink: true, viaTab: 'next' });
-    }
-
-    /**
-     * Picks the most-actionable match for the captain.
-     * Priority cascade:
-     *   1. A match that's revealed but not yet finalized (in progress / scoring)
-     *   2. The earliest unrevealed match where MY lineup isn't locked (need to act)
-     *   3. The earliest unrevealed match where I locked but opp didn't (waiting)
-     *   4. The most recently finalized match (post-game review)
-     */
-    function pickNextMatch(matches) {
-      // 1. Revealed, not finalized → that's the live one
-      const live = matches.find(m => m.status.revealed && !m.finalizedAt);
-      if (live) return live;
-
-      // 2. Earliest unrevealed where my lineup isn't locked
-      const needsMyLineup = matches
-        .filter(m => !m.status.revealed && !m.finalizedAt && !m.status.myLocked)
-        .sort((a, b) => a.week - b.week)[0];
-      if (needsMyLineup) return needsMyLineup;
-
-      // 3. Earliest unrevealed where I locked but opp didn't
-      const waiting = matches
-        .filter(m => !m.status.revealed && !m.finalizedAt && m.status.myLocked && !m.status.oppLocked)
-        .sort((a, b) => a.week - b.week)[0];
-      if (waiting) return waiting;
-
-      // 4. Most recently finalized
-      const finalized = matches
-        .filter(m => m.finalizedAt)
-        .sort((a, b) => new Date(b.finalizedAt) - new Date(a.finalizedAt))[0];
-      if (finalized) return finalized;
-
-      return null;
-    }
-
-    /**
-     * State 0 — Renders the "finish your roster" landing.
-     * { empty: true } means no players at all
-     * { missing: [...] } means players exist but some have no gender
-     */
-    function renderRosterIncomplete({ empty, missing }) {
-      const teamName = state.me.team.name;
-      const upcoming = (state.matches || [])
-        .filter(m => !m.finalizedAt)
-        .slice(0, 3);
-
-      const upcomingHtml = upcoming.length ? `
-        <div style="padding: 20px 24px; border-top: 1px solid rgba(13,59,64,0.08); background: rgba(13,59,64,0.02);">
-          <div style="font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--teal-900); opacity: 0.55; font-weight: 500; margin-bottom: 10px;">Your schedule preview</div>
-          ${upcoming.map(m => `
-            <div style="display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; padding: 8px 0; font-size: 13px; color: var(--teal-900);">
-              <div style="font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 16px; color: var(--gold-deep, #C9972E);">W${m.week}</div>
-              <div>vs ${escapeHtml(m.opponent.name)} <span style="opacity: 0.6; font-size: 12px;">${m.court ? '· ' + escapeHtml(m.court) : ''} ${m.scheduledAt ? '· ' + formatDateShort(m.scheduledAt) : ''}</span></div>
-              <div style="font-size: 11px; opacity: 0.5;">Locked when ready</div>
-            </div>
-          `).join('')}
-        </div>
-      ` : '';
-
-      const heroBody = empty ? `
-        <h2 style="font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 30px; font-weight: 500; margin: 0 0 10px; line-height: 1.15;">Add your roster first.</h2>
-        <p style="font-size: 14px; opacity: 0.8; margin: 0 0 24px; line-height: 1.6; max-width: 400px; margin-left: auto; margin-right: auto;">
-          Before you can lock a lineup, ${escapeHtml(teamName)} needs a roster of players with names and gender so we can enforce women's, men's, and mixed slots.
-        </p>
-        <div>
-          <button class="cap-btn cap-btn--gold" id="finish-roster-btn">Add players &rarr;</button>
-        </div>
-      ` : `
-        <h2 style="font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 30px; font-weight: 500; margin: 0 0 10px; line-height: 1.15;">Finish your roster first.</h2>
-        <p style="font-size: 14px; opacity: 0.8; margin: 0 0 24px; line-height: 1.6; max-width: 420px; margin-left: auto; margin-right: auto;">
-          <strong style="font-weight: 500; color: var(--gold);">${missing.length} of ${(state.roster || []).length} players</strong> don't have a gender set. We need this to enforce women's / men's / mixed slots when you lock a lineup.
-        </p>
-        <div style="display: inline-block; text-align: left; padding: 16px 20px; background: rgba(245,235,212,0.05); border: 1px solid rgba(232,181,66,0.2); border-radius: 6px; font-size: 13px; margin-bottom: 24px; max-width: 420px;">
-          <div style="font-size: 10px; letter-spacing: 0.15em; opacity: 0.65; margin-bottom: 4px;">Needs gender</div>
-          <div>${missing.map(p => escapeHtml(p.name)).join(', ')}</div>
-        </div>
-        <div>
-          <button class="cap-btn cap-btn--gold" id="finish-roster-btn">Finish roster &rarr;</button>
-        </div>
-      `;
-
-      $id('next-landing-area').innerHTML = `
-        <div style="background: #fff; border: 1px solid rgba(13,59,64,0.1); border-radius: var(--radius-sm); overflow: hidden;">
-          <div style="padding: 48px 32px; text-align: center; background: linear-gradient(135deg, #0D3B40 0%, #000 100%); color: var(--cream);">
-            <div style="font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); opacity: 0.85; font-weight: 500; margin-bottom: 14px;">Before you can play</div>
-            ${heroBody}
-          </div>
-          ${upcomingHtml}
-        </div>
-      `;
-
-      $id('finish-roster-btn').addEventListener('click', () => {
-        document.querySelectorAll('.cap-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'roster'));
-        switchSection('roster');
-        loadRoster();
-      });
-    }
-
-    /**
-     * State 1 — No schedule yet (Circuit not started or admin hasn't generated)
-     */
-    function renderNoSchedule() {
-      const teamName = state.me.team.name;
-      const division = state.me.team.division || '';
-      const circuit = state.me.team.circuit || 'I';
-
-      $id('next-landing-area').innerHTML = `
-        <div style="background: #fff; border: 1px solid rgba(13,59,64,0.1); border-radius: var(--radius-sm); padding: 60px 32px; text-align: center;">
-          <div style="font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--teal-900); opacity: 0.55; font-weight: 500; margin-bottom: 14px;">Schedule pending</div>
-          <h2 style="font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 30px; font-weight: 500; color: var(--teal-900); margin: 0 0 12px; line-height: 1.15;">No matches yet for ${escapeHtml(teamName)}.</h2>
-          <p style="font-size: 14px; color: var(--teal-900); opacity: 0.7; margin: 0 0 24px; line-height: 1.6; max-width: 420px; margin-left: auto; margin-right: auto;">
-            Circuit ${escapeHtml(circuit)} ${division ? `(${escapeHtml(division)})` : ''} hasn't been scheduled yet. Once the schedule drops, your matches will show up here.
-          </p>
-          <p style="font-size: 13px; color: var(--teal-900); opacity: 0.55; margin: 0;">In the meantime, get your roster ready &mdash; Roster tab above.</p>
-        </div>
-      `;
-    }
-
-    /**
-     * State edge — All matches finalized, no upcoming. Show the most recent + a wrap-up.
-     */
-    function renderAllDone() {
-      const teamName = state.me.team.name;
-      $id('next-landing-area').innerHTML = `
-        <div style="background: #fff; border: 1px solid rgba(13,59,64,0.1); border-radius: var(--radius-sm); padding: 60px 32px; text-align: center;">
-          <div style="font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold-deep, #C9972E); font-weight: 500; margin-bottom: 14px;">Circuit complete</div>
-          <h2 style="font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 30px; font-weight: 500; color: var(--teal-900); margin: 0 0 12px;">That's a wrap.</h2>
-          <p style="font-size: 14px; color: var(--teal-900); opacity: 0.7; margin: 0; line-height: 1.6;">
-            All ${escapeHtml(teamName)} matches for this Circuit are final. Hit the Schedule tab to review the season.
-          </p>
-        </div>
-      `;
-    }
-
-    function formatDateShort(iso) {
-      if (!iso) return '';
-      const d = new Date(iso);
-      if (isNaN(d)) return '';
-      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     }
 
     // ===== Match detail / lineup builder =====
-    async function openMatch(matchId, opts) {
-      const showBackLink = !(opts && opts.hideBackLink);
+    async function openMatch(matchId) {
       switchSection('match');
-      // Set tab active state — "Next match" if dispatched, otherwise no tab is "in" the detail
-      if (opts && opts.viaTab) {
-        document.querySelectorAll('.cap-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === opts.viaTab));
-      } else {
-        document.querySelectorAll('.cap-tab').forEach(b => b.classList.remove('is-active'));
-      }
-      // Toggle back-to-matches link visibility
-      $id('back-to-matches').style.display = showBackLink ? '' : 'none';
+      document.querySelectorAll('.cap-tab').forEach(b => b.classList.remove('is-active'));
 
       state.currentMatch = state.matches.find(m => m.id === matchId);
       if (!state.currentMatch) return;
@@ -1404,38 +821,11 @@
         state.lineupDraft = (data.myLineup?.games) || {};
         renderMatchDetail(data);
 
-        // If revealed, also fetch and render scoresheet
-        if (data.status.revealed) {
-          await refreshScoresheet();
-        } else {
-          $id('scoresheet-area').innerHTML = '';
-        }
-
         // Poll if we've locked but opponent hasn't — to auto-reveal
         if (data.status.myLocked && !data.status.revealed) startPolling();
-        else if (data.status.revealed && !isMatchFinal()) startPolling();  // also poll during score entry
         else stopPolling();
       } catch {
         $id('lineup-builder').innerHTML = '<div class="empty-state">Could not load match.</div>';
-      }
-    }
-
-    function isMatchFinal() {
-      return state.currentScore?.final === true;
-    }
-
-    async function refreshScoresheet() {
-      if (!state.currentMatch) return;
-      try {
-        const res = await fetch(`/.netlify/functions/captain-score?match=${encodeURIComponent(state.currentMatch.id)}`, {
-          credentials: 'include',
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        state.currentScore = data;
-        renderScoresheet(data);
-      } catch {
-        $id('scoresheet-area').innerHTML = '<div class="empty-state">Could not load scoresheet.</div>';
       }
     }
 
@@ -1461,9 +851,7 @@
         revealEl.innerHTML = renderReveal(data);
         lockBtn.style.display = 'none';
         saveBtn.style.display = 'none';
-        // Builder is redundant post-reveal — scoresheet shows the locked lineup already
-        $id('lineup-builder').style.display = 'none';
-        $id('lineup-actions').style.display = 'none';
+        Scoresheet.mount(m.id);
       } else if (data.status.myLocked) {
         pillEl.innerHTML = '<span class="match-pill match-pill--locked">Locked</span>';
         revealEl.innerHTML = `
@@ -1473,15 +861,13 @@
         `;
         lockBtn.style.display = 'none';
         saveBtn.style.display = 'none';
-        $id('lineup-builder').style.display = '';
-        $id('lineup-actions').style.display = '';
+        Scoresheet.unmount();
       } else {
         pillEl.innerHTML = '<span class="match-pill match-pill--unlocked">Unlocked</span>';
         revealEl.innerHTML = '';
         lockBtn.style.display = '';
         saveBtn.style.display = '';
-        $id('lineup-builder').style.display = '';
-        $id('lineup-actions').style.display = '';
+        Scoresheet.unmount();
       }
 
       renderLineupBuilder(data.status.myLocked, data.status.revealed);
@@ -1601,459 +987,6 @@
       `;
     }
 
-    // ===== Scoresheet =====
-    // Backend contract:
-    //   PUT  captain-score?match=<id>          → save my entries (one captain at a time)
-    //   POST captain-score?match=<id>&action=submit|withdraw
-    // Both captains enter every game. System auto-validates per-game agreement.
-    // Match finalizes only when all 12 games confirmed AND both captains submit.
-
-    const SLOT_TYPE_LABEL = {
-      r1g1: "Women's", r1g2: "Men's", r1g3: 'Mixed', r1g4: 'Mixed', r1g5: 'Mixed', r1g6: 'Mixed',
-      r2g1: "Women's", r2g2: "Men's", r2g3: 'Mixed', r2g4: 'Mixed', r2g5: 'Mixed', r2g6: 'Mixed',
-    };
-
-    function isMatchFinal() {
-      return !!state.currentScore?.score?.finalizedAt;
-    }
-
-    // ============================================================
-    // DUAL-ENTRY SCORESHEET
-    // Both captains enter every game. System validates match-vs-mismatch.
-    // Match finalizes only when all 12 games are confirmed AND both
-    // captains have tapped "Submit final".
-    // ============================================================
-
-    function renderScoresheet(data) {
-      const area = $id('scoresheet-area');
-      if (!data.revealed) {
-        area.innerHTML = '';
-        return;
-      }
-
-      const myRole = data.myRole;
-      const homeName = data.match.home.name;
-      const awayName = data.match.away.name;
-      const myTeamName = myRole === 'home' ? homeName : awayName;
-      const homeLineup = data.homeLineup?.games || {};
-      const awayLineup = data.awayLineup?.games || {};
-
-      const score = data.score;
-      const games = score.games || {};
-      const c = score.computed || {};
-      const final = !!score.finalizedAt;
-
-      // I can edit my own scores anytime pre-final
-      const canEdit = !final;
-
-      const renderRound = (round) => {
-        const serveNote = round === 1
-          ? 'Home serves first &middot; Away chooses side'
-          : 'Home chooses side &middot; Away serves first';
-
-        const rows = [];
-        rows.push(`
-          <tr>
-            <th>Game</th>
-            <th>${escapeHtml(homeName)} pair</th>
-            <th class="ss-th--score">Home</th>
-            <th class="ss-th--score">Away</th>
-            <th>${escapeHtml(awayName)} pair</th>
-            <th class="ss-th--status">Status</th>
-          </tr>
-        `);
-
-        for (let g = 1; g <= 6; g++) {
-          const slot = `r${round}g${g}`;
-          const gs = games[slot] || { home: null, away: null };
-          const status = (c.gameStatuses || []).find(s => s.slot === slot)?.status || 'empty';
-          const homePair = formatPair(homeLineup[slot]);
-          const awayPair = formatPair(awayLineup[slot]);
-
-          // Each side's entered value (if any)
-          const hv = gs.home?.entered ?? '';
-          const av = gs.away?.entered ?? '';
-
-          // Cell-level styling per status
-          const homeIsMine = myRole === 'home';
-          const awayIsMine = myRole === 'away';
-
-          const inputClass = (mine, sideStatus) => {
-            const classes = ['ss-score-input'];
-            if (status === 'confirmed') classes.push('ss-score-input--confirmed');
-            else if (status === 'mismatch') classes.push('ss-score-input--mismatch');
-            else if (sideStatus === 'entered' && mine) classes.push('ss-score-input--mine-entered');
-            else if (sideStatus === 'entered') classes.push('ss-score-input--other-entered');
-            else if (sideStatus === 'empty' && !mine) classes.push('ss-score-input--awaiting-other');
-            return classes.join(' ');
-          };
-
-          // For each cell: am I the editor? what's the value?
-          const homeSideStatus = gs.home ? 'entered' : 'empty';
-          const awaySideStatus = gs.away ? 'entered' : 'empty';
-
-          // Status pill
-          const pill = renderStatusPill(status);
-
-          // Row background tint for confirmed/mismatch
-          const rowClass = status === 'confirmed' ? 'ss-row--confirmed'
-                          : status === 'mismatch' ? 'ss-row--mismatch' : '';
-
-          rows.push(`
-            <tr class="${rowClass}">
-              <td><span class="ss-type">G${g}</span> <span class="ss-type-label">${SLOT_TYPE_LABEL[slot]}</span></td>
-              <td class="ss-pair">${escapeHtml(homePair)}</td>
-              <td>
-                <input type="number" inputmode="numeric" min="0" max="30"
-                  class="${inputClass(homeIsMine, homeSideStatus)}"
-                  value="${hv}"
-                  placeholder="${homeIsMine ? '' : '?'}"
-                  data-slot="${slot}" data-side="home"
-                  ${canEdit && homeIsMine ? '' : 'disabled'}>
-              </td>
-              <td>
-                <input type="number" inputmode="numeric" min="0" max="30"
-                  class="${inputClass(awayIsMine, awaySideStatus)}"
-                  value="${av}"
-                  placeholder="${awayIsMine ? '' : '?'}"
-                  data-slot="${slot}" data-side="away"
-                  ${canEdit && awayIsMine ? '' : 'disabled'}>
-              </td>
-              <td class="ss-pair">${escapeHtml(awayPair)}</td>
-              <td class="ss-status-cell">${pill}</td>
-            </tr>
-          `);
-        }
-
-        const rsum = round === 1 ? c.round1 : c.round2;
-        const rWin = rsum?.homePoints > rsum?.awayPoints ? 'home'
-          : rsum?.awayPoints > rsum?.homePoints ? 'away' : null;
-        const rsumComplete = rsum?.scoredGames === 6;
-
-        return `
-          <div class="ss-round">
-            <h4 class="ss-round__title">Round ${round}</h4>
-            <div class="ss-round__sub">${serveNote}</div>
-            <table class="ss-table">${rows.join('')}</table>
-            ${rsumComplete ? `
-              <div class="ss-round-summary">
-                <div class="ss-round-summary__block">
-                  <div class="ss-round-summary__label">${escapeHtml(homeName)}</div>
-                  <div class="ss-round-summary__value">
-                    ${rsum.homeGames} games &middot;
-                    <span class="${rWin === 'home' ? 'ss-round-summary__gold' : ''}">${rsum.homePoints} pt${rsum.homePoints === 1 ? '' : 's'}</span>
-                  </div>
-                </div>
-                <div class="ss-round-summary__block">
-                  <div class="ss-round-summary__label">${escapeHtml(awayName)}</div>
-                  <div class="ss-round-summary__value">
-                    ${rsum.awayGames} games &middot;
-                    <span class="${rWin === 'away' ? 'ss-round-summary__gold' : ''}">${rsum.awayPoints} pt${rsum.awayPoints === 1 ? '' : 's'}</span>
-                  </div>
-                </div>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      };
-
-      // Top banner — overall scoresheet state
-      const banner = renderScoresheetBanner(data);
-
-      // Totals card
-      const totals = `
-        <div class="ss-total">
-          <div class="ss-total__team">
-            <div class="ss-approval__label">Home</div>
-            <div style="font-weight: 500; margin-top: 2px;">${escapeHtml(homeName)}</div>
-          </div>
-          <div>
-            <div class="ss-total__score">${c.matchPoints?.home ?? 0} &ndash; ${c.matchPoints?.away ?? 0}</div>
-            <div class="ss-total__vs">Match points (max 4)</div>
-            ${final && c.matchWinner !== 'tie'
-              ? `<div class="ss-total__winner">${c.matchWinner === 'home' ? escapeHtml(homeName) : escapeHtml(awayName)} wins</div>`
-              : (final ? '<div class="ss-total__winner">Match tied</div>' : '')}
-          </div>
-          <div class="ss-total__team ss-total__team--right">
-            <div class="ss-approval__label">Away</div>
-            <div style="font-weight: 500; margin-top: 2px;">${escapeHtml(awayName)}</div>
-          </div>
-        </div>
-      `;
-
-      // Submit/withdraw state for both captains
-      const mySubmitted = myRole === 'home' ? !!score.homeSubmittedAt : !!score.awaySubmittedAt;
-      const otherSubmitted = myRole === 'home' ? !!score.awaySubmittedAt : !!score.homeSubmittedAt;
-      const myLabel = myRole === 'home' ? homeName : awayName;
-      const otherLabel = myRole === 'home' ? awayName : homeName;
-
-      const submissions = `
-        <div class="ss-approvals">
-          <div class="ss-approval ${score.homeSubmittedAt ? 'ss-approval--done' : ''} ${myRole === 'home' ? 'ss-approval--mine' : ''}">
-            <div class="ss-approval__label">${escapeHtml(homeName)} submission</div>
-            <div class="ss-approval__value">
-              ${score.homeSubmittedAt ? '&check; Submitted' : 'Not yet submitted'}
-            </div>
-            ${score.homeSubmittedAt ? `<div class="ss-approval__time">${formatTime(score.homeSubmittedAt)}</div>` : ''}
-          </div>
-          <div class="ss-approval ${score.awaySubmittedAt ? 'ss-approval--done' : ''} ${myRole === 'away' ? 'ss-approval--mine' : ''}">
-            <div class="ss-approval__label">${escapeHtml(awayName)} submission</div>
-            <div class="ss-approval__value">
-              ${score.awaySubmittedAt ? '&check; Submitted' : 'Not yet submitted'}
-            </div>
-            ${score.awaySubmittedAt ? `<div class="ss-approval__time">${formatTime(score.awaySubmittedAt)}</div>` : ''}
-          </div>
-        </div>
-      `;
-
-      // Action buttons
-      const actions = [];
-      if (!final) {
-        if (!mySubmitted) {
-          const ready = !!c.canSubmit;
-          let label;
-          if (ready) {
-            label = otherSubmitted
-              ? `Submit final &mdash; ${escapeHtml(otherLabel)} is waiting`
-              : 'Submit final';
-          } else {
-            const remaining = (c.counts?.empty || 0) + (c.counts?.partial || 0) + (c.counts?.mismatch || 0);
-            label = `${remaining} game${remaining === 1 ? '' : 's'} need${remaining === 1 ? 's' : ''} to confirm`;
-          }
-          actions.push(`
-            <button class="cap-btn cap-btn--gold" id="ss-submit-btn" ${ready ? '' : 'disabled'}>${label}</button>
-          `);
-        } else {
-          actions.push(`
-            <button class="cap-btn cap-btn--ghost" id="ss-withdraw-btn">Withdraw my submission</button>
-          `);
-        }
-      }
-
-      area.innerHTML = `
-        <div class="scoresheet">
-          <div class="scoresheet__header">
-            <h3 class="scoresheet__title">Scoresheet</h3>
-            <div class="scoresheet__meta">Week ${data.match.week} &middot; ${escapeHtml(data.match.court || '—')}</div>
-          </div>
-          ${banner}
-          ${renderRound(1)}
-          ${renderRound(2)}
-          ${totals}
-          ${submissions}
-          ${actions.length ? `<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap;">${actions.join('')}</div>` : ''}
-          <div class="cap-status" id="ss-status"></div>
-        </div>
-        ${final ? renderUpNextStrip() : ''}
-      `;
-
-      // Wire input listeners — only the inputs for MY side are enabled
-      area.querySelectorAll('.ss-score-input:not([disabled])').forEach(inp => {
-        inp.addEventListener('blur', onScoreInputBlur);
-        // Save on Enter
-        inp.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
-        });
-      });
-
-      const submitBtn = $id('ss-submit-btn');
-      if (submitBtn) submitBtn.addEventListener('click', submitFinal);
-
-      const withdrawBtn = $id('ss-withdraw-btn');
-      if (withdrawBtn) withdrawBtn.addEventListener('click', withdrawSubmit);
-
-      // Wire Up Next CTA if present
-      const upNextBtn = $id('up-next-btn');
-      if (upNextBtn) {
-        upNextBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const id = upNextBtn.dataset.matchId;
-          if (id) openMatch(id, { hideBackLink: true, viaTab: 'next' });
-        });
-      }
-    }
-
-    /**
-     * Returns HTML for the "Up next" strip shown below a finalized match.
-     * Bridges the captain to the next actionable match in one tap.
-     */
-    function renderUpNextStrip() {
-      const cur = state.currentMatch;
-      if (!cur) return '';
-      const matches = state.matches || [];
-      // Find the next actionable match: same priority cascade as dispatcher,
-      // but excluding the current finalized one
-      const candidates = matches.filter(m => m.id !== cur.id);
-      const next = pickNextMatch(candidates);
-      if (!next) return '';
-
-      let label, sublabel, ctaText;
-      if (next.finalizedAt) {
-        label = 'Most recent result';
-        sublabel = `vs ${next.opponent.name}`;
-        ctaText = 'View &rarr;';
-      } else if (!next.status.myLocked) {
-        label = 'Up next &middot; needs your lineup';
-        sublabel = `vs ${next.opponent.name}`;
-        ctaText = 'Set lineup &rarr;';
-      } else if (!next.status.oppLocked) {
-        label = 'Up next &middot; waiting on opponent';
-        sublabel = `vs ${next.opponent.name}`;
-        ctaText = 'View &rarr;';
-      } else {
-        label = 'Up next';
-        sublabel = `vs ${next.opponent.name}`;
-        ctaText = 'Open &rarr;';
-      }
-
-      const meta = [
-        next.scheduledAt ? formatDateShort(next.scheduledAt) : null,
-        next.court,
-      ].filter(Boolean).join(' · ');
-
-      return `
-        <div style="margin-top: 16px; border: 1px solid rgba(232,181,66,0.35); background: rgba(232,181,66,0.06); border-radius: var(--radius-sm); padding: 16px 20px;">
-          <div style="font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--teal-900); opacity: 0.6; font-weight: 500; margin-bottom: 10px;">${label}</div>
-          <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;">
-            <div style="font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 22px; color: var(--gold-deep, #C9972E); font-weight: 500;">W${next.week}</div>
-            <div>
-              <div style="font-size: 14px; font-weight: 500; color: var(--teal-900);">${escapeHtml(sublabel)}</div>
-              ${meta ? `<div style="font-size: 12px; color: var(--teal-900); opacity: 0.65; margin-top: 2px;">${escapeHtml(meta)}</div>` : ''}
-            </div>
-            <button class="cap-btn cap-btn--primary" id="up-next-btn" data-match-id="${escapeAttr(next.id)}">${ctaText}</button>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderStatusPill(status) {
-      const pills = {
-        empty: '<span class="ss-pill ss-pill--empty">Empty</span>',
-        partial: '<span class="ss-pill ss-pill--partial">Awaiting</span>',
-        confirmed: '<span class="ss-pill ss-pill--confirmed">&check; Confirmed</span>',
-        mismatch: '<span class="ss-pill ss-pill--mismatch">&times; Mismatch</span>',
-      };
-      return pills[status] || pills.empty;
-    }
-
-    function renderScoresheetBanner(data) {
-      const c = data.score?.computed || {};
-      const final = !!data.score?.finalizedAt;
-      const myRole = data.myRole;
-      const mySubmitted = myRole === 'home' ? !!data.score.homeSubmittedAt : !!data.score.awaySubmittedAt;
-
-      if (final) {
-        return `<div class="ss-banner ss-banner--final"><strong>Match finalized.</strong> Both captains submitted &mdash; scores committed to the Circuit leaderboard.</div>`;
-      }
-
-      const mismatches = c.mismatches || [];
-      if (mismatches.length > 0) {
-        return `
-          <div class="ss-banner ss-banner--mismatch">
-            <strong>${mismatches.length} game${mismatches.length === 1 ? '' : 's'} don't match.</strong>
-            Talk to the other captain courtside, then both re-enter. The system will mark the games confirmed when you both type the same numbers.
-            <span class="ss-banner__detail">Affected: ${mismatches.map(s => prettySlotShort(s)).join(', ')}</span>
-          </div>
-        `;
-      }
-
-      if (c.canSubmit && !mySubmitted) {
-        return `<div class="ss-banner ss-banner--ready"><strong>All 12 games confirmed.</strong> Tap "Submit final" below to finalize the match. Both captains must submit before scores are written to the leaderboard.</div>`;
-      }
-
-      if (mySubmitted) {
-        return `<div class="ss-banner ss-banner--mine-submitted"><strong>You've submitted.</strong> Waiting on the other captain to submit. The match will finalize as soon as they do.</div>`;
-      }
-
-      const remaining = (c.counts?.empty || 0) + (c.counts?.partial || 0);
-      return `<div class="ss-banner"><strong>Both captains enter scores game-by-game.</strong> A game shows as confirmed when both numbers match. ${remaining} game${remaining === 1 ? '' : 's'} still to enter or confirm.</div>`;
-    }
-
-    function formatPair(gamePicks) {
-      if (!gamePicks) return '—';
-      const parts = [gamePicks.p1Name, gamePicks.p2Name].filter(Boolean);
-      return parts.length ? parts.join(' & ') : '—';
-    }
-
-    function formatTime(iso) {
-      if (!iso) return '';
-      const d = new Date(iso);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    }
-
-    function prettySlotShort(slot) {
-      const round = slot.startsWith('r1') ? 'R1' : 'R2';
-      return `${round}G${slot.slice(-1)}`;
-    }
-
-    // ===== Save flow =====
-    async function onScoreInputBlur(e) {
-      const inp = e.target;
-      const slot = inp.dataset.slot;
-      const side = inp.dataset.side;
-      const v = inp.value.trim();
-      const games = {};
-      games[slot] = { entered: v === '' ? null : Number(v) };
-
-      const status = $id('ss-status');
-      try {
-        const res = await fetch(`/.netlify/functions/captain-score?match=${encodeURIComponent(state.currentMatch.id)}`, {
-          method: 'PUT',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ games }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Save failed');
-        // Re-render to show updated status pills/colors and live totals
-        await refreshScoresheet();
-      } catch (err) {
-        if (status) {
-          status.className = 'cap-status is-error';
-          status.textContent = err.message;
-        }
-      }
-    }
-
-    async function submitFinal() {
-      if (!confirm('Submit this scoresheet as final from your side?\n\nIf the other captain also submits, the match becomes FINAL and scores are written to the leaderboard. You can withdraw your submission until the other captain submits.')) return;
-
-      const status = $id('ss-status');
-      try {
-        const res = await fetch(`/.netlify/functions/captain-score?match=${encodeURIComponent(state.currentMatch.id)}&action=submit`, {
-          method: 'POST', credentials: 'include',
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Submit failed');
-        await refreshScoresheet();
-        await loadMatches();
-      } catch (err) {
-        if (status) {
-          status.className = 'cap-status is-error';
-          status.textContent = err.message;
-        }
-      }
-    }
-
-    async function withdrawSubmit() {
-      if (!confirm('Withdraw your submission? You can re-submit later.')) return;
-      const status = $id('ss-status');
-      try {
-        const res = await fetch(`/.netlify/functions/captain-score?match=${encodeURIComponent(state.currentMatch.id)}&action=withdraw`, {
-          method: 'POST', credentials: 'include',
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed');
-        await refreshScoresheet();
-      } catch (err) {
-        if (status) {
-          status.className = 'cap-status is-error';
-          status.textContent = err.message;
-        }
-      }
-    }
-
     // ===== Save / Lock =====
     $id('save-draft-btn').addEventListener('click', () => saveLineup('save'));
     $id('lock-lineup-btn').addEventListener('click', () => {
@@ -2107,6 +1040,7 @@
     $id('back-to-matches').addEventListener('click', (e) => {
       e.preventDefault();
       stopPolling();
+      Scoresheet.unmount();
       document.querySelectorAll('.cap-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === 'schedule'));
       switchSection('schedule');
       loadMatches();
@@ -2195,8 +1129,6 @@
         status.className = 'cap-status is-success';
         status.textContent = 'Roster saved.';
         renderRoster();
-        updateGenderWarning();
-        maybeShowGenderWarning();
       } catch (err) {
         status.className = 'cap-status is-error';
         status.textContent = err.message;
@@ -2204,6 +1136,376 @@
         btn.disabled = false;
       }
     });
+
+    // ===== Scoresheet (dual-entry scoring) =====
+    const Scoresheet = (function () {
+      const SLOT_LABELS = {
+        g1: "Women's", g2: "Men's",
+        g3: 'Mixed 1', g4: 'Mixed 2', g5: 'Mixed 3', g6: 'Mixed 4',
+      };
+      const ROUND_KEYS = ['r1', 'r2'];
+      const SS_SLOTS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
+
+      const local = {
+        matchId: null,
+        side: null,
+        view: null,
+        submitted: { home: null, away: null },
+        finalScore: null,
+        finalizedAt: null,
+        myTeamName: null,
+        oppTeamName: null,
+        pollTimer: null,
+      };
+      const host = () => $id('scoresheet-area');
+
+      async function call(method, bodyOrNull) {
+        const opts = {
+          method,
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        };
+        if (bodyOrNull) opts.body = JSON.stringify(bodyOrNull);
+        const res = await fetch(
+          `/.netlify/functions/captain-score?match=${encodeURIComponent(local.matchId)}`,
+          opts
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `${res.status}`);
+        return data;
+      }
+
+      function absorb(data) {
+        local.view = data.view;
+        local.submitted = data.submitted || { home: null, away: null };
+        local.finalizedAt = data.finalizedAt || null;
+        local.finalScore = data.finalScore || null;
+        if (data.side) local.side = data.side;
+        if (data.myTeam?.name) local.myTeamName = data.myTeam.name;
+        if (data.opponent?.name) local.oppTeamName = data.opponent.name;
+      }
+
+      async function mount(matchId) {
+        unmount();
+        local.matchId = matchId;
+        const el = host();
+        if (!el) return;
+        el.style.display = 'block';
+        el.innerHTML = '<div class="empty-state">Loading scoresheet&hellip;</div>';
+        try {
+          const data = await call('GET');
+          absorb(data);
+          render();
+          startPolling();
+        } catch (e) {
+          el.innerHTML = `<div class="ss-banner ss-banner--warn">Couldn't load scoresheet: ${escapeHtml(e.message)}</div>`;
+        }
+      }
+
+      function unmount() {
+        stopPolling();
+        local.matchId = null;
+        const el = host();
+        if (el) { el.innerHTML = ''; el.style.display = 'none'; }
+      }
+
+      async function refresh() {
+        if (!local.matchId) return;
+        try {
+          const data = await call('GET');
+          absorb(data);
+          render();
+          if (local.finalizedAt) stopPolling();
+        } catch {
+          /* soft fail */
+        }
+      }
+
+      function startPolling() {
+        stopPolling();
+        local.pollTimer = setInterval(() => {
+          if (!local.matchId || local.finalizedAt) { stopPolling(); return; }
+          refresh();
+        }, 8000);
+      }
+      function stopPolling() {
+        if (local.pollTimer) { clearInterval(local.pollTimer); local.pollTimer = null; }
+      }
+
+      function render() {
+        const el = host();
+        if (!el) return;
+        if (local.finalizedAt) {
+          el.innerHTML = renderFinal();
+          stopPolling();
+          return;
+        }
+        el.innerHTML = renderActive();
+        wireInputs();
+      }
+
+      function renderFinal() {
+        const fs = local.finalScore;
+        if (!fs) {
+          return `<div class="ss-banner ss-banner--final">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.7;font-weight:600">Match final</div>
+            <div style="margin-top:6px;font-size:14px">Results locked in.</div>
+          </div>`;
+        }
+        const aWon = fs.scoreA > fs.scoreB;
+        return `
+          <div class="ss-banner ss-banner--final">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.7;font-weight:600">Match final</div>
+            <div class="ss-final-summary">
+              <span style="${aWon?'':'opacity:.55'}">${escapeHtml(local.side === 'home' ? local.myTeamName : local.oppTeamName || '')}</span>
+              <span class="vs">${fs.scoreA}&ndash;${fs.scoreB}</span>
+              <span style="${!aWon?'':'opacity:.55'}">${escapeHtml(local.side === 'home' ? local.oppTeamName : local.myTeamName || '')}</span>
+            </div>
+            <div style="font-size:12px;opacity:0.7">Finalized ${new Date(local.finalizedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>
+          </div>
+          ${renderRoundReadOnly('r1', fs.round1)}
+          ${renderRoundReadOnly('r2', fs.round2)}
+        `;
+      }
+
+      function renderActive() {
+        const counts = countStatuses();
+        const mySubmitted = !!local.submitted[local.side];
+        const oppSubmitted = !!local.submitted[otherSide(local.side)];
+        const myName = local.myTeamName || '';
+        const oppName = local.oppTeamName || '';
+
+        let banner;
+        if (counts.mismatch > 0) {
+          banner = `<div class="ss-banner ss-banner--warn">
+            <strong>${counts.mismatch} mismatch${counts.mismatch===1?'':'es'}.</strong>
+            Resolve courtside before submitting &mdash; red rows show your opponent's number with a tap-to-accept.
+          </div>`;
+        } else if (counts.confirmed === 12 && mySubmitted && !oppSubmitted) {
+          banner = `<div class="ss-banner ss-banner--good">
+            <strong>Submitted.</strong> Waiting on ${escapeHtml(oppName)} to submit final.
+          </div>`;
+        } else if (counts.confirmed === 12) {
+          banner = `<div class="ss-banner ss-banner--good">
+            All 12 games confirmed. Tap <strong>Submit final</strong> when ready.
+          </div>`;
+        } else {
+          banner = `<div class="ss-banner ss-banner--info">
+            Enter scores as games complete. You're entering as <strong>${escapeHtml(myName)}</strong>. Your opponent enters independently &mdash; each game turns green when you both agree.
+          </div>`;
+        }
+
+        const disabled = counts.confirmed < 12 || mySubmitted;
+
+        return `
+          <h3 class="lineup-round__title" style="margin-top:24px;">Scoresheet</h3>
+          ${banner}
+          ${renderRound('r1', 'Round 1')}
+          ${renderRound('r2', 'Round 2')}
+          <div class="ss-actions">
+            <div class="ss-progress">
+              ${counts.confirmed}/12 confirmed${counts.partial?` &middot; ${counts.partial} awaiting opponent`:''}${counts.mismatch?` &middot; ${counts.mismatch} mismatch${counts.mismatch===1?'':'es'}`:''}
+            </div>
+            ${mySubmitted
+              ? `<button class="cap-btn cap-btn--ghost" data-ss-action="unsubmit">Withdraw submission</button>`
+              : ''}
+            <button class="cap-btn cap-btn--gold" data-ss-action="submit" ${disabled?'disabled':''}>
+              ${mySubmitted ? 'Submitted &check;' : 'Submit final'}
+            </button>
+          </div>
+        `;
+      }
+
+      function renderRound(roundKey, label) {
+        const view = local.view?.[roundKey] || {};
+        let homeGames = 0, awayGames = 0;
+        for (const slot of SS_SLOTS) {
+          const cell = view[slot];
+          if (cell?.status === 'confirmed') {
+            if (cell.home.home > cell.home.away) homeGames++;
+            else if (cell.home.away > cell.home.home) awayGames++;
+          }
+        }
+        let html = `<div class="ss-round">
+          <div class="ss-round__head">
+            <h4 class="ss-round__title">${label}</h4>
+            <span class="ss-round__tally">${homeGames}&ndash;${awayGames}</span>
+          </div>`;
+        for (const slot of SS_SLOTS) html += renderSlot(roundKey, slot, view[slot] || {});
+        html += `</div>`;
+        return html;
+      }
+
+      function renderSlot(roundKey, slot, cell) {
+        const mine = cell[local.side];
+        const theirs = cell[otherSide(local.side)];
+        const home = mine?.home ?? '';
+        const away = mine?.away ?? '';
+        const status = cell.status || 'empty';
+        const glyph = { empty: '&middot;', partial: '&hellip;', confirmed: '&check;', mismatch: '!' }[status];
+
+        let mismatchRow = '';
+        if (status === 'mismatch' && theirs) {
+          mismatchRow = `<div class="ss-mismatch-row">
+            <span>Opponent has <span class="ss-mismatch-row__pill">${theirs.home}&ndash;${theirs.away}</span> for this game.</span>
+            <button data-ss-action="accept-opp" data-round="${roundKey}" data-slot="${slot}" data-h="${theirs.home}" data-a="${theirs.away}">Accept opponent's</button>
+          </div>`;
+        }
+
+        return `<div class="ss-slot" data-round="${roundKey}" data-slot="${slot}">
+          <div class="ss-slot__label"><span class="ss-slot__num">G${slot.slice(1)}</span>${SLOT_LABELS[slot]}</div>
+          <div class="ss-inputs">
+            <input type="number" inputmode="numeric" min="0" max="30" class="ss-input" data-ss-side="home" value="${home}" />
+            <span class="ss-dash">&ndash;</span>
+            <input type="number" inputmode="numeric" min="0" max="30" class="ss-input" data-ss-side="away" value="${away}" />
+          </div>
+          <span class="ss-status ss-status--${status}" title="${status}">${glyph}</span>
+          ${mismatchRow}
+        </div>`;
+      }
+
+      function renderRoundReadOnly(roundKey, round) {
+        if (!round) return '';
+        const label = roundKey === 'r1' ? 'Round 1' : 'Round 2';
+        let html = `<div class="ss-round">
+          <div class="ss-round__head">
+            <h4 class="ss-round__title">${label}</h4>
+            <span class="ss-round__tally">${round.homeGames}&ndash;${round.awayGames} &middot; ${round.homePoints ?? '?'}&ndash;${round.awayPoints ?? '?'} pts</span>
+          </div>`;
+        for (const slot of SS_SLOTS) {
+          const s = round.slotScores?.[slot];
+          const winner = round.slotResults?.[slot];
+          if (!s) {
+            html += `<div class="ss-slot">
+              <div class="ss-slot__label"><span class="ss-slot__num">G${slot.slice(1)}</span>${SLOT_LABELS[slot]}</div>
+              <div><span class="ss-ro-score ss-ro-score--loser">&mdash;</span></div>
+              <span></span>
+            </div>`;
+            continue;
+          }
+          html += `<div class="ss-slot">
+            <div class="ss-slot__label"><span class="ss-slot__num">G${slot.slice(1)}</span>${SLOT_LABELS[slot]}</div>
+            <div class="ss-inputs">
+              <span class="ss-ro-score ${winner==='home'?'ss-ro-score--winner':'ss-ro-score--loser'}">${s.home}</span>
+              <span class="ss-dash">&ndash;</span>
+              <span class="ss-ro-score ${winner==='away'?'ss-ro-score--winner':'ss-ro-score--loser'}">${s.away}</span>
+            </div>
+            <span></span>
+          </div>`;
+        }
+        html += `</div>`;
+        return html;
+      }
+
+      function wireInputs() {
+        const el = host();
+        if (!el) return;
+
+        el.querySelectorAll('.ss-slot[data-round]').forEach((slotEl) => {
+          const round = slotEl.dataset.round;
+          const slot = slotEl.dataset.slot;
+          const inputs = slotEl.querySelectorAll('.ss-input');
+          let timer = null;
+
+          const trySave = () => {
+            const home = inputs[0].value === '' ? null : Number(inputs[0].value);
+            const away = inputs[1].value === '' ? null : Number(inputs[1].value);
+            if (home === null || away === null) return;
+            if (!Number.isInteger(home) || !Number.isInteger(away)) return;
+            if (home < 0 || away < 0) return;
+            if (home < 11 && away < 11) return;
+            if (home === away) return;
+            doSaveGame(round, slot, home, away);
+          };
+
+          inputs.forEach((input) => {
+            input.addEventListener('input', () => {
+              clearTimeout(timer);
+              timer = setTimeout(trySave, 700);
+            });
+            input.addEventListener('blur', () => { clearTimeout(timer); trySave(); });
+            input.addEventListener('keydown', (ev) => {
+              if (ev.key === 'Enter') {
+                ev.preventDefault();
+                clearTimeout(timer);
+                trySave();
+                focusNext(input);
+              }
+            });
+          });
+        });
+
+        el.querySelectorAll('[data-ss-action="accept-opp"]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            doSaveGame(btn.dataset.round, btn.dataset.slot, Number(btn.dataset.h), Number(btn.dataset.a));
+          });
+        });
+        el.querySelectorAll('[data-ss-action="submit"]').forEach((btn) =>
+          btn.addEventListener('click', doSubmitFinal));
+        el.querySelectorAll('[data-ss-action="unsubmit"]').forEach((btn) =>
+          btn.addEventListener('click', doUnsubmitFinal));
+      }
+
+      function focusNext(currentInput) {
+        const inputs = Array.from(host().querySelectorAll('.ss-input'));
+        const i = inputs.indexOf(currentInput);
+        if (i >= 0 && i + 1 < inputs.length) inputs[i + 1].focus();
+      }
+
+      async function doSaveGame(round, slot, home, away) {
+        try {
+          const data = await call('POST', { action: 'set-game', round, slot, home, away });
+          absorb(data);
+          render();
+        } catch (e) {
+          flash(`Save failed: ${e.message}`);
+        }
+      }
+      async function doSubmitFinal() {
+        try {
+          const data = await call('POST', { action: 'submit-final' });
+          absorb(data);
+          render();
+          if (local.finalizedAt) {
+            loadMatches(); // refresh pills
+          }
+        } catch (e) {
+          flash(`Submit failed: ${e.message}`);
+        }
+      }
+      async function doUnsubmitFinal() {
+        try {
+          const data = await call('POST', { action: 'unsubmit-final' });
+          absorb(data);
+          render();
+        } catch (e) {
+          flash(`Withdraw failed: ${e.message}`);
+        }
+      }
+
+      function countStatuses() {
+        const counts = { empty: 0, partial: 0, confirmed: 0, mismatch: 0 };
+        for (const r of ROUND_KEYS) {
+          for (const s of SS_SLOTS) {
+            const status = local.view?.[r]?.[s]?.status || 'empty';
+            counts[status]++;
+          }
+        }
+        return counts;
+      }
+      function otherSide(side) { return side === 'home' ? 'away' : 'home'; }
+      function flash(msg) {
+        const el = host();
+        if (!el) return;
+        const d = document.createElement('div');
+        d.className = 'ss-banner ss-banner--warn';
+        d.textContent = msg;
+        el.prepend(d);
+        setTimeout(() => d.remove(), 4000);
+      }
+
+      return { mount, unmount, refresh };
+    })();
 
     // ===== Utils =====
     function escapeHtml(s) {
