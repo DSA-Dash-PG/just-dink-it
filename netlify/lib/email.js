@@ -1,179 +1,131 @@
-// netlify/functions/lib/email.js
-// Shared Resend email library for The Dink Society.
-// Used by: stripe-webhook.js (registration confirmations)
-// Future: schedule announcements, match reminders, etc.
+// netlify/lib/email.js
+// Email sending via Resend (https://resend.com). Single dependency-free HTTP
+// call — no Resend SDK needed, keeps the bundle small.
 //
 // Required env vars:
-//   RESEND_API_KEY      — re_... from https://resend.com/api-keys
-//   EMAIL_FROM          — e.g. "The Dink Society <hello@justdinkit.com>"
-//                         The domain must be verified in Resend.
-//   EMAIL_REPLY_TO      — optional, e.g. "richard@justdinkit.com"
+//   RESEND_API_KEY  — from https://resend.com/api-keys
+//   FROM_EMAIL      — e.g. 'The Dink Society <noreply@dinksociety.com>'
+//                     (must be a verified sender/domain in Resend)
+//
+// Optional:
+//   SITE_URL        — used only for link rendering fallbacks
 
-import { Resend } from 'resend';
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
-const BRAND = {
-  teal: '#0D3B40',
-  black: '#000000',
-  gold: '#E8B542',
-  cream: '#F5EBD4',
-};
-
-/**
- * Send an email via Resend.
- * @param {Object} opts
- * @param {string|string[]} opts.to       Single or array of recipients
- * @param {string}          opts.subject  Subject line
- * @param {string}          opts.html     HTML body
- * @param {string}          [opts.text]   Plain-text fallback (auto-generated if omitted)
- * @param {string[]}        [opts.bcc]    BCC addresses (e.g. admin)
- */
-export async function sendEmail({ to, subject, html, text, bcc }) {
-  const apiKey = Netlify.env.get('RESEND_API_KEY');
-  const from = Netlify.env.get('EMAIL_FROM');
-  const replyTo = Netlify.env.get('EMAIL_REPLY_TO');
-
-  if (!apiKey) {
-    console.warn('RESEND_API_KEY missing — skipping email send');
-    return { skipped: true, reason: 'no_api_key' };
+function env(name) {
+  // Works in both Functions v1 (process.env) and v2 (Netlify.env.get)
+  if (typeof Netlify !== 'undefined' && Netlify?.env?.get) {
+    return Netlify.env.get(name) || process.env[name] || '';
   }
-  if (!from) {
-    console.warn('EMAIL_FROM missing — skipping email send');
-    return { skipped: true, reason: 'no_from' };
-  }
+  return process.env[name] || '';
+}
 
-  const resend = new Resend(apiKey);
+export async function sendEmail({ to, subject, html, text, from }) {
+  const apiKey = env('RESEND_API_KEY');
+  const fromAddr = from || env('FROM_EMAIL');
+
+  if (!apiKey || !fromAddr) {
+    // Don't throw — log and soft-succeed so dev envs without keys don't
+    // break the magic-link flow. Production MUST have both vars set.
+    console.warn('[email] Missing RESEND_API_KEY or FROM_EMAIL — email not sent', {
+      to,
+      subject,
+    });
+    return { sent: false, reason: 'missing_config' };
+  }
 
   const payload = {
-    from,
+    from: fromAddr,
     to: Array.isArray(to) ? to : [to],
     subject,
     html,
-    text: text || htmlToText(html),
   };
-  if (replyTo) payload.reply_to = replyTo;
-  if (bcc && bcc.length) payload.bcc = bcc;
+  if (text) payload.text = text;
 
-  try {
-    const result = await resend.emails.send(payload);
-    return { ok: true, id: result?.data?.id, result };
-  } catch (err) {
-    console.error('Resend send failed:', err);
-    return { ok: false, error: err.message };
+  const res = await fetch(RESEND_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[email] Resend error', res.status, body);
+    throw new Error(`Resend failed: ${res.status}`);
   }
+
+  const data = await res.json().catch(() => ({}));
+  return { sent: true, id: data.id || null };
 }
 
-/**
- * Build the confirmation email HTML for a confirmed registration.
- * @param {Object} reg Registration object with { circuit, divisionLabel, path, team, agent, id, amountPaid }
- */
-export function renderRegistrationConfirmation(reg) {
-  const isTeam = reg.path === 'team';
-  const name = isTeam ? reg.team.players[0].name : reg.agent.name;
-  const price = formatCents(reg.amountPaid || (isTeam ? 45000 : 7500));
+// ---------- Templates ----------
+// Dink Society palette: teal #0D3B40, gold #E8B542, cream #F5EBD4
+// Fonts: we can't rely on web fonts in email clients, so we use a
+// serif/sans stack that degrades gracefully.
 
-  const rosterRows = isTeam
-    ? reg.team.players.map((p, i) => `
-        <tr>
-          <td style="padding: 6px 0; color: ${BRAND.teal}; opacity: 0.6; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;">
-            Player ${i + 1}${i === 0 ? ' · Captain' : ''}
-          </td>
-          <td style="padding: 6px 0; text-align: right; color: ${BRAND.teal}; font-size: 14px;">
-            ${esc(p.name)}
-          </td>
-        </tr>
-      `).join('')
-    : '';
+const SERIF_STACK = `'Cormorant Garamond', Georgia, 'Times New Roman', serif`;
+const SANS_STACK = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`;
 
-  const detailRows = [
-    ['Circuit', `Circuit ${reg.circuit} · May 2026`],
-    ['Division', reg.divisionLabel || reg.division],
-    ['Membership', isTeam ? `Team · ${esc(reg.team.name)}` : 'Free agent'],
-    ['Amount paid', price],
-    ['Reference', (reg.id || '').toUpperCase()],
-  ].map(([k, v]) => `
-    <tr>
-      <td style="padding: 8px 0; color: ${BRAND.teal}; opacity: 0.65; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid rgba(13, 59, 64, 0.08);">${k}</td>
-      <td style="padding: 8px 0; text-align: right; color: ${BRAND.teal}; font-size: 14px; font-weight: 500; border-bottom: 1px solid rgba(13, 59, 64, 0.08);">${v}</td>
-    </tr>
-  `).join('');
+export function renderCaptainMagicLink(magicUrl, teamName) {
+  const safeTeam = escapeHtml(teamName || 'Your team');
+  const safeUrl = escapeAttr(magicUrl);
 
-  return `<!DOCTYPE html>
+  return `<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>You're in &middot; The Dink Society</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in to The Dink Society</title>
 </head>
-<body style="margin:0; padding:0; background:${BRAND.cream}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:${BRAND.cream}; padding: 32px 16px;">
+<body style="margin:0;padding:0;background:#F5EBD4;font-family:${SANS_STACK};color:#0D3B40;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5EBD4;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="max-width: 560px; width: 100%;">
-
-          <!-- Header -->
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(13,59,64,0.08);">
           <tr>
-            <td style="background: linear-gradient(135deg, ${BRAND.teal} 0%, ${BRAND.black} 100%); border-radius: 12px 12px 0 0; padding: 40px 32px; color: ${BRAND.cream}; text-align: left;">
-              <div style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 18px; color: ${BRAND.gold}; margin-bottom: 32px;">
+            <td style="background:#0D3B40;padding:28px 32px;text-align:center;">
+              <div style="font-family:${SERIF_STACK};font-size:28px;font-weight:600;color:#E8B542;letter-spacing:0.02em;">
                 The Dink Society
               </div>
-              <div style="font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: ${BRAND.gold}; margin-bottom: 14px; font-weight: 500;">
-                Circuit ${reg.circuit} &middot; May 2026
-              </div>
-              <h1 style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 40px; line-height: 1.1; font-weight: 500; margin: 0; color: ${BRAND.cream};">
-                You're in, ${esc(firstName(name))}.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 32px 24px 32px;">
+              <h1 style="margin:0 0 16px 0;font-family:${SERIF_STACK};font-size:24px;font-weight:600;color:#0D3B40;">
+                Sign in to ${safeTeam}
               </h1>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="background: #ffffff; padding: 36px 32px; color: ${BRAND.teal};">
-
-              <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.65; color: ${BRAND.teal};">
-                Your spot in Circuit ${reg.circuit} is secured. Here's the receipt &mdash; keep this email handy until the schedule drops.
+              <p style="margin:0 0 24px 0;font-size:15px;line-height:1.55;color:#333;">
+                Tap the button below to sign in as captain. This link is good for 15 minutes and can only be used once.
               </p>
-
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 24px 0;">
-                ${detailRows}
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td align="center" style="background:#E8B542;border-radius:4px;">
+                    <a href="${safeUrl}" style="display:inline-block;padding:14px 28px;font-family:${SANS_STACK};font-size:15px;font-weight:600;color:#0D3B40;text-decoration:none;letter-spacing:0.02em;">
+                      Sign in as captain
+                    </a>
+                  </td>
+                </tr>
               </table>
-
-              ${isTeam ? `
-                <div style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: ${BRAND.teal}; opacity: 0.6; margin: 28px 0 12px; font-weight: 500;">Roster</div>
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background: rgba(13, 59, 64, 0.03); border-radius: 8px; padding: 16px 20px;">
-                  ${rosterRows}
-                </table>
-              ` : ''}
-
-              <div style="margin: 32px 0 0; padding: 20px; background: ${BRAND.teal}; border-radius: 8px; color: ${BRAND.cream};">
-                <div style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 18px; color: ${BRAND.gold}; margin-bottom: 8px;">
-                  What's next
-                </div>
-                <ul style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7; color: ${BRAND.cream};">
-                  ${isTeam
-                    ? '<li>Players 2-4 will receive onboarding emails at the addresses on the roster.</li>'
-                    : '<li>Captains will draft free agents before Circuit I begins.</li>'}
-                  <li>The schedule drops before the Circuit starts &mdash; watch your inbox.</li>
-                  <li>Questions? Reply to this email.</li>
-                </ul>
-              </div>
-
+              <p style="margin:28px 0 0 0;font-size:13px;line-height:1.5;color:#666;">
+                Or copy and paste this link into your browser:<br>
+                <a href="${safeUrl}" style="color:#0D3B40;word-break:break-all;">${safeUrl}</a>
+              </p>
             </td>
           </tr>
-
-          <!-- Footer -->
           <tr>
-            <td style="background: ${BRAND.cream}; border-radius: 0 0 12px 12px; padding: 24px 32px; text-align: center; font-size: 12px; color: ${BRAND.teal};">
-              <div style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 14px; color: ${BRAND.teal}; margin-bottom: 8px;">
-                The Dink Society
-              </div>
-              <div style="opacity: 0.7;">Southern California</div>
-              <div style="margin-top: 10px;">
-                <a href="https://instagram.com/dinksociety.pb" style="color: ${BRAND.teal}; text-decoration: none; font-weight: 500;">@dinksociety.pb</a>
-              </div>
+            <td style="padding:20px 32px 28px 32px;border-top:1px solid #F5EBD4;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#888;">
+                If you didn't request this email, you can safely ignore it. Someone may have typed your address by mistake.
+              </p>
             </td>
           </tr>
-
         </table>
+        <p style="margin:20px 0 0 0;font-size:12px;color:#0D3B40;opacity:0.7;">
+          The Dink Society · South Bay, CA
+        </p>
       </td>
     </tr>
   </table>
@@ -181,105 +133,16 @@ export function renderRegistrationConfirmation(reg) {
 </html>`;
 }
 
-/** Extract first name for greeting (handles "First Last" or "First") */
-function firstName(full) {
-  if (!full) return 'friend';
-  return full.trim().split(/\s+/)[0];
+// ---------- Utils ----------
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-/** Basic HTML escape for user-supplied values */
-function esc(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
-}
-
-/** Format cents as USD string */
-function formatCents(cents) {
-  return '$' + (cents / 100).toFixed(2).replace(/\.00$/, '');
-}
-
-/** Crude HTML → text fallback for email clients that block HTML */
-function htmlToText(html) {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|tr|h\d|li)>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&middot;/g, '·')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\n\s*\n\s*\n/g, '\n\n')
-    .trim();
-}
-
-/**
- * Build a magic-link email for captains signing into the portal.
- * @param {string} magicUrl Full URL the captain clicks to sign in
- * @param {string} teamName The team they're signing in as
- */
-export function renderCaptainMagicLink(magicUrl, teamName) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in &middot; The Dink Society</title>
-</head>
-<body style="margin:0; padding:0; background:${BRAND.cream}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:${BRAND.cream}; padding: 32px 16px;">
-    <tr><td align="center">
-      <table role="presentation" width="520" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; width: 100%;">
-
-        <tr><td style="background: linear-gradient(135deg, ${BRAND.teal} 0%, ${BRAND.black} 100%); border-radius: 12px 12px 0 0; padding: 36px 32px; color: ${BRAND.cream}; text-align: left;">
-          <div style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 18px; color: ${BRAND.gold}; margin-bottom: 24px;">
-            The Dink Society
-          </div>
-          <div style="font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: ${BRAND.gold}; margin-bottom: 12px; font-weight: 500;">
-            Captain sign-in
-          </div>
-          <h1 style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 36px; line-height: 1.1; font-weight: 500; margin: 0; color: ${BRAND.cream};">
-            One-tap to ${esc(teamName)}.
-          </h1>
-        </td></tr>
-
-        <tr><td style="background: #ffffff; padding: 32px; color: ${BRAND.teal}; text-align: left;">
-          <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.65;">
-            Tap the button below to sign in to the captain portal. This link is good for the next 15 minutes and can only be used once.
-          </p>
-
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 28px 0;">
-            <tr><td align="center">
-              <a href="${magicUrl}" style="display: inline-block; background: ${BRAND.gold}; color: ${BRAND.teal}; padding: 14px 36px; border-radius: 8px; font-size: 15px; font-weight: 500; text-decoration: none;">
-                Sign in to captain portal
-              </a>
-            </td></tr>
-          </table>
-
-          <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.65; color: ${BRAND.teal}; opacity: 0.75;">
-            If the button doesn't work, copy and paste this link:
-          </p>
-          <p style="margin: 0 0 20px; font-size: 12px; line-height: 1.5; word-break: break-all; color: ${BRAND.teal}; opacity: 0.6;">
-            ${magicUrl}
-          </p>
-
-          <div style="margin: 28px 0 0; padding: 16px 20px; background: rgba(13, 59, 64, 0.04); border-radius: 8px; font-size: 13px; line-height: 1.6; color: ${BRAND.teal};">
-            <strong style="font-weight: 500;">Didn't request this?</strong> Someone typed your email into the captain sign-in page. You can ignore this email &mdash; no action needed.
-          </div>
-        </td></tr>
-
-        <tr><td style="background: ${BRAND.cream}; border-radius: 0 0 12px 12px; padding: 20px 32px; text-align: center; font-size: 12px; color: ${BRAND.teal};">
-          <div style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 14px; color: ${BRAND.teal}; margin-bottom: 6px;">
-            The Dink Society
-          </div>
-          <div style="opacity: 0.7;">
-            <a href="https://instagram.com/dinksociety.pb" style="color: ${BRAND.teal}; text-decoration: none; font-weight: 500;">@dinksociety.pb</a>
-          </div>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+function escapeAttr(s) {
+  return String(s).replace(/"/g, '&quot;');
 }
