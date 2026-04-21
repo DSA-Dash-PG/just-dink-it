@@ -50,6 +50,13 @@ function readCookie(reqOrEvent, name) {
   return null;
 }
 
+// Public: read the captain session ID from a request's cookies (or null).
+// Used by captain-logout.js which wants to delete the server-side session
+// before clearing the cookie.
+export function getCaptainToken(reqOrEvent) {
+  return readCookie(reqOrEvent, COOKIE_NAME);
+}
+
 // Resolve captain email for a team. Works whether the team doc stores
 // `captainEmail` directly (denormalized) or only `captainId` (requires a
 // players lookup). Returns lowercased email or null.
@@ -132,6 +139,12 @@ export async function createSession(team, email) {
   return sessionId;
 }
 
+// Delete a session by its ID. No-op if the ID is falsy or already gone.
+export async function deleteSession(sessionId) {
+  if (!sessionId) return;
+  await sessionsStore().delete(sessionId).catch(() => {});
+}
+
 export function buildCaptainCookie(sessionId) {
   const maxAge = Math.floor(SESSION_TTL_MS / 1000);
   return [
@@ -144,7 +157,8 @@ export function buildCaptainCookie(sessionId) {
   ].join('; ');
 }
 
-export function buildCaptainLogoutCookie() {
+// Cookie that clears the captain session on the client.
+export function buildClearCaptainCookie() {
   return [
     `${COOKIE_NAME}=`,
     'Path=/',
@@ -154,6 +168,8 @@ export function buildCaptainLogoutCookie() {
     'Max-Age=0',
   ].join('; ');
 }
+// Back-compat alias — earlier code referred to this as buildCaptainLogoutCookie
+export const buildCaptainLogoutCookie = buildClearCaptainCookie;
 
 // Reads the captain session cookie and returns the stored record, or null.
 async function readSession(reqOrEvent) {
@@ -206,7 +222,7 @@ export async function requireCaptain(reqOrEvent) {
   const currentCaptainEmail = await resolveCaptainEmail(team);
   if (!currentCaptainEmail || currentCaptainEmail !== session.email) {
     // Stale session — invalidate it
-    await sessionsStore().delete(session.sessionId).catch(() => {});
+    await deleteSession(session.sessionId);
     return null;
   }
 
@@ -225,11 +241,12 @@ export function unauthResponse(message = 'Unauthorized') {
   });
 }
 
-// Explicit logout: deletes session and returns a clearing cookie
+// Explicit logout: deletes session and returns a clearing cookie.
+// Kept for any caller that prefers a one-shot helper over the two-step flow.
 export async function destroySession(reqOrEvent) {
   const session = await readSession(reqOrEvent);
   if (session) {
-    await sessionsStore().delete(session.sessionId).catch(() => {});
+    await deleteSession(session.sessionId);
   }
-  return buildCaptainLogoutCookie();
+  return buildClearCaptainCookie();
 }
