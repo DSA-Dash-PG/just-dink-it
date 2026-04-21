@@ -1,23 +1,122 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Dink Society — Southern California Pickleball League</title>
-  <meta name="description" content="Southern California's most competitive social pickleball league. Six teams, seven weeks, one championship." />
+  <title>The Dink Society</title>
+  <meta name="description" content="Southern California's most competitive social pickleball league. Six teams, seven weeks, one gold title." />
   <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
   <link rel="stylesheet" href="/css/shared.css" />
   <style>
-    .hero { padding: 52px var(--gutter) 36px; max-width: var(--max-w); margin: 0 auto; }
-    .hero .row-kicker { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-    .hero .dot { width: 6px; height: 6px; background: var(--gold); }
-    .hero h1 { margin-bottom: 20px; }
-    .hero .lede { margin-bottom: 32px; max-width: 460px; }
-    .hero .ctas { display: flex; gap: 12px; margin-bottom: 40px; flex-wrap: wrap; }
+    /* ---------- HERO ---------- */
+    .hero {
+      position: relative;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 44px var(--gutter) 52px;
+    }
+    .hero__chrome-circuit {
+      position: absolute;
+      top: 44px; right: var(--gutter);
+      font-size: 11px; letter-spacing: 0.2em;
+      opacity: 0.65;
+      text-transform: uppercase;
+    }
+    .hero__brand {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 18px;
+      color: var(--gold);
+      letter-spacing: 0.02em;
+      margin-bottom: 48px;
+    }
+    .hero__headline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: clamp(42px, 6vw, 64px);
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      margin: 0 0 20px;
+      max-width: 780px;
+    }
+    .hero__headline .accent { color: var(--gold); display: block; }
+    .hero__lede {
+      max-width: 520px;
+      font-size: 15px;
+      line-height: 1.6;
+      opacity: 0.82;
+      margin: 0 0 36px;
+    }
 
-    .season-block { margin-top: 16px; }
-    .season-block .label { margin-bottom: 14px; }
+    .hero__meta {
+      display: grid;
+      grid-template-columns: repeat(4, auto) 1fr;
+      gap: 0;
+      align-items: stretch;
+      border-top: 1px solid rgba(245,235,212,0.18);
+      border-bottom: 1px solid rgba(245,235,212,0.18);
+      margin-bottom: 32px;
+      padding: 18px 0;
+    }
+    .hero__meta-cell {
+      padding: 0 28px;
+      border-right: 1px solid rgba(245,235,212,0.14);
+      min-width: 0;
+    }
+    .hero__meta-cell:first-child { padding-left: 0; }
+    .hero__meta-cell:nth-child(4) { border-right: 0; }
+    .hero__meta-cell:nth-child(5) { display: none; } /* spacer keeps grid edges aligned */
+    .hero__meta-label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .hero__meta-value {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+    .hero__meta-sub {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 2px;
+    }
 
+    .hero__ctas {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ---------- SEASON STRIP ---------- */
+    .season-section {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--gutter) 32px;
+    }
+    .season-section__head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 14px;
+    }
+    .season-section__label {
+      font-size: 10px; letter-spacing: 0.22em;
+      text-transform: uppercase; opacity: 0.6;
+      font-weight: 500;
+    }
+    .season-section__link {
+      font-size: 12px; letter-spacing: 0.04em;
+      color: var(--gold); text-decoration: none;
+      opacity: 0.9;
+    }
+    .season-section__link:hover { opacity: 1; }
+
+    /* ---------- DATA STRIP ---------- */
     .data-strip {
       background: var(--cream);
       color: var(--teal-900);
@@ -34,104 +133,216 @@
     .featured-match {
       background: var(--teal-900);
       color: var(--cream);
-      padding: 20px 22px;
+      padding: 22px 24px;
       border-radius: var(--radius-sm);
+      display: flex; flex-direction: column;
+      min-height: 170px;
     }
-    .featured-match .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .featured-match .head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px;
+    }
+    .featured-match .kind {
+      font-size: 10px; letter-spacing: 0.22em; color: var(--gold);
+      font-weight: 500;
+    }
+    .featured-match .when {
+      font-size: 11px; letter-spacing: 0.14em; opacity: 0.7;
+    }
     .featured-match .vs-grid {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
       gap: 20px;
+      flex: 1;
     }
     .vs-team { display: flex; flex-direction: column; }
     .vs-team.right { text-align: right; }
-    .vs-team .neighborhood { font-size: 11px; letter-spacing: 0.16em; color: var(--sage); margin-bottom: 4px; }
-    .vs-team .name { font-size: 20px; font-weight: 500; line-height: 1.1; }
-    .vs-team .record { font-size: 11px; color: var(--sage-300); margin-top: 6px; }
-    .vs-divider { font-size: 28px; font-weight: 500; color: var(--gold); letter-spacing: -0.02em; }
+    .vs-team .neighborhood {
+      font-size: 11px; letter-spacing: 0.16em; opacity: 0.65;
+      margin-bottom: 6px; text-transform: uppercase;
+    }
+    .vs-team .name {
+      font-size: 20px; font-weight: 500; line-height: 1.1;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+    }
+    .vs-team .record {
+      font-size: 11px; opacity: 0.6; margin-top: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .vs-divider {
+      font-size: 28px; font-weight: 500; color: var(--gold);
+      letter-spacing: -0.02em;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+    }
+    .featured-match.is-result .vs-divider {
+      font-family: inherit;
+      font-style: normal;
+      font-size: 24px;
+      font-variant-numeric: tabular-nums;
+    }
 
     .standings-mini, .league-mini { display: flex; flex-direction: column; gap: 0; }
     .standings-mini-head, .league-mini-head {
-      font-size: 10px; letter-spacing: 0.22em; color: var(--sage-700); margin-bottom: 14px; text-transform: uppercase;
+      font-size: 10px; letter-spacing: 0.22em; opacity: 0.6;
+      margin-bottom: 14px; text-transform: uppercase;
+      font-weight: 500;
     }
     .standings-mini-row {
       display: flex; justify-content: space-between;
-      padding: 6px 0; border-bottom: 1px solid rgba(13,59,64,0.12);
+      padding: 7px 0; border-bottom: 1px solid rgba(13,59,64,0.12);
       font-size: 13px;
     }
     .standings-mini-row:last-child { border-bottom: none; }
     .standings-mini-row .name { font-weight: 500; }
-    .standings-mini-row .pts { color: var(--gold-deep); font-weight: 500; }
-    .standings-mini-row .pts.muted { color: var(--teal-900); font-weight: 400; }
+    .standings-mini-row .pts {
+      color: var(--gold-deep, #C9972E); font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .standings-mini-row .pts.muted { color: var(--teal-900); opacity: 0.6; font-weight: 400; }
+    .standings-mini-more {
+      display: block;
+      font-size: 11px; letter-spacing: 0.08em;
+      color: var(--teal-900); opacity: 0.7;
+      text-decoration: none;
+      margin-top: 12px;
+    }
+    .standings-mini-more:hover { opacity: 1; color: var(--gold-deep, #C9972E); }
 
     .league-mini-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px;
     }
     .league-mini-cell .num {
-      font-size: 22px; font-weight: 500; line-height: 1; color: var(--teal-900);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 26px; font-weight: 500; line-height: 1;
+      color: var(--teal-900);
     }
-    .league-mini-cell .num.gold { color: var(--gold-deep); }
+    .league-mini-cell .num.gold { color: var(--gold-deep, #C9972E); }
+    .league-mini-cell .num.small {
+      font-size: 16px;
+      font-family: inherit; font-style: normal; font-weight: 500;
+    }
     .league-mini-cell .label {
-      font-size: 10px; letter-spacing: 0.14em; color: var(--sage-700);
-      text-transform: uppercase; margin-top: 4px;
+      font-size: 10px; letter-spacing: 0.14em; opacity: 0.6;
+      text-transform: uppercase; margin-top: 6px;
+      font-weight: 500;
+    }
+
+    /* Skeleton state before data loads */
+    .is-loading .standings-mini-row .name,
+    .is-loading .standings-mini-row .pts,
+    .is-loading .vs-team .name,
+    .is-loading .vs-team .record {
+      color: transparent;
+      background: linear-gradient(90deg, rgba(245,235,212,0.08) 0%, rgba(245,235,212,0.15) 50%, rgba(245,235,212,0.08) 100%);
+      border-radius: 4px;
+    }
+    .data-strip.is-loading .standings-mini-row .name,
+    .data-strip.is-loading .standings-mini-row .pts {
+      background: linear-gradient(90deg, rgba(13,59,64,0.06) 0%, rgba(13,59,64,0.12) 50%, rgba(13,59,64,0.06) 100%);
     }
 
     @media (max-width: 900px) {
-      .hero { padding: 40px var(--gutter) 28px; }
-      .data-strip-grid { grid-template-columns: 1fr; gap: 20px; }
+      .hero { padding: 36px var(--gutter) 40px; }
+      .hero__chrome-circuit { top: 36px; right: var(--gutter); }
+      .hero__brand { margin-bottom: 32px; }
+      .hero__meta {
+        grid-template-columns: 1fr 1fr;
+        row-gap: 16px;
+      }
+      .hero__meta-cell {
+        padding: 0;
+        border-right: 0;
+      }
+      .hero__meta-cell:nth-child(even) { padding-left: 20px; border-left: 1px solid rgba(245,235,212,0.14); }
+      .hero__meta-cell:nth-child(5) { display: none; }
+
+      .data-strip-grid { grid-template-columns: 1fr; gap: 16px; }
+      .featured-match { min-height: 0; }
+    }
+    @media (max-width: 520px) {
+      .vs-team .name { font-size: 18px; }
+      .vs-divider { font-size: 22px; }
     }
   </style>
 </head>
-<body data-page="">
+<body data-page="home">
   <div data-partial="nav"></div>
   <div data-partial="ticker"></div>
 
   <header class="hero">
-    <div class="row-kicker">
-      <span class="dot"></span>
-      <span class="kicker">Summer 2026 · Week 04 of 07</span>
-    </div>
-    <h1 class="h1-hero">
-      Show up.<br/>
-      <span class="accent">Dink hard.</span><br/>
-      Stay late.
+    <span class="hero__chrome-circuit" id="hero-circuit-chrome">Circuit I</span>
+    <div class="hero__brand">The Dink Society</div>
+
+    <h1 class="hero__headline">
+      Membership has its privileges.
+      <span class="accent">Like winning.</span>
     </h1>
-    <p class="lede">
-      Southern California's most competitive social pickleball league. Six teams, seven weeks, one championship — from the South Bay to the Eastside, we play Tuesdays loud.
+
+    <p class="hero__lede">
+      Six teams. Seven weeks. One gold title. The Dink Society is an invite-worthy social pickleball league. Where the paddles are serious and the after-court round is (somewhat) non-negotiable. So bring your A-game — the Society keeps receipts.
     </p>
-    <div class="ctas">
-      <a href="/register.html" class="btn btn-primary">Register a team →</a>
-      <a href="/rules.html" class="btn btn-ghost">How it works</a>
+
+    <div class="hero__meta">
+      <div class="hero__meta-cell">
+        <span class="hero__meta-label">Circuit</span>
+        <div class="hero__meta-value" id="hero-circuit-meta">I · May 2026</div>
+      </div>
+      <div class="hero__meta-cell">
+        <span class="hero__meta-label">Field</span>
+        <div class="hero__meta-value" id="hero-field-meta">6 teams · 7 weeks</div>
+      </div>
+      <div class="hero__meta-cell">
+        <span class="hero__meta-label">Divisions</span>
+        <div class="hero__meta-value">3.0 Mixed · 3.5 Mixed</div>
+        <div class="hero__meta-sub">3.5 Women's · coming soon</div>
+      </div>
+      <div class="hero__meta-cell">
+        <span class="hero__meta-label">Dues</span>
+        <div class="hero__meta-value">$450 · team</div>
+        <div class="hero__meta-sub">$75 · free agent</div>
+      </div>
+      <div class="hero__meta-cell"></div>
     </div>
 
-    <div class="season-block">
-      <div class="kicker-muted label">The season · 7 weeks</div>
-      <div class="season-strip" id="season-strip">
-        <!-- populated by inline script -->
-      </div>
+    <div class="hero__ctas">
+      <a href="/register.html" class="btn btn-primary">Apply for membership</a>
+      <a href="/rules.html" class="btn btn-ghost">How membership works</a>
     </div>
   </header>
 
-  <section class="data-strip">
+  <section class="season-section">
+    <div class="season-section__head">
+      <span class="season-section__label" id="season-label">The circuit · 7 weeks</span>
+      <a class="season-section__link" href="/leaderboard.html">See full leaderboard →</a>
+    </div>
+    <div class="season-strip" id="season-strip">
+      <!-- populated by inline script -->
+    </div>
+  </section>
+
+  <section class="data-strip" id="data-strip">
     <div class="data-strip-grid">
 
       <div class="featured-match" id="featured-match">
         <div class="head">
-          <span style="font-size: 10px; letter-spacing: 0.22em; color: var(--gold);">THIS WEEK'S MATCH OF THE NIGHT</span>
-          <span style="font-size: 10px; letter-spacing: 0.14em; color: var(--sage);">TUE · 6:30PM</span>
+          <span class="kind" id="featured-kind">NEXT MATCH</span>
+          <span class="when" id="featured-when">—</span>
         </div>
         <div class="vs-grid">
           <div class="vs-team right">
-            <span class="neighborhood">SOUTH BAY</span>
-            <span class="name">PIER<br/>PRESSURE</span>
-            <span class="record">3–1 · 2nd</span>
+            <span class="neighborhood" id="featured-a-meta">&nbsp;</span>
+            <span class="name" id="featured-a-name">—</span>
+            <span class="record" id="featured-a-record">&nbsp;</span>
           </div>
-          <span class="vs-divider">VS</span>
+          <span class="vs-divider" id="featured-divider">VS</span>
           <div class="vs-team">
-            <span class="neighborhood">WESTSIDE</span>
-            <span class="name">SALTY<br/>SERVERS</span>
-            <span class="record">4–0 · 1st</span>
+            <span class="neighborhood" id="featured-b-meta">&nbsp;</span>
+            <span class="name" id="featured-b-name">—</span>
+            <span class="record" id="featured-b-record">&nbsp;</span>
           </div>
         </div>
       </div>
@@ -139,24 +350,25 @@
       <div class="standings-mini">
         <div class="standings-mini-head">Standings · Top 4</div>
         <div id="standings-mini-list">
-          <div class="standings-mini-row"><span class="name">1 · Salty Servers</span><span class="pts">8 pts</span></div>
-          <div class="standings-mini-row"><span class="name">2 · Pier Pressure</span><span class="pts">6 pts</span></div>
-          <div class="standings-mini-row"><span class="name">3 · Kitchen Sink</span><span class="pts muted">4 pts</span></div>
-          <div class="standings-mini-row"><span class="name">4 · Dinks &amp; Drinks</span><span class="pts muted">3 pts</span></div>
+          <div class="standings-mini-row"><span class="name">—</span><span class="pts muted">— pts</span></div>
+          <div class="standings-mini-row"><span class="name">—</span><span class="pts muted">— pts</span></div>
+          <div class="standings-mini-row"><span class="name">—</span><span class="pts muted">— pts</span></div>
+          <div class="standings-mini-row"><span class="name">—</span><span class="pts muted">— pts</span></div>
         </div>
+        <a href="/leaderboard.html" class="standings-mini-more">View all standings →</a>
       </div>
 
       <div class="league-mini">
         <div class="league-mini-head">The league</div>
         <div class="league-mini-grid">
           <div class="league-mini-cell">
-            <div class="num">6</div><div class="label">Teams</div>
+            <div class="num" id="league-teams">6</div><div class="label">Teams</div>
           </div>
           <div class="league-mini-cell">
-            <div class="num">7</div><div class="label">Weeks</div>
+            <div class="num" id="league-weeks">7</div><div class="label">Weeks</div>
           </div>
           <div class="league-mini-cell">
-            <div class="num" style="font-size: 16px;">3.5+ Mixed</div><div class="label">Division</div>
+            <div class="num small" id="league-division">3.5 Mixed</div><div class="label">Division</div>
           </div>
           <div class="league-mini-cell">
             <div class="num gold">11</div><div class="label">Win by 1</div>
@@ -171,32 +383,202 @@
 
   <script src="/js/partials.js"></script>
   <script>
-    // Season strip — generated client-side from CURRENT_WEEK so we can move it forward weekly
-    (function () {
-      const TOTAL_WEEKS = 7;
-      const CURRENT_WEEK = 4; // bump this each Tuesday morning
-      const WEEK_LABELS = ['RR', 'RR', 'RR', 'RR', 'RR', 'RIVALRY', 'CUP'];
+    // =============================================================
+    // DINK SOCIETY — HOMEPAGE LIVE DATA
+    // =============================================================
+    // Pulls the current Circuit's standings, upcoming, and most recent
+    // finalized match from /public-leaderboard and wires them into the
+    // season strip + data strip cards. Falls back gracefully when there
+    // is no data yet (pre-Circuit I or right after schedule drops).
+    // =============================================================
 
-      const strip = document.getElementById('season-strip');
-      const html = [];
-      for (let w = 1; w <= TOTAL_WEEKS; w++) {
-        let cls, label;
-        if (w < CURRENT_WEEK) {
-          cls = 'season-cell done';
-          label = 'DONE';
-        } else if (w === CURRENT_WEEK) {
-          cls = 'season-cell now';
-          label = 'TONIGHT';
-        } else if (w === TOTAL_WEEKS) {
-          cls = 'season-cell cup';
-          label = '🏆';
-        } else {
-          cls = 'season-cell upcoming';
-          label = WEEK_LABELS[w - 1];
+    (function () {
+      const TOTAL_WEEKS_DEFAULT = 7;
+      const WEEK_LABELS_DEFAULT = ['RR', 'RR', 'RR', 'RR', 'RR', 'RIVALRY', 'CUP'];
+
+      // State we resolve from the API
+      let currentWeek = 1;    // defaults until we have data
+      let totalWeeks = TOTAL_WEEKS_DEFAULT;
+
+      // Render the season strip once we know the current week.
+      function renderSeasonStrip() {
+        const strip = document.getElementById('season-strip');
+        if (!strip) return;
+        const html = [];
+        for (let w = 1; w <= totalWeeks; w++) {
+          let cls, label;
+          if (w < currentWeek) {
+            cls = 'season-cell done';
+            label = 'DONE';
+          } else if (w === currentWeek) {
+            cls = 'season-cell now';
+            label = 'TONIGHT';
+          } else if (w === totalWeeks) {
+            cls = 'season-cell cup';
+            label = '🏆';
+          } else {
+            cls = 'season-cell upcoming';
+            label = WEEK_LABELS_DEFAULT[w - 1] || 'RR';
+          }
+          html.push(`<div class="${cls}"><div class="week">W${w}</div><div class="label">${label}</div></div>`);
         }
-        html.push(`<div class="${cls}"><div class="week">W${w}</div><div class="label">${label}</div></div>`);
+        strip.innerHTML = html.join('');
       }
-      strip.innerHTML = html.join('');
+
+      // Derive current week from the API response:
+      //   - If any match is unfinalized, current week = min(unfinalized week)
+      //   - Otherwise current week = max(finalized week) — circuit is done
+      function deriveCurrentWeek(data) {
+        const weeksSeenFinalized = new Set();
+        const weeksSeenUnfinalized = new Set();
+        for (const m of data.recent || []) {
+          if (m.week) weeksSeenFinalized.add(m.week);
+        }
+        for (const m of data.upcoming || []) {
+          if (m.week) weeksSeenUnfinalized.add(m.week);
+        }
+        if (weeksSeenUnfinalized.size) {
+          return Math.min(...weeksSeenUnfinalized);
+        }
+        if (weeksSeenFinalized.size) {
+          return Math.max(...weeksSeenFinalized);
+        }
+        return 1;
+      }
+
+      // Featured match rule:
+      //   Prefer the next upcoming match (any week). Fall back to the most
+      //   recent finalized match. If neither, keep the placeholder.
+      function renderFeaturedMatch(data) {
+        const el = document.getElementById('featured-match');
+        const upcoming = (data.upcoming || [])[0];
+        const recent = (data.recent || [])[0];
+
+        if (upcoming) {
+          el.classList.remove('is-result');
+          const when = upcoming.scheduledAt
+            ? new Date(upcoming.scheduledAt).toLocaleString(undefined, {
+                weekday: 'short', hour: 'numeric', minute: '2-digit'
+              }).toUpperCase()
+            : `WEEK ${upcoming.week}`;
+          setText('featured-kind', "THIS WEEK'S MATCH");
+          setText('featured-when', when);
+          setText('featured-a-meta', upcoming.venue || `Court ${upcoming.court || ''}`.trim() || '');
+          setText('featured-b-meta', '');
+          setText('featured-a-name', upcoming.teamAName || '—');
+          setText('featured-b-name', upcoming.teamBName || '—');
+          setText('featured-a-record', '');
+          setText('featured-b-record', '');
+          setText('featured-divider', 'VS');
+          return;
+        }
+
+        if (recent) {
+          el.classList.add('is-result');
+          const when = recent.finalizedAt
+            ? new Date(recent.finalizedAt).toLocaleDateString(undefined, {
+                month: 'short', day: 'numeric'
+              }).toUpperCase()
+            : '';
+          setText('featured-kind', 'LAST RESULT');
+          setText('featured-when', when);
+          setText('featured-a-meta', '');
+          setText('featured-b-meta', '');
+          setText('featured-a-name', recent.teamAName || '—');
+          setText('featured-b-name', recent.teamBName || '—');
+          setText('featured-a-record', `Week ${recent.week}`);
+          setText('featured-b-record', '');
+          setText('featured-divider', `${recent.scoreA}–${recent.scoreB}`);
+          return;
+        }
+
+        // Neither — show a pre-Circuit placeholder
+        el.classList.remove('is-result');
+        setText('featured-kind', 'COMING SOON');
+        setText('featured-when', 'CIRCUIT I · MAY 2026');
+        setText('featured-a-name', 'Teams');
+        setText('featured-b-name', 'TBA');
+        setText('featured-divider', 'VS');
+        setText('featured-a-record', '');
+        setText('featured-b-record', '');
+        setText('featured-a-meta', '');
+        setText('featured-b-meta', '');
+      }
+
+      function renderStandingsMini(data) {
+        const list = document.getElementById('standings-mini-list');
+        if (!list) return;
+        const top4 = (data.standings || []).slice(0, 4);
+        if (!top4.length) {
+          list.innerHTML = `
+            <div class="standings-mini-row"><span class="name">Standings pending</span><span class="pts muted">—</span></div>
+            <div class="standings-mini-row"><span class="name">First match drops</span><span class="pts muted">—</span></div>
+            <div class="standings-mini-row"><span class="name">May 2026</span><span class="pts muted">—</span></div>
+            <div class="standings-mini-row"><span class="name">&nbsp;</span><span class="pts muted">&nbsp;</span></div>
+          `;
+          return;
+        }
+        list.innerHTML = top4.map((r, idx) => {
+          const ptsClass = idx < 2 ? 'pts' : 'pts muted';
+          return `<div class="standings-mini-row">
+            <span class="name">${r.rank} · ${escapeHtml(r.name)}</span>
+            <span class="${ptsClass}">${r.mp} pts</span>
+          </div>`;
+        }).join('');
+      }
+
+      function renderLeagueMini(data) {
+        // Teams count — from standings if we have them, else default
+        const teamCount = (data.standings || []).length || 6;
+        setText('league-teams', teamCount);
+        setText('league-weeks', totalWeeks);
+        // Division — use whatever division the API resolved
+        if (data.meta?.division) {
+          setText('league-division', data.meta.division);
+        }
+      }
+
+      function updateHeroChrome(data) {
+        if (data.meta?.circuit) {
+          setText('hero-circuit-chrome', `Circuit ${data.meta.circuit}`);
+        }
+      }
+
+      async function loadHomeData() {
+        const stripEl = document.getElementById('data-strip');
+        stripEl?.classList.add('is-loading');
+        try {
+          const res = await fetch('/.netlify/functions/public-leaderboard?view=teams');
+          if (!res.ok) throw new Error('load failed');
+          const data = await res.json();
+
+          currentWeek = deriveCurrentWeek(data);
+          renderSeasonStrip();
+          updateHeroChrome(data);
+          renderFeaturedMatch(data);
+          renderStandingsMini(data);
+          renderLeagueMini(data);
+        } catch {
+          // Soft-fail: keep placeholders, just render the season strip at week 1
+          renderSeasonStrip();
+        } finally {
+          stripEl?.classList.remove('is-loading');
+        }
+      }
+
+      function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value == null || value === '' ? '\u00A0' : value;
+      }
+      function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[c]));
+      }
+
+      // Kick off
+      renderSeasonStrip();       // render a default strip immediately
+      loadHomeData();            // then upgrade it with real data
     })();
   </script>
 </body>
