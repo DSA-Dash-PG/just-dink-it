@@ -4,7 +4,7 @@
 // is public) but NOT opponent lineup details.
 
 import { getStore } from '@netlify/blobs';
-import { requireCaptain, unauthResponse } from './lib/captain-auth.js';
+import { requireCaptain, unauthResponse } from '../lib/captain-auth.js';
 
 export default async (req) => {
   const ctx = await requireCaptain(req);
