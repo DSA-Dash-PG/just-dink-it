@@ -10,7 +10,7 @@
 //     g3-g6 = Mixed Doubles (one M + one F)
 
 import { getStore } from '@netlify/blobs';
-import { requireCaptain, unauthResponse } from './lib/captain-auth.js';
+import { requireCaptain, unauthResponse } from '../lib/captain-auth.js';
 
 const SLOT_RULES = {
   r1g1: 'WOMENS', r1g2: 'MENS', r1g3: 'MIXED', r1g4: 'MIXED', r1g5: 'MIXED', r1g6: 'MIXED',
