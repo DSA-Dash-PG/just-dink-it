@@ -8,7 +8,7 @@
 // gender is REQUIRED because it's used for slot enforcement in lineups.
 
 import { getStore } from '@netlify/blobs';
-import { requireCaptain, unauthResponse } from './lib/captain-auth.js';
+import { requireCaptain, unauthResponse } from '../lib/captain-auth.js';
 
 const MAX_ROSTER_SIZE = 20;
 
