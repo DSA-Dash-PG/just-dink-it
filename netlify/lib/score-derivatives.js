@@ -1,51 +1,34 @@
-// netlify/functions/lib/score-derivatives.js
+// netlify/lib/score-derivatives.js
+// Scoring rules (per Aloha PB League / Dink Society scoresheet convention):
 //
-// Given a round's raw game scores, derive everything the leaderboard needs:
-//   - homeGames / awayGames    (slots won)
-//   - homePoints / awayPoints  (sum of game points)
-//   - slotResults              (winner per slot)
-//   - slotScores               (per-slot point pair)
+//   • Each round = 6 games. Every game ends 11-anything, win by 1.
+//   • Round points (2 points per round, split between home/away):
+//       - More games won → 2 points for the winner, 0 for the loser
+//       - Tied 3-3       → 1 point each
+//   • Match points (4 points per match, between home/away):
+//       - Simply the sum of each team's round points
 //
-// Slot keys for a round (matches the lineup builder):
-//   g1  = Women's doubles
-//   g2  = Men's doubles
-//   g3..g6 = Mixed doubles
-//
-// Input shape (ONE round's worth — keys are bare game numbers):
-//   {
-//     g1: { home: 11, away: 9 },
-//     g2: { home: 8,  away: 11 },
-//     g3: { home: 11, away: 5 },
-//     g4: { home: 11, away: 9 },
-//     g5: { home: 7,  away: 11 },
-//     g6: { home: 11, away: 4 },
+// Exports:
+//   ROUND_GAME_KEYS         — ['g1','g2','g3','g4','g5','g6']
+//   computeRoundDerivatives(roundGames) → {
+//     homeGames, awayGames,                   // games won, 0–6
+//     homePoints, awayPoints,                 // rally points scored across 6 games
+//     roundPointsHome, roundPointsAway,       // round points awarded (0/1/2)
+//     winner,                                 // 'home' | 'away' | 'tie'
+//     slotResults,                            // { g1: 'home'|'away', ... }
+//     slotScores,                             // { g1: { home, away }, ... }
 //   }
-//
-// All 6 slots must be present and confirmed before this is called — the
-// finalizer enforces that via the dual-entry submission flags.
+//   computeMatchPoints(r1, r2) → { scoreA, scoreB }  // 0–4, sums to 4
 
 export const ROUND_GAME_KEYS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
 
-// Convenience: full per-match slot keys (round-prefixed). Used elsewhere.
-export const FULL_SLOT_KEYS = [
-  'r1g1', 'r1g2', 'r1g3', 'r1g4', 'r1g5', 'r1g6',
-  'r2g1', 'r2g2', 'r2g3', 'r2g4', 'r2g5', 'r2g6',
-];
-
-// Slot-type lookup for analytics (women's / men's / mixed).
-export const SLOT_TYPE_BY_GAME = {
-  g1: 'womens',
-  g2: 'mens',
-  g3: 'mixed', g4: 'mixed', g5: 'mixed', g6: 'mixed',
-};
-
-/**
- * Compute round-level derivatives from raw per-slot game scores.
- * Returns an object safe to write directly onto match.round1 / match.round2.
- */
+// roundGames must contain all six slots with valid { home, away } integers.
+// Throws if any slot is missing or malformed — by the time this is called,
+// captain-score.js has already verified all 12 slots are confirmed, so a
+// missing slot here is a programming error, not a user state.
 export function computeRoundDerivatives(roundGames) {
-  if (!roundGames) {
-    throw new Error('computeRoundDerivatives: roundGames required');
+  if (!roundGames || typeof roundGames !== 'object') {
+    throw new Error('computeRoundDerivatives: roundGames is required');
   }
 
   let homeGames = 0;
@@ -56,45 +39,54 @@ export function computeRoundDerivatives(roundGames) {
   const slotScores = {};
 
   for (const slot of ROUND_GAME_KEYS) {
-    const game = roundGames[slot];
-    if (!game || typeof game.home !== 'number' || typeof game.away !== 'number') {
-      throw new Error(`computeRoundDerivatives: missing/invalid score for slot "${slot}"`);
+    const g = roundGames[slot];
+    if (!g || typeof g.home !== 'number' || typeof g.away !== 'number') {
+      throw new Error(`computeRoundDerivatives: missing or invalid game at slot ${slot}`);
     }
-    const h = game.home;
-    const a = game.away;
 
-    homePoints += h;
-    awayPoints += a;
-    slotScores[slot] = { home: h, away: a };
+    slotScores[slot] = { home: g.home, away: g.away };
+    homePoints += g.home;
+    awayPoints += g.away;
 
-    if (h > a) {
+    if (g.home > g.away) {
       homeGames++;
       slotResults[slot] = 'home';
-    } else if (a > h) {
+    } else if (g.away > g.home) {
       awayGames++;
       slotResults[slot] = 'away';
     } else {
-      // Games are to 11 win-by-1 — ties shouldn't happen. Defensive only.
+      // Shouldn't happen with win-by-1 rules, but if it does we don't
+      // credit the game to either side
       slotResults[slot] = 'tie';
     }
   }
 
-  return { homeGames, awayGames, homePoints, awayPoints, slotResults, slotScores };
-}
-
-/**
- * Compute match-level points (0–4 per team) from two round derivatives.
- * Round winner = 2 pts, tie = 1-1.
- */
-export function computeMatchPoints(r1Derivatives, r2Derivatives) {
-  let scoreA = 0;
-  let scoreB = 0;
-
-  for (const r of [r1Derivatives, r2Derivatives]) {
-    if (r.homeGames > r.awayGames) scoreA += 2;
-    else if (r.awayGames > r.homeGames) scoreB += 2;
-    else { scoreA += 1; scoreB += 1; }
+  let roundPointsHome, roundPointsAway, winner;
+  if (homeGames > awayGames) {
+    roundPointsHome = 2; roundPointsAway = 0; winner = 'home';
+  } else if (awayGames > homeGames) {
+    roundPointsHome = 0; roundPointsAway = 2; winner = 'away';
+  } else {
+    roundPointsHome = 1; roundPointsAway = 1; winner = 'tie';
   }
 
+  return {
+    homeGames,
+    awayGames,
+    homePoints,
+    awayPoints,
+    roundPointsHome,
+    roundPointsAway,
+    winner,
+    slotResults,
+    slotScores,
+  };
+}
+
+// r1 and r2 are the outputs of computeRoundDerivatives().
+// scoreA / scoreB are match points (0–4, always sum to 4).
+export function computeMatchPoints(r1, r2) {
+  const scoreA = (r1?.roundPointsHome || 0) + (r2?.roundPointsHome || 0);
+  const scoreB = (r1?.roundPointsAway || 0) + (r2?.roundPointsAway || 0);
   return { scoreA, scoreB };
 }
