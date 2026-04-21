@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130" role="img" aria-label="The Dink Society">
+  <title>The Dink Society</title>
+  <!-- Court outline -->
+  <rect x="6" y="14" width="208" height="100" fill="none" stroke="#E8B542" stroke-width="2"/>
+  <!-- Net (dashed center vertical) -->
+  <line x1="110" y1="14" x2="110" y2="114" stroke="#E8B542" stroke-width="2" stroke-dasharray="4 3"/>
+  <!-- Kitchen lines -->
+  <line x1="76" y1="14" x2="76" y2="114" stroke="#E8B542" stroke-width="1" opacity="0.55"/>
+  <line x1="144" y1="14" x2="144" y2="114" stroke="#E8B542" stroke-width="1" opacity="0.55"/>
+  <!-- Service center lines -->
+  <line x1="6" y1="64" x2="76" y2="64" stroke="#E8B542" stroke-width="1" opacity="0.55"/>
+  <line x1="144" y1="64" x2="214" y2="64" stroke="#E8B542" stroke-width="1" opacity="0.55"/>
+  <!-- D and S monograms in the service zones -->
+  <text x="41" y="78" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="42" font-weight="500" fill="#E8B542" text-anchor="middle" letter-spacing="-2">D</text>
+  <text x="179" y="78" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="42" font-weight="500" fill="#E8B542" text-anchor="middle" letter-spacing="-2">S</text>
+</svg>

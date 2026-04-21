@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player — The Dink Society</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .player-hero {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 32px var(--gutter) 16px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    /* Left: avatar card */
+    .player-hero-card {
+      position: relative;
+      padding: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 340px;
+      overflow: hidden;
+    }
+    .player-hero-card.rank-1 {
+      background: linear-gradient(135deg, rgba(232,181,66,0.3) 0%, rgba(232,181,66,0.08) 100%);
+      border: 1px solid rgba(232,181,66,0.55);
+    }
+    .player-hero-card.rank-top {
+      background: linear-gradient(135deg, rgba(232,181,66,0.18) 0%, rgba(232,181,66,0.04) 100%);
+      border: 1px solid rgba(232,181,66,0.4);
+    }
+    .player-hero-card.rank-mid {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+    }
+
+    .player-hero-card .rank-bg {
+      position: absolute;
+      top: 12px; right: 18px;
+      font-size: 120px;
+      font-weight: 500;
+      letter-spacing: -0.06em;
+      line-height: 1;
+      opacity: 0.2;
+      color: var(--gold);
+    }
+
+    .player-hero-card .top-row {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+    .player-hero-card .avatar-xl-big {
+      width: 84px; height: 84px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+      color: var(--teal-900);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 500;
+      flex-shrink: 0;
+    }
+    .player-hero-card .name-block .kicker-mini {
+      font-size: 10px; letter-spacing: 0.22em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .player-hero-card .name-block h1 {
+      font-size: 36px; font-weight: 500; letter-spacing: -0.02em; line-height: 1;
+      margin-bottom: 6px;
+    }
+    .player-hero-card .name-block .team-meta {
+      font-size: 12px; color: var(--sage); letter-spacing: 0.1em;
+    }
+    .player-hero-card .name-block .team-meta a {
+      color: var(--cream); border-bottom: 1px solid transparent;
+    }
+    .player-hero-card .name-block .team-meta a:hover {
+      color: var(--gold); border-color: var(--gold);
+    }
+
+    .player-hero-card .composite-block {
+      padding-top: 18px;
+      border-top: 1px solid rgba(232,181,66,0.25);
+      position: relative; z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .player-hero-card .composite-block .comp-num {
+      font-size: 56px;
+      font-weight: 500;
+      color: var(--gold);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .player-hero-card .composite-block .comp-lbl {
+      font-size: 10px; letter-spacing: 0.22em; color: var(--sage);
+      text-transform: uppercase;
+      text-align: right;
+    }
+    .player-hero-card .composite-block .comp-sub {
+      font-size: 11px; color: var(--sage-300); margin-top: 4px;
+    }
+
+    /* Right: stat grid */
+    .player-hero-info {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .player-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .player-stat-box {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      padding: 16px 18px;
+      border-radius: var(--radius-sm);
+    }
+    .player-stat-box .num { font-size: 26px; font-weight: 500; line-height: 1; }
+    .player-stat-box .num.gold { color: var(--gold); }
+    .player-stat-box .lbl { font-size: 9px; letter-spacing: 0.18em; color: var(--sage); margin-top: 8px; text-transform: uppercase; }
+
+    .player-badges {
+      padding: 14px 18px;
+      background: rgba(232,181,66,0.06);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .player-badges .lbl {
+      font-size: 9px; letter-spacing: 0.2em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .player-badges .badge-list {
+      display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .player-badges .badge {
+      padding: 4px 9px;
+      font-size: 10px; letter-spacing: 0.1em;
+      background: rgba(232,181,66,0.15);
+      color: var(--gold);
+      border-radius: var(--radius-sm);
+    }
+    .player-badges .badge.muted {
+      background: rgba(245,235,212,0.06);
+      color: var(--sage);
+    }
+
+    /* Sections */
+    .player-section {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 16px var(--gutter);
+    }
+    .player-section h2 {
+      font-size: 11px; letter-spacing: 0.22em; color: var(--gold);
+      margin-bottom: 16px; text-transform: uppercase;
+    }
+
+    /* Format breakdown */
+    .format-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .format-card {
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.1);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+    }
+    .format-card.best {
+      background: rgba(232,181,66,0.08);
+      border-color: rgba(232,181,66,0.3);
+    }
+    .format-card-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(245,235,212,0.08);
+    }
+    .format-card.best .format-card-head { border-color: rgba(232,181,66,0.25); }
+    .format-card-head .code {
+      font-size: 11px; letter-spacing: 0.2em; color: var(--gold); font-weight: 500;
+    }
+    .format-card-head .desc {
+      font-size: 10px; letter-spacing: 0.12em; color: var(--sage-300);
+    }
+    .format-card .winpct {
+      font-size: 32px; font-weight: 500; color: var(--cream);
+      line-height: 1; letter-spacing: -0.02em;
+    }
+    .format-card.best .winpct { color: var(--gold); }
+    .format-card .winpct-lbl {
+      font-size: 10px; letter-spacing: 0.18em; color: var(--sage); margin-top: 4px;
+    }
+    .format-card .record-row {
+      display: flex; justify-content: space-between;
+      padding-top: 14px; margin-top: 14px;
+      border-top: 1px solid rgba(245,235,212,0.06);
+      font-size: 11px; color: var(--sage);
+    }
+    .format-card .record-row strong { color: var(--cream); font-weight: 500; }
+    .format-card .partner-note {
+      margin-top: 10px;
+      font-size: 11px; color: var(--sage);
+      font-style: italic; line-height: 1.5;
+    }
+    .format-card .partner-note strong { color: var(--gold); font-style: normal; font-weight: 500; }
+
+    /* Match history */
+    .match-list {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .match-row {
+      padding: 12px 16px;
+      background: rgba(245,235,212,0.04);
+      border: 1px solid rgba(245,235,212,0.08);
+      border-radius: var(--radius-sm);
+      display: grid;
+      grid-template-columns: 66px 40px 1fr auto auto;
+      gap: 14px;
+      align-items: center;
+    }
+    .match-row .week { font-size: 10px; letter-spacing: 0.16em; color: var(--sage); }
+    .match-row .fmt {
+      font-size: 9px; letter-spacing: 0.14em;
+      padding: 3px 6px;
+      background: rgba(232,181,66,0.1);
+      color: var(--gold);
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+    .match-row .players {
+      font-size: 13px;
+    }
+    .match-row .players .partner {
+      color: var(--sage); font-size: 11px;
+      display: block; margin-top: 2px;
+    }
+    .match-row .players .partner strong { color: var(--cream); font-weight: 400; }
+    .match-row .result {
+      font-size: 14px; font-weight: 500; letter-spacing: 0.06em;
+    }
+    .match-row .result.W { color: var(--gold); }
+    .match-row .result.L { color: var(--tan); }
+    .match-row .result.T { color: var(--sage); }
+    .match-row .score { font-size: 12px; color: var(--sage-300); }
+
+    /* Circuit card */
+    .circuit-card {
+      background: linear-gradient(135deg, rgba(232,181,66,0.1) 0%, rgba(232,181,66,0.02) 100%);
+      border: 1px solid rgba(232,181,66,0.25);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+    .circuit-card .head-line {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .circuit-card .dot {
+      width: 5px; height: 5px; background: var(--gold);
+    }
+    .circuit-card .lbl {
+      font-size: 10px; letter-spacing: 0.22em; color: var(--gold); text-transform: uppercase;
+    }
+    .circuit-card h3 {
+      font-size: 22px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .circuit-card p {
+      font-size: 12px; color: var(--sage); line-height: 1.6;
+    }
+    .circuit-card .total-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding-top: 14px; border-top: 1px solid rgba(232,181,66,0.2);
+    }
+    .circuit-card .total-row .big {
+      font-size: 42px; font-weight: 500; color: var(--gold); line-height: 1; letter-spacing: -0.02em;
+    }
+    .circuit-card .total-row .small {
+      font-size: 10px; letter-spacing: 0.18em; color: var(--sage); text-transform: uppercase;
+    }
+    .circuit-breakdown {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .circuit-breakdown-cell {
+      padding: 12px;
+      background: rgba(13,59,64,0.5);
+      border-radius: var(--radius-sm);
+    }
+    .circuit-breakdown-cell .num { font-size: 18px; font-weight: 500; color: var(--cream); line-height: 1; }
+    .circuit-breakdown-cell .num.gold { color: var(--gold); }
+    .circuit-breakdown-cell .lbl { font-size: 9px; letter-spacing: 0.14em; color: var(--sage); margin-top: 4px; text-transform: uppercase; }
+
+    @media (max-width: 900px) {
+      .player-hero { grid-template-columns: 1fr; }
+      .format-grid { grid-template-columns: 1fr; }
+      .circuit-card { grid-template-columns: 1fr; }
+      .match-row { grid-template-columns: 60px 34px 1fr auto; }
+      .match-row .score { display: none; }
+    }
+  </style>
+</head>
+<body data-page="leaderboard">
+  <div data-partial="nav"></div>
+  <div data-partial="ticker"></div>
+
+  <div style="max-width: var(--max-w); margin: 0 auto; padding: 24px var(--gutter) 0;">
+    <a href="/leaderboard.html" style="font-size: 11px; letter-spacing: 0.14em; color: var(--sage); text-transform: uppercase;">← Leaderboard</a>
+  </div>
+
+  <header class="player-hero">
+
+    <div class="player-hero-card rank-1" id="hero-card">
+      <div class="rank-bg" id="rank-bg">1</div>
+
+      <div class="top-row">
+        <div class="avatar-xl-big" id="avatar">MA</div>
+        <div class="name-block">
+          <div class="kicker-mini" id="kicker">Summer 2026 · #1 Overall</div>
+          <h1 id="player-name">Maya Ávila</h1>
+          <div class="team-meta" id="team-meta">
+            <a href="#" id="team-link">SALTY SERVERS</a> · MANHATTAN
+          </div>
+        </div>
+      </div>
+
+      <div class="composite-block">
+        <div>
+          <div class="comp-num" id="comp-num">92</div>
+          <div class="comp-sub">Composite score · 0–100 scale</div>
+        </div>
+        <div class="comp-lbl">
+          Win% × 40<br/>
+          + avg margin ÷ 2<br/>
+          + games won × 1.5
+        </div>
+      </div>
+    </div>
+
+    <div class="player-hero-info">
+      <div class="player-stat-grid">
+        <div class="player-stat-box"><div class="num gold" id="stat-record">10–2</div><div class="lbl">Overall record</div></div>
+        <div class="player-stat-box"><div class="num gold" id="stat-winpct">.833</div><div class="lbl">Win %</div></div>
+        <div class="player-stat-box"><div class="num" id="stat-diff">+42</div><div class="lbl">Differential</div></div>
+        <div class="player-stat-box"><div class="num" id="stat-games">18</div><div class="lbl">Games won</div></div>
+      </div>
+
+      <div class="player-badges" id="badges-block">
+        <div class="lbl">Achievements · Summer 2026</div>
+        <div class="badge-list" id="badge-list"></div>
+      </div>
+    </div>
+
+  </header>
+
+  <!-- Format breakdown -->
+  <section class="player-section">
+    <h2>Format breakdown</h2>
+    <div class="format-grid" id="format-grid"><!-- JS --></div>
+  </section>
+
+  <!-- Match history -->
+  <section class="player-section">
+    <h2>Match history · This season</h2>
+    <div class="match-list" id="match-list"><!-- JS --></div>
+  </section>
+
+  <!-- Society Circuit -->
+  <section class="player-section">
+    <h2>Society Circuit · Year-long standing</h2>
+    <div class="circuit-card">
+      <div>
+        <div class="head-line"><div class="dot"></div><span class="lbl">Circuit rank · #<span id="circuit-rank">1</span></span></div>
+        <h3 id="circuit-headline">Currently leading the 2026 Society Circuit.</h3>
+        <p id="circuit-blurb">Summer season in progress. Fall and Winter leagues haven't started yet — points will accumulate across all three plus any weekly bonuses.</p>
+      </div>
+      <div>
+        <div class="circuit-breakdown">
+          <div class="circuit-breakdown-cell"><div class="num gold" id="cc-sum">155</div><div class="lbl">Summer '26</div></div>
+          <div class="circuit-breakdown-cell"><div class="num" style="color: #5A7875;" id="cc-fall">—</div><div class="lbl">Fall '26</div></div>
+          <div class="circuit-breakdown-cell"><div class="num" style="color: #5A7875;" id="cc-win">—</div><div class="lbl">Winter '26</div></div>
+          <div class="circuit-breakdown-cell" style="background: rgba(232,181,66,0.12);"><div class="num gold" id="cc-total">155</div><div class="lbl">Total · YTD</div></div>
+        </div>
+        <div class="total-row" style="margin-top: 14px;">
+          <div class="big" id="cc-big">155</div>
+          <div class="small">Circuit points</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div data-partial="footer"></div>
+
+  <script src="/js/partials.js"></script>
+  <script>
+    // ─── Sample data — keyed by slug. Wire to /api/public-data?action=player&slug=... ───
+    const PLAYER_DATA = {
+      'maya-avila': {
+        name: 'Maya Ávila', monogram: 'MA',
+        team: 'Salty Servers', teamSlug: 'salty-servers', city: 'MANHATTAN',
+        rank: 1, comp: 92,
+        record: '10–2', winpct: '.833', diff: '+42', games: 18,
+        badges: [
+          { text: '3× PLAYER OF THE WEEK', strong: true },
+          { text: 'WD FORMAT MVP', strong: true },
+          { text: 'UNDEFEATED START', strong: true },
+          { text: 'CLUTCH · 6 WINS BY ≤2', strong: false },
+        ],
+        formats: [
+          { code: 'WD',  desc: "Women's Doubles",  w: 11, l: 1, winpct: '.917', best: true,
+            partner: 'Most played partner: <strong>Hana Sato</strong> · 6–0 together' },
+          { code: 'MXD', desc: 'Mixed Doubles',    w: 8,  l: 1, winpct: '.889', best: false,
+            partner: 'Most played partner: <strong>James Nguyen</strong> · 8–1 together' },
+          { code: 'MD',  desc: "Men's Doubles",    w: 0,  l: 0, winpct: '—', best: false,
+            partner: 'Does not play MD.' },
+        ],
+        matches: [
+          { week: 'WK 4', fmt: 'MXD', partner: 'James Nguyen', opp: 'Ramirez / Tanaka',    oppTeam: 'Pier Pressure',    result: 'upcoming', score: 'TONIGHT' },
+          { week: 'WK 3', fmt: 'MXD', partner: 'James Nguyen', opp: 'Thompson / Chen',     oppTeam: 'Dinks & Drinks',   result: 'W', score: '11–9' },
+          { week: 'WK 3', fmt: 'WD',  partner: 'Hana Sato',    opp: 'Chen / Reyes',        oppTeam: 'Dinks & Drinks',   result: 'W', score: '11–6' },
+          { week: 'WK 2', fmt: 'WD',  partner: 'Hana Sato',    opp: 'Sullivan / Reese',    oppTeam: 'Smash Brothers',   result: 'W', score: '11–4' },
+          { week: 'WK 2', fmt: 'MXD', partner: 'James Nguyen', opp: 'Walsh / Reese',       oppTeam: 'Smash Brothers',   result: 'W', score: '11–7' },
+          { week: 'WK 1', fmt: 'WD',  partner: 'Lily Chen',    opp: 'Reyes / Ortega-wife', oppTeam: 'Net Profits',      result: 'W', score: '11–9' },
+          { week: 'WK 1', fmt: 'MXD', partner: 'James Nguyen', opp: 'Kim / Chen',          oppTeam: 'Net Profits',      result: 'L', score: '9–11' },
+        ],
+        circuit: {
+          rank: 1,
+          headline: 'Currently leading the 2026 Society Circuit.',
+          blurb: 'Summer season in progress. Fall and Winter leagues haven\'t started yet — points will accumulate across all three plus any weekly bonuses.',
+          sum: 155, fall: null, win: null, total: 155,
+        },
+      },
+
+      'james-nguyen': {
+        name: 'James Nguyen', monogram: 'JN',
+        team: 'Salty Servers', teamSlug: 'salty-servers', city: 'MANHATTAN',
+        rank: 2, comp: 86,
+        record: '9–3', winpct: '.750', diff: '+34', games: 16,
+        badges: [
+          { text: '1× PLAYER OF THE WEEK', strong: true },
+          { text: 'MD FORMAT MVP', strong: true },
+          { text: 'BEST DUO · w/ ÁVILA', strong: false },
+        ],
+        formats: [
+          { code: 'MD',  desc: "Men's Doubles",    w: 10, l: 2, winpct: '.833', best: true,
+            partner: 'Most played partner: <strong>Tom Bradley</strong> · 5–1 together' },
+          { code: 'MXD', desc: 'Mixed Doubles',    w: 8,  l: 1, winpct: '.889', best: false,
+            partner: 'Most played partner: <strong>Maya Ávila</strong> · 8–1 together' },
+          { code: 'WD',  desc: "Women's Doubles",  w: 0,  l: 0, winpct: '—', best: false,
+            partner: 'Does not play WD.' },
+        ],
+        matches: [
+          { week: 'WK 4', fmt: 'MD',  partner: 'Tom Bradley',  opp: 'Ramirez / Brennan',   oppTeam: 'Pier Pressure',    result: 'upcoming', score: 'TONIGHT' },
+          { week: 'WK 3', fmt: 'MXD', partner: 'Maya Ávila',   opp: 'Thompson / Chen',     oppTeam: 'Dinks & Drinks',   result: 'W', score: '11–9' },
+          { week: 'WK 3', fmt: 'MD',  partner: 'Chris Park',   opp: 'Thompson / Chen-M',   oppTeam: 'Dinks & Drinks',   result: 'W', score: '11–5' },
+          { week: 'WK 2', fmt: 'MD',  partner: 'Tom Bradley',  opp: 'Walsh / Sullivan',    oppTeam: 'Smash Brothers',   result: 'W', score: '11–3' },
+          { week: 'WK 2', fmt: 'MXD', partner: 'Maya Ávila',   opp: 'Walsh / Reese',       oppTeam: 'Smash Brothers',   result: 'W', score: '11–7' },
+          { week: 'WK 1', fmt: 'MD',  partner: 'Chris Park',   opp: 'Kim / Ortega',        oppTeam: 'Net Profits',      result: 'L', score: '8–11' },
+          { week: 'WK 1', fmt: 'MXD', partner: 'Maya Ávila',   opp: 'Kim / Chen',          oppTeam: 'Net Profits',      result: 'L', score: '9–11' },
+        ],
+        circuit: {
+          rank: 2,
+          headline: '2nd in the 2026 Society Circuit — MD Format MVP lock-in.',
+          blurb: 'Consistency across MD and MXD has him in striking distance. A strong finish in Summer keeps the #1 seat within reach.',
+          sum: 130, fall: null, win: null, total: 130,
+        },
+      },
+
+      'marcus-ramirez': {
+        name: 'Marcus Ramirez', monogram: 'MR',
+        team: 'Pier Pressure', teamSlug: 'pier-pressure', city: 'HERMOSA',
+        rank: 3, comp: 78,
+        record: '8–4', winpct: '.667', diff: '+21', games: 14,
+        badges: [
+          { text: 'MD FORMAT · #2', strong: false },
+          { text: 'CAPTAIN', strong: false },
+        ],
+        formats: [
+          { code: 'MD',  desc: "Men's Doubles",    w: 10, l: 2, winpct: '.833', best: true,
+            partner: 'Most played partner: <strong>Kai Brennan</strong> · 6–1 together' },
+          { code: 'MXD', desc: 'Mixed Doubles',    w: 5,  l: 3, winpct: '.625', best: false,
+            partner: 'Most played partner: <strong>Sofia Tanaka</strong> · 4–2 together' },
+          { code: 'WD',  desc: "Women's Doubles",  w: 0,  l: 0, winpct: '—', best: false,
+            partner: 'Does not play WD.' },
+        ],
+        matches: [
+          { week: 'WK 4', fmt: 'MD',  partner: 'Kai Brennan',  opp: 'Nguyen / Bradley',    oppTeam: 'Salty Servers',    result: 'upcoming', score: 'TONIGHT' },
+          { week: 'WK 3', fmt: 'MXD', partner: 'Sofia Tanaka', opp: 'Nguyen / Ávila',      oppTeam: 'Salty Servers',    result: 'L', score: '9–11' },
+          { week: 'WK 3', fmt: 'MD',  partner: 'Kai Brennan',  opp: 'Nguyen / Park',       oppTeam: 'Salty Servers',    result: 'L', score: '7–11' },
+          { week: 'WK 2', fmt: 'MD',  partner: 'Kai Brennan',  opp: 'Patel / Walsh',       oppTeam: 'Kitchen Sink',     result: 'W', score: '11–8' },
+          { week: 'WK 2', fmt: 'MXD', partner: 'Sofia Tanaka', opp: 'Patel / Ivers',       oppTeam: 'Kitchen Sink',     result: 'W', score: '11–6' },
+          { week: 'WK 1', fmt: 'MD',  partner: 'Kai Brennan',  opp: 'Walsh / Sullivan',    oppTeam: 'Smash Brothers',   result: 'W', score: '11–5' },
+          { week: 'WK 1', fmt: 'MXD', partner: 'Nina Adams',   opp: 'Walsh / Reese',       oppTeam: 'Smash Brothers',   result: 'W', score: '11–8' },
+        ],
+        circuit: {
+          rank: 3,
+          headline: '3rd in the Circuit — best non-Salty.',
+          blurb: 'The first real Pier Pressure test is tonight against the undefeated Salty Servers. Result could swing the Circuit race.',
+          sum: 105, fall: null, win: null, total: 105,
+        },
+      },
+    };
+
+    // Pick the right player from the URL
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('slug') || 'maya-avila';
+    const player = PLAYER_DATA[slug] || PLAYER_DATA['maya-avila'];
+
+    document.title = `${player.name} — The Dink Society`;
+
+    // ─── Render hero ───
+    (function renderHero() {
+      const card = document.getElementById('hero-card');
+      card.classList.remove('rank-1', 'rank-top', 'rank-mid');
+      if (player.rank === 1) card.classList.add('rank-1');
+      else if (player.rank <= 3) card.classList.add('rank-top');
+      else card.classList.add('rank-mid');
+
+      document.getElementById('rank-bg').textContent = player.rank;
+      document.getElementById('avatar').textContent = player.monogram;
+      document.getElementById('kicker').textContent = `Summer 2026 · #${player.rank} Overall`;
+      document.getElementById('player-name').textContent = player.name;
+
+      const teamLink = document.getElementById('team-link');
+      teamLink.textContent = player.team.toUpperCase();
+      teamLink.href = `/team.html?slug=${player.teamSlug}`;
+      document.getElementById('team-meta').innerHTML = `<a href="/team.html?slug=${player.teamSlug}">${player.team.toUpperCase()}</a> · ${player.city}`;
+
+      document.getElementById('comp-num').textContent = player.comp;
+      document.getElementById('stat-record').textContent = player.record;
+      document.getElementById('stat-winpct').textContent = player.winpct;
+      document.getElementById('stat-diff').textContent = player.diff;
+      document.getElementById('stat-games').textContent = player.games;
+    })();
+
+    // ─── Render badges ───
+    (function renderBadges() {
+      const list = document.getElementById('badge-list');
+      if (!player.badges || !player.badges.length) {
+        document.getElementById('badges-block').style.display = 'none';
+        return;
+      }
+      const html = player.badges.map(b =>
+        `<span class="badge ${b.strong ? '' : 'muted'}">${b.text}</span>`
+      ).join('');
+      list.innerHTML = html;
+    })();
+
+    // ─── Render format breakdown ───
+    (function renderFormats() {
+      const grid = document.getElementById('format-grid');
+      const html = player.formats.map(f => `
+        <div class="format-card ${f.best ? 'best' : ''}">
+          <div class="format-card-head">
+            <span class="code">${f.code}</span>
+            <span class="desc">${f.desc}</span>
+          </div>
+          <div class="winpct">${f.winpct}</div>
+          <div class="winpct-lbl">Win percentage</div>
+          <div class="record-row">
+            <span><strong>${f.w}–${f.l}</strong> record</span>
+            <span>${f.w + f.l} games played</span>
+          </div>
+          <div class="partner-note">${f.partner}</div>
+        </div>
+      `).join('');
+      grid.innerHTML = html;
+    })();
+
+    // ─── Render match history ───
+    (function renderMatches() {
+      const list = document.getElementById('match-list');
+      const html = player.matches.map(m => `
+        <div class="match-row">
+          <span class="week">${m.week}</span>
+          <span class="fmt">${m.fmt}</span>
+          <div class="players">
+            vs ${m.opp}
+            <span class="partner">w/ <strong>${m.partner}</strong> · ${m.oppTeam}</span>
+          </div>
+          <span class="result ${m.result}">${m.result === 'upcoming' ? '—' : m.result}</span>
+          <span class="score">${m.score}</span>
+        </div>
+      `).join('');
+      list.innerHTML = html;
+    })();
+
+    // ─── Render circuit ───
+    (function renderCircuit() {
+      const c = player.circuit;
+      document.getElementById('circuit-rank').textContent = c.rank;
+      document.getElementById('circuit-headline').textContent = c.headline;
+      document.getElementById('circuit-blurb').textContent = c.blurb;
+      document.getElementById('cc-sum').textContent = c.sum;
+      document.getElementById('cc-fall').textContent = c.fall === null ? '—' : c.fall;
+      document.getElementById('cc-win').textContent = c.win === null ? '—' : c.win;
+      document.getElementById('cc-total').textContent = c.total;
+      document.getElementById('cc-big').textContent = c.total;
+    })();
+  </script>
+</body>
+</html>

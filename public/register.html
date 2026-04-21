@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — The Dink Society</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .options-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .option-card {
+      padding: 20px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: transform 0.15s var(--ease);
+      border: 2px solid transparent;
+    }
+    .option-card.team {
+      background: rgba(232,181,66,0.06);
+      border-color: rgba(232,181,66,0.4);
+    }
+    .option-card.solo {
+      background: rgba(245,235,212,0.04);
+      border-color: rgba(245,235,212,0.15);
+    }
+    .option-card:hover { transform: translateY(-2px); }
+    .option-head {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .option-head .label-small { font-size: 10px; letter-spacing: 0.22em; margin-bottom: 6px; text-transform: uppercase; }
+    .option-card.team .option-head .label-small { color: var(--gold); }
+    .option-card.solo .option-head .label-small { color: var(--sage); }
+    .option-head .name { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+    .option-head .price { font-size: 24px; font-weight: 500; }
+    .option-card.team .option-head .price { color: var(--gold); }
+    .option-card.solo .option-head .price { color: var(--cream); }
+
+    .option-blurb { font-size: 13px; color: var(--cream); line-height: 1.55; margin-bottom: 18px; }
+    .option-card.team .option-blurb { color: var(--cream); }
+    .option-card.solo .option-blurb { color: var(--sage); }
+
+    .option-incl {
+      padding: 12px 14px;
+      background: rgba(13,59,64,0.5);
+      margin-bottom: 12px;
+      border-radius: var(--radius-sm);
+    }
+    .option-incl-label {
+      font-size: 10px; letter-spacing: 0.18em; color: var(--sage);
+      margin-bottom: 8px; text-transform: uppercase;
+    }
+    .option-incl ul {
+      font-size: 12px; color: var(--cream); line-height: 1.8; list-style: none;
+    }
+    .option-incl ul li::before { content: '• '; color: var(--gold); }
+
+    .option-cta {
+      width: 100%;
+      padding: 14px;
+      text-align: center;
+      font-size: 13px; font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s var(--ease);
+      display: block;
+      border-radius: var(--radius-sm);
+    }
+    .option-card.team .option-cta { background: var(--gold); color: var(--teal-900); }
+    .option-card.solo .option-cta { background: transparent; color: var(--cream); border-color: var(--cream); }
+
+    /* ===== Form steps ===== */
+    .steps-strip {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+      margin-bottom: 4px;
+    }
+    .step {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+    }
+    .step .num { font-size: 10px; letter-spacing: 0.14em; opacity: 0.7; }
+    .step .lbl { font-size: 12px; margin-top: 2px; }
+    .step.active { background: var(--gold); color: var(--teal-900); }
+    .step.active .lbl { font-weight: 500; }
+    .step.upcoming { background: rgba(245,235,212,0.06); color: var(--sage); }
+    .step.done { background: rgba(232,181,66,0.18); color: var(--gold); }
+
+    .form-block {
+      padding: 24px;
+      background: rgba(13,59,64,0.4);
+      border: 1px solid rgba(245,235,212,0.08);
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+    }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .form-field label {
+      font-size: 10px; letter-spacing: 0.16em; color: var(--sage);
+      display: block; margin-bottom: 6px; text-transform: uppercase;
+    }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%;
+    }
+
+    .division-pills { display: flex; gap: 6px; }
+    .division-pill {
+      flex: 1;
+      padding: 11px;
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      background: rgba(245,235,212,0.05);
+      color: var(--sage);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      text-transform: uppercase;
+    }
+    .division-pill.active { background: var(--gold); color: var(--teal-900); font-weight: 500; }
+    .division-pill.disabled { color: #5A7875; border: 1px dashed rgba(245,235,212,0.15); cursor: not-allowed; }
+
+    .waiver-callout {
+      padding: 14px 16px;
+      background: rgba(232,181,66,0.08);
+      border-left: 3px solid var(--gold);
+      margin-bottom: 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .waiver-callout-label {
+      font-size: 10px; letter-spacing: 0.18em; color: var(--gold);
+      margin-bottom: 6px; text-transform: uppercase;
+    }
+    .waiver-callout p {
+      font-size: 12px; color: var(--cream); line-height: 1.6;
+    }
+    .waiver-callout a { color: var(--gold); text-decoration: underline; }
+
+    .checkbox-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 18px; }
+    .checkbox-row input[type="checkbox"] {
+      width: 18px; height: 18px; flex-shrink: 0;
+      appearance: none; -webkit-appearance: none;
+      border: 1.5px solid var(--gold);
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+    }
+    .checkbox-row input[type="checkbox"]:checked {
+      background: var(--gold);
+    }
+    .checkbox-row input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--teal-900);
+      font-size: 12px; font-weight: 500;
+    }
+    .checkbox-row label {
+      font-size: 12px; color: var(--cream); line-height: 1.5;
+      cursor: pointer;
+    }
+
+    .form-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 14px; border-top: 1px solid rgba(245,235,212,0.1);
+    }
+    .form-bottom-info {
+      font-size: 11px; color: var(--sage);
+    }
+    .form-bottom-info strong { color: var(--cream); font-weight: 500; }
+
+    .info-cards {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .info-card {
+      background: rgba(245,235,212,0.03);
+      padding: 16px 18px;
+      border-radius: var(--radius-sm);
+    }
+    .info-card-label {
+      font-size: 10px; letter-spacing: 0.18em; color: var(--gold);
+      margin-bottom: 8px; text-transform: uppercase;
+    }
+    .info-card p {
+      font-size: 12px; color: var(--cream); line-height: 1.55;
+    }
+
+    @media (max-width: 800px) {
+      .options-grid, .form-grid-2, .form-grid-3, .info-cards {
+        grid-template-columns: 1fr;
+      }
+      .steps-strip { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-page="">
+  <div data-partial="nav"></div>
+  <div data-partial="ticker"></div>
+
+  <header class="page-header">
+    <span class="kicker">Summer 2026 · Registration Open</span>
+    <h1 class="h1">Get in the society.</h1>
+    <p class="lede" style="margin-bottom: 28px;">
+      Register a team of 4–12 or throw your paddle in the free-agent pool. Season kicks off Tuesday, June 2. Registration closes May 18.
+    </p>
+  </header>
+
+  <section class="container">
+
+    <div class="options-grid">
+
+      <div class="option-card team" id="team-option">
+        <div class="option-head">
+          <div>
+            <div class="label-small">Option A</div>
+            <div class="name">Register a team</div>
+          </div>
+          <div class="price">$450</div>
+        </div>
+        <p class="option-blurb">You're the captain. You've got 4+ players. Pay the team fee, add your roster, and you're locked in.</p>
+        <div class="option-incl">
+          <div class="option-incl-label">What you get</div>
+          <ul>
+            <li>Guaranteed spot for 7 weeks of play</li>
+            <li>All facility + court fees included</li>
+            <li>Custom team page + photo upload</li>
+            <li>Rankings, stats, and Society Circuit points</li>
+          </ul>
+        </div>
+        <a href="#team-form" class="option-cta">Register team →</a>
+      </div>
+
+      <div class="option-card solo" id="solo-option">
+        <div class="option-head">
+          <div>
+            <div class="label-small">Option B</div>
+            <div class="name">Free-agent pool</div>
+          </div>
+          <div class="price">$75</div>
+        </div>
+        <p class="option-blurb">No team yet? Sign up solo. Captains can draft from the pool, or we'll form a free-agent team when we have enough players.</p>
+        <div class="option-incl">
+          <div class="option-incl-label">What you get</div>
+          <ul>
+            <li>Profile visible to captains looking for players</li>
+            <li>Automatic roster spot on free-agent team if formed</li>
+            <li>Full refund if no team materializes</li>
+            <li>Society Circuit points from day one</li>
+          </ul>
+        </div>
+        <a href="#free-agent" class="option-cta">Join pool →</a>
+      </div>
+
+    </div>
+
+    <div id="team-form" style="padding-top: 16px;">
+      <div class="kicker-muted" style="margin-bottom: 18px;">Team registration · 4 steps</div>
+
+      <div class="steps-strip">
+        <div class="step active"><div class="num">STEP 1</div><div class="lbl">Team & captain</div></div>
+        <div class="step upcoming"><div class="num">STEP 2</div><div class="lbl">Division & format</div></div>
+        <div class="step upcoming"><div class="num">STEP 3</div><div class="lbl">Waiver & conduct</div></div>
+        <div class="step upcoming"><div class="num">STEP 4</div><div class="lbl">Payment</div></div>
+      </div>
+
+      <form class="form-block" id="register-form" onsubmit="return handleRegister(event)">
+
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label>Team name</label>
+            <input type="text" name="teamName" placeholder="e.g. Pier Pressure" required />
+          </div>
+          <div class="form-field">
+            <label>Neighborhood</label>
+            <input type="text" name="neighborhood" placeholder="e.g. Hermosa, Torrance, PV" />
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-field">
+            <label>Captain name</label>
+            <input type="text" name="captainName" placeholder="First Last" required />
+          </div>
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" name="captainEmail" placeholder="captain@email.com" required />
+          </div>
+          <div class="form-field">
+            <label>Phone</label>
+            <input type="tel" name="captainPhone" placeholder="(310) 555-0142" />
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label>DUPR ID (optional)</label>
+            <input type="text" name="duprId" placeholder="e.g. 12345678" />
+          </div>
+          <div class="form-field">
+            <label>Division</label>
+            <div class="division-pills">
+              <div class="division-pill active" data-division="3.5+ Mixed">3.5+ Mixed</div>
+              <div class="division-pill disabled">3.0 coming</div>
+            </div>
+            <input type="hidden" name="division" value="3.5+ Mixed" />
+          </div>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label>Team motto (optional, shows on team page)</label>
+          <input type="text" name="motto" placeholder="e.g. We dink under stress." />
+        </div>
+
+        <div class="waiver-callout">
+          <div class="waiver-callout-label">Required · Before payment</div>
+          <p>All rostered players will need to sign the <a href="/waiver.html" target="_blank">Waiver &amp; Release of Liability</a> and <a href="/conduct.html" target="_blank">Player Code of Conduct</a> before their first match. You'll collect these as captain — we'll email the link to each player.</p>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="waiver-ack" required />
+          <label for="waiver-ack">I agree to the waiver terms on behalf of myself and acknowledge I'm responsible for ensuring all rostered players sign before their first match.</label>
+        </div>
+
+        <div class="form-bottom">
+          <span class="form-bottom-info"><strong>$450 team fee</strong> · processed securely via Stripe</span>
+          <button type="submit" class="btn btn-primary">Continue to payment →</button>
+        </div>
+
+      </form>
+
+      <div class="info-cards">
+        <div class="info-card">
+          <div class="info-card-label">Roster rules</div>
+          <p>4–12 players. 18+. Final rosters due one week before first match.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Refunds</div>
+          <p>Full refund until May 18. After that, no refunds (weather included).</p>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Questions</div>
+          <p><a href="mailto:hi@thedinksociety.com" style="color: var(--gold);">hi@thedinksociety.com</a><br/>(310) 555-0142</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="free-agent" style="padding-top: 56px;">
+      <div class="kicker-muted" style="margin-bottom: 18px;">Free-agent pool · Solo signup</div>
+
+      <div class="form-block" style="background: rgba(245,235,212,0.04);">
+
+        <p style="font-size: 13px; color: var(--cream); line-height: 1.6; margin-bottom: 20px; max-width: 560px;">
+          No team yet? Drop your info here. Captains can browse the pool and draft you onto their roster, or once we hit 4+ free agents, we'll form a team and split the $75 each.
+        </p>
+
+        <form id="free-agent-form" onsubmit="return handleFreeAgent(event)">
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label>Your name</label>
+              <input type="text" name="playerName" placeholder="First Last" required />
+            </div>
+            <div class="form-field">
+              <label>Neighborhood</label>
+              <input type="text" name="neighborhood" placeholder="e.g. Hermosa, Torrance, PV" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label>Email</label>
+              <input type="email" name="email" placeholder="you@email.com" required />
+            </div>
+            <div class="form-field">
+              <label>Phone</label>
+              <input type="tel" name="phone" placeholder="(310) 555-0142" />
+            </div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-field">
+              <label>DUPR ID (optional)</label>
+              <input type="text" name="duprId" placeholder="e.g. 12345678" />
+            </div>
+            <div class="form-field">
+              <label>Self-rated level</label>
+              <select name="level" required>
+                <option value="">Pick one</option>
+                <option value="3.0">3.0</option>
+                <option value="3.5">3.5</option>
+                <option value="4.0">4.0</option>
+                <option value="4.5+">4.5+</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Preferred format</label>
+              <select name="preferredFormat">
+                <option value="any">Any</option>
+                <option value="MD">Men's doubles</option>
+                <option value="WD">Women's doubles</option>
+                <option value="MXD">Mixed doubles</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label>Tell captains about you (optional)</label>
+            <textarea name="bio" rows="3" placeholder="A sentence or two — strengths, availability, why you should be drafted first."></textarea>
+          </div>
+
+          <div class="waiver-callout">
+            <div class="waiver-callout-label">Required · Before payment</div>
+            <p>You'll need to sign the <a href="/waiver.html" target="_blank">Waiver &amp; Release of Liability</a> and <a href="/conduct.html" target="_blank">Player Code of Conduct</a> before your first match. We'll email the link.</p>
+          </div>
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="fa-waiver-ack" required />
+            <label for="fa-waiver-ack">I agree to the waiver terms and code of conduct, and understand I'll get a full refund if no team forms.</label>
+          </div>
+
+          <div class="form-bottom">
+            <span class="form-bottom-info"><strong>$75 free-agent fee</strong> · refunded if no team forms</span>
+            <button type="submit" class="btn btn-primary">Continue to payment →</button>
+          </div>
+
+        </form>
+
+        <div class="info-cards" style="margin-top: 20px;">
+          <div class="info-card">
+            <div class="info-card-label">How drafting works</div>
+            <p>Captains see your profile and can request you. We facilitate intros — you confirm before you're locked in.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-label">If no team forms</div>
+            <p>Full $75 refund, no questions. We'll roll you to the next season's pool if you want.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-label">Questions</div>
+            <p><a href="mailto:hi@thedinksociety.com" style="color: var(--gold);">hi@thedinksociety.com</a><br/>(310) 555-0142</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <div data-partial="footer"></div>
+
+  <script src="/js/partials.js"></script>
+  <script>
+    // Division pill toggling
+    document.querySelectorAll('.division-pill:not(.disabled)').forEach(p => {
+      p.addEventListener('click', () => {
+        document.querySelectorAll('.division-pill').forEach(x => x.classList.remove('active'));
+        p.classList.add('active');
+        document.querySelector('input[name="division"]').value = p.dataset.division;
+      });
+    });
+
+    // Smooth-scroll the anchor links
+    document.querySelectorAll('.option-cta').forEach(a => {
+      a.addEventListener('click', e => {
+        const href = a.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          e.preventDefault();
+          const el = document.querySelector(href);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Form submit handler — POSTs to /api/register
+    async function handleRegister(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+      data.seasonId = 'summer-2026';      // placeholder — admin assigns real ID
+      data.divisionId = data.division;     // simple mapping for now
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const orig = submitBtn.innerHTML;
+      submitBtn.innerHTML = 'Submitting...';
+      submitBtn.disabled = true;
+
+      try {
+        const r = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await r.json();
+        if (!r.ok) throw new Error(result.message || 'Registration failed');
+
+        // Once confirmed, kick off Stripe checkout
+        if (result.registration && result.registration.id) {
+          const checkout = await fetch('/api/stripe-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ registrationId: result.registration.id }),
+          });
+          const ck = await checkout.json();
+          if (ck.url) {
+            window.location.href = ck.url;
+            return false;
+          }
+        }
+        alert('Thanks! Your registration is in. We\'ll be in touch shortly.');
+        form.reset();
+      } catch (err) {
+        alert('Sorry — something went wrong: ' + err.message);
+      } finally {
+        submitBtn.innerHTML = orig;
+        submitBtn.disabled = false;
+      }
+      return false;
+    }
+
+    // Free-agent form handler
+    async function handleFreeAgent(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+      data.type = 'free-agent';
+      data.seasonId = 'summer-2026';
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const orig = submitBtn.innerHTML;
+      submitBtn.innerHTML = 'Submitting...';
+      submitBtn.disabled = true;
+
+      try {
+        const r = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await r.json();
+        if (!r.ok) throw new Error(result.message || 'Registration failed');
+
+        if (result.registration && result.registration.id) {
+          const checkout = await fetch('/api/stripe-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ registrationId: result.registration.id, freeAgent: true }),
+          });
+          const ck = await checkout.json();
+          if (ck.url) { window.location.href = ck.url; return false; }
+        }
+        alert('Thanks! You\'re in the pool. Captains will see your profile shortly.');
+        form.reset();
+      } catch (err) {
+        alert('Sorry — something went wrong: ' + err.message);
+      } finally {
+        submitBtn.innerHTML = orig;
+        submitBtn.disabled = false;
+      }
+      return false;
+    }
+  </script>
+</body>
+</html>
