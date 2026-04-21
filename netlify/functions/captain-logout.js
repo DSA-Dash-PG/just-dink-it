@@ -5,7 +5,7 @@ import {
   buildClearCaptainCookie,
   getCaptainToken,
   deleteSession,
-} from './lib/captain-auth.js';
+} from '../lib/captain-auth.js';
 
 export default async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
