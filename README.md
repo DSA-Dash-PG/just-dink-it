@@ -1,188 +1,180 @@
-# Just Dink It — South Bay Pickleball League
+/* ===========================================================
+   Mobile navigation — hamburger + slide-out drawer
+   Shared between public site, captain portal, admin portal.
+   Append this to /css/shared.css or include as a separate file.
+   =========================================================== */
 
-A modern league management site for the South Bay's premier pickleball league. Built on Netlify with Blobs storage, Functions for the API, Supabase Auth, and Stripe for payments.
+/* The hamburger button — always present in the DOM, only visible under 720px */
+.ds-hamburger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+.ds-hamburger:hover { background: rgba(245, 235, 212, 0.08); }
+.ds-hamburger__line {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
 
-## Stack
+/* When drawer is open, transform the lines into an X */
+.ds-hamburger.is-open .ds-hamburger__line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.ds-hamburger.is-open .ds-hamburger__line:nth-child(2) {
+  opacity: 0;
+}
+.ds-hamburger.is-open .ds-hamburger__line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
 
-- **Hosting:** Netlify (static + Functions)
-- **Database:** Netlify Blobs (key-value, one per entity type)
-- **Auth:** Supabase Auth (email + password, Google OAuth)
-- **Payments:** Stripe
-- **Frontend:** Plain HTML/CSS/JS with ES modules
-- **Fonts:** Inter + Cormorant Garamond (Google Fonts)
+/* Drawer backdrop — full-viewport overlay */
+.ds-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 59, 64, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 998;
+}
+.ds-drawer-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
 
-## Auth model
+/* The drawer itself — slides in from the right */
+.ds-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
+  background: #0D3B40;
+  color: #F5EBD4;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15);
+}
+.ds-drawer.is-open {
+  transform: translateX(0);
+}
 
-Auth is handled by **Supabase** (separate project from SBPL). Two roles:
+.ds-drawer__header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(232, 181, 66, 0.2);
+}
+.ds-drawer__brand {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 18px;
+  color: #E8B542;
+  font-weight: 500;
+}
+.ds-drawer__close {
+  background: transparent;
+  border: none;
+  color: #F5EBD4;
+  font-size: 28px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.ds-drawer__close:hover { background: rgba(245, 235, 212, 0.08); }
 
-- **Admin** — identified by email matching the `ADMIN_EMAILS` env var (comma-separated list). Has full access to `/admin.html`.
-- **Captain** — identified by email matching a team's captain email. Auto-assigned: any authenticated user who signs up with an email that matches a registered team captain is treated as that team's captain. Access via `/captain.html`.
+.ds-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+}
 
-There's no invitation flow — captains just sign up normally with the same email they used when registering their team.
+.ds-drawer__section {
+  padding: 8px 0;
+}
+.ds-drawer__section + .ds-drawer__section {
+  border-top: 1px solid rgba(245, 235, 212, 0.1);
+  margin-top: 8px;
+  padding-top: 16px;
+}
+.ds-drawer__section-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #E8B542;
+  opacity: 0.7;
+  font-weight: 500;
+  padding: 4px 12px 10px;
+}
 
----
+.ds-drawer__link {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 6px;
+  color: #F5EBD4;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 400;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.ds-drawer__link:hover,
+.ds-drawer__link:focus {
+  background: rgba(245, 235, 212, 0.08);
+  outline: none;
+}
+.ds-drawer__link.is-active {
+  background: rgba(232, 181, 66, 0.15);
+  color: #E8B542;
+  font-weight: 500;
+}
 
-## Setup: Supabase (do this first — ~10 minutes)
+.ds-drawer__footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(245, 235, 212, 0.1);
+  font-size: 11px;
+  opacity: 0.55;
+}
 
-### 1. Create the Supabase project
+/* Responsive triggers */
+@media (max-width: 720px) {
+  .ds-hamburger { display: flex; }
+  /* Hide the inline/horizontal nav links so only the hamburger remains */
+  .ds-nav-inline { display: none !important; }
+}
 
-1. Go to https://supabase.com/dashboard
-2. Click **New project**
-3. Name: `just-dink-it`
-4. Database password: generate and save somewhere (not needed for the app, but Supabase requires it)
-5. Region: **West US (North California)** — closest to LA
-6. Pricing: Free tier
-7. Click **Create new project** — takes ~2 min to provision
-
-### 2. Get your API credentials
-
-Once the project finishes provisioning:
-
-1. Left sidebar → **Project Settings** (gear icon) → **API**
-2. Copy these three values:
-   - **Project URL** → env var `SUPABASE_URL`
-   - **`anon` `public` key** → env var `SUPABASE_ANON_KEY` (safe to expose to browser)
-   - **`service_role` `secret` key** → env var `SUPABASE_SERVICE_ROLE_KEY` (NEVER put in frontend code)
-
-### 3. Enable Google OAuth
-
-1. Supabase left sidebar → **Authentication** → **Providers**
-2. Find **Google**, toggle on
-3. Copy the **Callback URL** shown (looks like `https://abcdefgh.supabase.co/auth/v1/callback`)
-4. **In a new tab**, go to https://console.cloud.google.com
-5. Create a new project named "Just Dink It"
-6. Search **OAuth consent screen** → **External** → Create
-   - App name: `Just Dink It`
-   - User support email + developer email: your email
-   - Save and continue through all screens
-7. Go to **APIs & Services → Credentials**
-8. **Create Credentials** → **OAuth client ID**
-   - Application type: **Web application**
-   - Name: `Just Dink It Web`
-   - **Authorized redirect URIs**: paste the Callback URL from Supabase
-   - Create
-9. Copy the **Client ID** and **Client Secret**
-10. Back in Supabase → Google provider config → paste both → Save
-
-### 4. Configure Auth URLs
-
-1. Supabase → **Authentication** → **URL Configuration**
-2. **Site URL**: your Netlify site URL (e.g. `https://just-dink-it.netlify.app`)
-3. **Redirect URLs**: add both:
-   - `https://just-dink-it.netlify.app/**`
-   - `http://localhost:8888/**` (for local dev)
-4. Save
-
-### 5. Disable email confirmation (optional, recommended for testing)
-
-1. Supabase → **Authentication** → **Providers** → **Email**
-2. Toggle off **Confirm email** (so new signups work immediately)
-3. For production later, turn this back on and configure a real SMTP sender (SendGrid, etc.)
-
----
-
-## Setup: Netlify
-
-### 1. Deploy
-
-1. Push this repo to GitHub (`DSA-Dash-PG/just-dink-it` matches your naming pattern)
-2. In Netlify dashboard, **Add new site** → **Import from Git** → select the repo
-3. Build settings auto-detected from `netlify.toml`
-4. Deploy
-
-### 2. Set environment variables
-
-In Netlify dashboard → Site configuration → **Environment variables**, add:
-
-| Name | Value |
-|------|-------|
-| `SUPABASE_URL` | Your Supabase Project URL |
-| `SUPABASE_ANON_KEY` | Your Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service_role/secret key |
-| `ADMIN_EMAILS` | `richardhak@gmail.com` (add more comma-separated later) |
-| `STRIPE_SECRET_KEY` | Stripe secret key (optional until you take payments) |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (optional) |
-
-After adding env vars, trigger a new deploy (Deploys → Trigger deploy) so functions pick them up.
-
-### 3. Stripe webhook (only when you're ready to take payments)
-
-1. Stripe dashboard → Developers → Webhooks → **Add endpoint**
-2. URL: `https://YOUR-SITE.netlify.app/.netlify/functions/stripe-webhook`
-3. Events: `checkout.session.completed`
-4. Copy the signing secret → Netlify env var `STRIPE_WEBHOOK_SECRET`
-
----
-
-## First login
-
-1. Visit `https://YOUR-SITE.netlify.app/admin.html`
-2. Click **Sign in** → switch to **Create account** tab
-3. Sign up with the email that's in your `ADMIN_EMAILS` env var
-4. Or click **Continue with Google** if you want Google sign-in
-
-If email confirmation is disabled in Supabase (step 5 above), you'll be signed in immediately.
-
-## First season setup
-
-In the admin dashboard:
-
-1. **Seasons & Divisions** tab → click the big coral **⚡ Seed mock season** button for a fully-populated demo
-2. Or manually: create a season → create divisions → wait for registrations
-
-## Captain onboarding (real flow)
-
-1. Captain fills out `/register.html`
-2. Admin approves in Registrations tab
-3. System creates the team + a player record with the captain's email
-4. Captain visits `/captain.html` → clicks Sign in → uses **the same email** from their registration
-5. They automatically have captain access to their team
-
----
-
-## Reset & seed
-
-From the admin dashboard (Seasons & Divisions tab):
-
-- **⚡ Seed mock season** — creates 1 season, 6 teams, 6-12 players per team, ~15 matches (some finalized), 4 sponsors
-- **⚠ Reset everything** (danger zone at bottom) — wipes all data. Two-step confirmation (type `DELETE EVERYTHING`).
-
----
-
-## Local development
-
-```bash
-npm install
-npm install -g netlify-cli
-netlify login
-netlify link              # connect to your site (pulls env vars)
-netlify dev               # runs at http://localhost:8888
-```
-
-`netlify dev` automatically pulls env vars from your linked Netlify site, so local dev works with real Supabase + Blobs.
-
----
-
-## Architecture notes
-
-- **No database migrations.** Netlify Blobs is schemaless; the data layer in `db.js` is the single source of truth for structure.
-- **Career stats are denormalized** onto the player record so profile pages load fast. Recomputed when a match is finalized.
-- **Both-captain score agreement** — `scores.js` tracks submissions from both teams; match goes to `final` only if scores match, `disputed` otherwise (admin resolves).
-- **Pretty URLs** via Netlify redirects: `/teams/pier-pressure`, `/players/jane-smith-abc1`.
-- **Supabase for auth only** — all app data lives in Netlify Blobs. Keeps you on free tiers longer.
-- **Admin identity via env var** — `ADMIN_EMAILS` is the canonical source of truth for who's an admin. No DB mutation needed to add/remove admins; just update the env var and redeploy.
-
-## Things to add later
-
-- Email notifications (SendGrid or Supabase SMTP for registration confirmations)
-- Photo upload via Netlify Blobs file storage or Supabase Storage
-- Custom domain (`justdinkit.com`)
-- Head-to-head matrix and MVP race on the stats page
-- Bracket builder for playoffs
-- Sponsor logos on homepage + footer
-- Email captain when their registration is approved
-- Mobile push notifications for match reminders
-
----
-
-Built with care for the South Bay pickleball community.
+/* Prevent background scroll when drawer is open */
+body.ds-drawer-open {
+  overflow: hidden;
+}
