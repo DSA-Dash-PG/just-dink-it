@@ -9,20 +9,6 @@
   node_bundler = "esbuild"
 
 # Pretty URLs for team pages: /teams/pier-pressure → /team.html?slug=pier-pressure
-[[redirects]]
-  from = "/teams/:slug"
-  to = "/team.html?slug=:slug"
-  status = 200
-
-[[redirects]]
-  from = "/players/:slug"
-  to = "/player.html?slug=:slug"
-  status = 200
-
-[[redirects]]
-  from = "/seasons/:id"
-  to = "/season.html?id=:id"
-  status = 200
 
 # API routes
 [[redirects]]
